@@ -75,7 +75,7 @@ To find out more about our branching strategy please read this article from the 
         </td>
         <td align="center">
             <p>
-                Descr 
+                Hey there ! My passion lies in the structure of languages, not only programming languages but natural langauges too. I am a full time Computer Science student with a little bit of industry experience. I am a friendly giant who wants the best for everyone. A little weird fact about me is that I started my computing career on puppy linux at age 4. I personally believe that disciplined smart work is the key to success. Communication is the make or break of a team.
             </p>
             <br>
             <a href="https://www.linkedin.com/in/andreas-visagie-b838bb205/">
@@ -123,3 +123,5 @@ To find out more about our branching strategy please read this article from the 
         </td>
     </tr>
 </table>
+
+# 📚 Tech Stack 📚
