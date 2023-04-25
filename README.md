@@ -10,13 +10,25 @@ to help assist users navigate their routes through these dark times.
 
 # About the repo ℹ️
 ## 🏛️ Basic Structure 🏛️
-- TODO
+<a href="https://angular.io/">
+    <img alt="Ang" src="https://img.shields.io/badge/Angular-DD0031?style=for-the-badge&logo=angular&logoColor=white" />
+</a>
+<a href="https://ionicframework.com/">
+    <img alt="ion" src="https://img.shields.io/badge/Ionic-3880FF?style=for-the-badge&logo=ionic&logoColor=white" />
+</a>
+<a href="https://rocket.rs/">
+    <img alt="ion" src="https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white" />
+</a>
+<a href="https://www.mongodb.com/">
+    <img alt="ion" src="https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white" />
+</a>
+
 ## 📌 Project Board 📌
--TODO
-## 📑 Organisation 📑
 - TODO
+## 📑 Organisation 📑
+- Directory
 ## 🌴 Branching Strategy 🌴
-### GitFlow
+- ### GitFlow
 
 <img src="https://user-images.githubusercontent.com/14026724/234128010-5797691a-afb2-4161-aba9-2209371d9a0c.jpg">
 To find out more about our branching strategy please read this article from the original author <a href="https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow">
