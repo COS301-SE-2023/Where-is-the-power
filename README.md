@@ -123,7 +123,11 @@ To find out more about our branching strategy please read this article from the 
         </td>
         <td align="center"> <hr>
             <p>
-                Descr 
+                As a Computer Scientist, my fascination lies in the ability of machines to solve complex problems with efficiency mankind has never seen before.
+                As such, I have spent a lot of time studying Artificial Intelligence and Machine Learning. I'd like to continue studying to get a Masters in Computer Science.
+                I plan on pursuing a career in Artificial Intelligence Safety. I think the key to an effective business solution is an effective team.
+                The software is ultimately only as good as the people who created it. As such, I think it is important for a team to be a cohesive unit.
+                This requires effective communication and thoughtful planning to pull off, so this is what I endeavor to provide to any team I am a part of.
             </p>
             <hr>
             <a href="https://www.linkedin.com/in/jaco-malan-b9389915b/">
