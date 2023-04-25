@@ -29,7 +29,7 @@ To find out more about our branching strategy please read this article from the 
 
 <table>
     <tr>
-        <th>Member</th>
+        <th style="width: 150px">Member</th>
         <th>Description</th>
     </tr>
     <tr>
@@ -37,11 +37,11 @@ To find out more about our branching strategy please read this article from the 
             <h3>Amber-Leigh Lezar<h3>
             <img align="left" height="150px" src="https://user-images.githubusercontent.com/14026724/234123948-3be6ae8b-8532-4b0f-8069-7f12e6c33f3d.png" /> 
         </td>
-        <td align="center">
+        <td align="center"> <hr>
             <p>
                 Descr 
             </p>
-            <br>
+            <hr>
             <a href="https://www.linkedin.com/in/amber-leigh-lezar-818317249/">
                 <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white">
             </a>
@@ -55,11 +55,11 @@ To find out more about our branching strategy please read this article from the 
             <h3>Tumi Pare<h3>
             <img align="left" height="150px" src="https://user-images.githubusercontent.com/14026724/234124064-c073993e-782b-42f4-a523-3da0ac478571.png" /> 
         </td>
-        <td align="center">
+        <td align="center"> <hr>
             <p>
                 Descr 
             </p>
-            <br>
+            <hr>
             <a href="https://www.linkedin.com/in/tumi-pare-8406a2162/">
                 <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white">
             </a>
@@ -73,11 +73,11 @@ To find out more about our branching strategy please read this article from the 
             <h3>Andreas Visagie<h3>
             <img align="left" height="150px" src="https://user-images.githubusercontent.com/14026724/234117089-5a9d5158-5f3e-4cae-828e-342897c8163a.png" /> 
         </td>
-        <td align="center">
+        <td align="center"> <hr>
             <p>
                 Hey there ! My passion lies in the structure of languages, not only programming languages but natural langauges too. I am a full time Computer Science student with a little bit of industry experience. I am a friendly giant who wants the best for everyone. A little weird fact about me is that I started my computing career on puppy linux at age 4. I personally believe that disciplined smart work is the key to success. Communication is the make or break of a team.
             </p>
-            <br>
+            <hr>
             <a href="https://www.linkedin.com/in/andreas-visagie-b838bb205/">
                 <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white">
             </a>
@@ -91,11 +91,11 @@ To find out more about our branching strategy please read this article from the 
             <h3>Gustav Radloff<h3>
             <img align="left" height="150px" src="https://user-images.githubusercontent.com/14026724/234124284-fae0aba7-c611-4d58-9c4c-cdccdf760d13.png" /> 
         </td>
-        <td align="center">
+        <td align="center"> <hr>
             <p>
                 Descr 
             </p>
-            <br>
+            <hr>
             <a href="https://www.linkedin.com/in/gustav-radloff-5aa99b272/">
                 <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white">
             </a>
@@ -109,11 +109,11 @@ To find out more about our branching strategy please read this article from the 
             <h3>Jaco Malan<h3>
             <img align="left" height="150px" src="https://user-images.githubusercontent.com/14026724/234124293-2f4cc3fb-4e04-4a5c-9d6e-4ccd292d01e1.png" /> 
         </td>
-        <td align="center">
+        <td align="center"> <hr>
             <p>
                 Descr 
             </p>
-            <br>
+            <hr>
             <a href="https://www.linkedin.com/in/jaco-malan-b9389915b/">
                 <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white">
             </a>
@@ -123,5 +123,3 @@ To find out more about our branching strategy please read this article from the 
         </td>
     </tr>
 </table>
-
-# 📚 Tech Stack 📚
