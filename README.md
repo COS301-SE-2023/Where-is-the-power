@@ -139,3 +139,9 @@ To find out more about our branching strategy please read this article from the 
         </td>
     </tr>
 </table>
+
+# Team Contact ✉️
+- ## bytemycode.software@gmail.com 
+<a href="mailto:bytemycode.software@gmail.com">
+    <img alt="s" src="https://img.shields.io/badge/-Byte%20my%20Code%20%E2%9C%89%EF%B8%8F-blue">
+</a>
