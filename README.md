@@ -51,7 +51,7 @@ To find out more about our branching strategy please read this article from the 
         </td>
         <td align="center"> <hr>
             <p>
-                Descr 
+                A caring and sweet person, I like to ensure that everyone I work with does their tasks nicely :) I love design and am a huge enthusiast for front-end development. I personally believe in good designs, this is because I want my clients to have a good time when interacting with technology. I am an avid gamer 🎮. I like to play chill games in my spare time. I pay very close attention to detail, I never take a challenge blindly as I always prepare for any major hits.
             </p>
             <hr>
             <a href="https://www.linkedin.com/in/amber-leigh-lezar-818317249/">
