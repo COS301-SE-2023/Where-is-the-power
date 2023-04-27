@@ -27,6 +27,7 @@ to help assist users navigate their routes through these dark times.
 <a href="https://github.com/orgs/COS301-SE-2023/projects/7">
     <img alt="x" src="https://img.shields.io/badge/-Project%20Board-blue">
 </a>
+
 ## 📑 Organisation 📑
 - Directory
 ## 🌴 Branching Strategy 🌴
