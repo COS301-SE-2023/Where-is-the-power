@@ -69,7 +69,7 @@ To find out more about our branching strategy please read this article from the 
         </td>
         <td align="center"> <hr>
             <p>
-                Descr 
+                                Hi!&#128523 I am passionate about pursuing a career in game development, as I believe that games can be a powerful tool for teaching important values and making a positive impact on the world. I am drawn to the storytelling aspect of games, and I believe that we can use games as a powerful tool to teach children important values in a fun and engaging way. Above all, I am passionate about making a positive impact on the world. I enjoy working with children and hope to make a difference in their lives through my work in game development and other endeavors.
             </p>
             <hr>
             <a href="https://www.linkedin.com/in/tumi-pare-8406a2162/">
