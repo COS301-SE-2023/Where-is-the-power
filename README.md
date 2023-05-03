@@ -108,7 +108,7 @@ To find out more about our branching strategy please read this article from the 
         </td>
         <td align="center"> <hr>
             <p>
-                Descr 
+                Hey there. I love making things do what they are not supposed to do and understanding the fundamental inner workings of how a system functions and using that knowledge to do all sorts of fun things. I plan on doing at least an honors. After that, I plan on pursuing a career in either Software Development/Engineering as I do enjoy the development process and the challenges that it brings, but I'm more drawn towards pursuing a career in Security as I have always been drawn to it. Understanding and being conscious of how to break something and how it can be broken leads to better, safer, and more reliable code, which with today's data breaches and the personal information of so many being exposed is more important than ever. It also leads to being better at fixing issues and utilizing technologies and tools to their fullest capacity. From starting on a Pentium dual core ThinkPad from 2000 running Windows XP programming in Visual Basic, to now on Arch Linux learning more than I ever thought I would, I'm excited about the endless possibilities that tomorrow brings.
             </p>
             <hr>
             <a href="https://www.linkedin.com/in/gustav-radloff-5aa99b272/">
