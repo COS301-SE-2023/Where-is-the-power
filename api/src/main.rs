@@ -1,6 +1,9 @@
 use log::LevelFilter;
-use rocket::{get, routes};
+use rocket::{get, routes, Build, Rocket};
 use std::time::SystemTime;
+
+#[cfg(test)]
+mod tests;
 
 #[get("/world")]
 async fn hi() -> &'static str {
@@ -29,16 +32,16 @@ fn setup_logger() -> Result<(), fern::InitError> {
     Ok(())
 }
 
+fn build_rocket() -> Rocket<Build> {
+    let figment = rocket::Config::figment();
+    rocket::custom(figment).mount("/hello", routes![hi])
+}
+
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
     setup_logger().expect("Couldn't setup logger!");
 
-    let figment = rocket::Config::figment();
-
-    let _ = rocket::custom(figment)
-        .mount("/hello", routes![hi])
-        .launch()
-        .await?;
+    build_rocket().launch().await?;
 
     Ok(())
 }
