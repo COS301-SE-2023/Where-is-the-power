@@ -1,7 +1,13 @@
-# Where is the power ?
-## Byte my Code
+<div align="center">
+    <h1>Where is the power 💡</h1>
+    <img alt="logo" height="200px" src="https://user-images.githubusercontent.com/14026724/236333707-7c8ed21b-b0e0-4166-ab95-e9a08a842a87.jpg">
+</div>
 
-- Todo: Create a Banner
+<br>
+
+<div align="center" style="background-color: red;">
+    <h2>Byte my Code</h2>
+</div>
 
 # Project Description 🔑
 Where is the power is a web app accessible on mobile and desktop that gives
@@ -24,12 +30,16 @@ to help assist users navigate their routes through these dark times.
 </a>
 
 ## 📌 Project Board 📌
-<a href="https://github.com/orgs/COS301-SE-2023/projects/7">
+- <a href="https://github.com/orgs/COS301-SE-2023/projects/7">
     <img alt="x" src="https://img.shields.io/badge/-Project%20Board-blue">
 </a>
 
 ## 📑 Organisation 📑
-- Directory
+- ### Directory Structure
+```
+📂API
+📂APP
+```
 ## 🌴 Branching Strategy 🌴
 - ### GitFlow
 
