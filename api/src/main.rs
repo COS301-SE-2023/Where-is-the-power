@@ -1,9 +1,30 @@
-use log::LevelFilter;
-use rocket::{get, routes, Build, Rocket};
-use std::time::SystemTime;
-
+mod api;
+mod auth;
 #[cfg(test)]
 mod tests;
+
+use api::ApiError;
+use auth::{AuthRequest, AuthResponder, AuthType, JWTAuthToken};
+use log::LevelFilter;
+use rocket::serde::json::Json;
+use rocket::{get, post, routes, Build, Rocket};
+use std::time::SystemTime;
+
+#[post("/auth", format = "application/json", data = "<auth_request>")]
+async fn authenticate(
+    auth_request: Json<AuthRequest>,
+) -> Result<AuthResponder, Json<ApiError<'static>>> {
+    match auth_request.auth_type {
+        AuthType::Anonymous => Ok(AuthResponder {
+            inner: Json(JWTAuthToken::new(auth_request.auth_type).unwrap()),
+            header: rocket::http::Header::new(
+                "Set-Cookie",
+                "cookie=some_cookie;expires=0;path=/;SameSite=Strict".to_string(),
+            ),
+        }),
+        AuthType::User => unimplemented!(),
+    }
+}
 
 #[get("/world")]
 async fn hi() -> &'static str {
@@ -34,7 +55,9 @@ fn setup_logger() -> Result<(), fern::InitError> {
 
 fn build_rocket() -> Rocket<Build> {
     let figment = rocket::Config::figment();
-    rocket::custom(figment).mount("/hello", routes![hi])
+    rocket::custom(figment)
+        .mount("/hello", routes![hi])
+        .mount("/api", routes![authenticate])
 }
 
 #[rocket::main]
