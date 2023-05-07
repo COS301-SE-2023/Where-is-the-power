@@ -2,6 +2,7 @@ mod api;
 mod auth;
 #[cfg(test)]
 mod tests;
+mod user;
 
 use api::ApiError;
 use auth::{AuthRequest, AuthResponder, AuthType, JWTAuthToken};

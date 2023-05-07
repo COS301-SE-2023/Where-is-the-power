@@ -20,6 +20,8 @@ fn test_anonymous_auth() {
     let client = Client::tracked(build_rocket()).expect("valid rocket instance");
     let body = json::to_string(&AuthRequest {
         auth_type: crate::auth::AuthType::Anonymous,
+        email: None,
+        password: None,
     })
     .unwrap();
 

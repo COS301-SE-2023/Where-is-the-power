@@ -1,14 +1,14 @@
+use jsonwebtoken::{Algorithm, EncodingKey, Header};
+use rocket::serde::json::Json;
+use rocket::Responder;
+use serde::{Deserialize, Serialize};
 use std::{
     io::Read,
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use jsonwebtoken::{Algorithm, EncodingKey, Header};
-use rocket::serde::json::Json;
-use rocket::Responder;
-use serde::{Deserialize, Serialize};
-
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AuthClaims {
     pub auth_type: AuthType,
     pub exp: u64,
@@ -21,8 +21,11 @@ pub enum AuthType {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AuthRequest {
     pub auth_type: AuthType,
+    pub email: Option<String>,
+    pub password: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
