@@ -1,3 +1,5 @@
+use crate::db::Entity;
+use macros::Entity;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -8,9 +10,12 @@ pub struct UserLocation {
     pub city: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Entity)]
 #[serde(rename_all = "camelCase")]
+#[collection_name = "users"]
 pub struct User {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<u32>,
     pub first_name: String,
     pub last_name: String,
     pub location: Option<UserLocation>,
