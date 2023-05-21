@@ -9,7 +9,7 @@ describe('LocationPickerComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ LocationPickerComponent ],
+      declarations: [LocationPickerComponent],
       imports: [IonicModule.forRoot()]
     }).compileComponents();
 
