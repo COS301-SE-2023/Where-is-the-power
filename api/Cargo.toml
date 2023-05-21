@@ -10,3 +10,6 @@ fern = "0.6.2"
 humantime = "2.1.0"
 log = "0.4.17"
 rocket = "=0.5.0-rc.3"
+
+[build-dependencies]
+copy_dir = "0.1.2"
