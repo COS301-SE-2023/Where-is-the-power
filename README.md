@@ -14,6 +14,12 @@ Where is the power is a web app accessible on mobile and desktop that gives
 the user a map overlay of areas where loadshedding is currently happening,
 to help assist users navigate their routes through these dark times.
 
+# Demos
+- ## Demo 1
+    - [BytemyCode Demo 1 Video]()
+    - [System Requirements Specifications](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Software-Requirements-Specification-(SRS))   
+
+
 # About the repo ℹ️
 ## 🏛️ Basic Structure 🏛️
 <a href="https://angular.io/">
