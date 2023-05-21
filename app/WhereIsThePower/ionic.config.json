@@ -1,5 +1,7 @@
 {
   "name": "WhereIsThePower",
-  "integrations": {},
+  "integrations": {
+    "capacitor": {}
+  },
   "type": "angular"
 }

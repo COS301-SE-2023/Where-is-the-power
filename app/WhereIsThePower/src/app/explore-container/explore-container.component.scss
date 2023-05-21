@@ -1,9 +1,6 @@
-ion-menu-button {
-  color: var(--ion-color-primary);
-}
-
 #container {
   text-align: center;
+
   position: absolute;
   left: 0;
   right: 0;
@@ -19,7 +16,9 @@ ion-menu-button {
 #container p {
   font-size: 16px;
   line-height: 22px;
+
   color: #8c8c8c;
+
   margin: 0;
 }
 
