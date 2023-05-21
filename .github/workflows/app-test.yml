@@ -15,12 +15,9 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: "18"
-      - run: |
-            pwd
-            ls
-            cd app
-            pwd
-            ls
-            cd WhereIsThePower
-            npm install --frozen-lockfile
-    #   - run: npm install --frozen-lockfile
+      - name: Install Dependencies
+        working-directory: ./app/WhereIsThePower
+        run: npm install --frozen-lock
+      - name: Run Tests
+        working-directory: ./app/WhereIsThePower
+        run: npm run test
