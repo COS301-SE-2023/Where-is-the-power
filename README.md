@@ -9,6 +9,8 @@
     <h2>Byte my Code</h2>
 </div>
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=COS301-SE-2023_Where-is-the-power&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=COS301-SE-2023_Where-is-the-power)
+
 # Project Description 🔑
 Where is the power is a web app accessible on mobile and desktop that gives
 the user a map overlay of areas where loadshedding is currently happening,
