@@ -16,5 +16,6 @@ jobs:
         with:
           node-version: "18"
       - run: cd app/WhereIsThePower
-      - run: npm install --frozen-lockfile
+      - run: pwd 
+    #   - run: npm install --frozen-lockfile
       - run: npm run test
