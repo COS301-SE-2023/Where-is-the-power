@@ -15,5 +15,6 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: "18"
+      - run: cd app/WhereIsThePower
       - run: npm install --frozen-lockfile
       - run: npm run test
