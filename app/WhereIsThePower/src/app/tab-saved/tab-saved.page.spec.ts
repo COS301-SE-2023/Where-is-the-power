@@ -5,7 +5,7 @@ import { ExploreContainerComponentModule } from '../explore-container/explore-co
 
 import { TabSavedPage } from './tab-saved.page';
 
-describe('Tab2Page', () => {
+describe('TabSavedPage', () => {
   let component: TabSavedPage;
   let fixture: ComponentFixture<TabSavedPage>;
 

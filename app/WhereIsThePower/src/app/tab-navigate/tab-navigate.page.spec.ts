@@ -5,7 +5,7 @@ import { ExploreContainerComponentModule } from '../explore-container/explore-co
 
 import { TabNavigatePage } from './tab-navigate.page';
 
-describe('Tab1Page', () => {
+describe('TabNavigatePage', () => {
   let component: TabNavigatePage;
   let fixture: ComponentFixture<TabNavigatePage>;
 
