@@ -16,13 +16,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Setup Testing keys
+      run: cp api/test_pk.pem api/publicKey.pem && cp api/test_sk api/privateKey.pem
     - name: Build
-      env:
-        API_PRIVATE_KEY: ${{ secrets.API_PRIVATE_KEY }}
-        API_PUBLIC_KEY: ${{ secrets.API_PUBLIC_KEY }}
-      run: cd api && echo $API_PRIVATE_KEY > privateKey.pem && echo $API_PUBLIC_KEY > publicKey.pem && cargo build --verbose
+      run: cd api && cargo build --verbose
     - name: Run tests
-      env:
-        API_PRIVATE_KEY: ${{ secrets.API_PRIVATE_KEY }}
-        API_PUBLIC_KEY: ${{ secrets.API_PUBLIC_KEY }}
-      run: cd api && echo $API_PRIVATE_KEY > privateKey.pem && echo $API_PUBLIC_KEY > publicKey.pem && cargo test --verbose
+      run: cd api && cargo test --verbose
