@@ -15,9 +15,9 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: "18"
-#       - name: Install Dependencies
-#         working-directory: ./app/WhereIsThePower
-#         run: npm install --frozen-lock
+      - name: Install Dependencies
+        working-directory: ./app/WhereIsThePower
+        run: npm install --frozen-lock
       - name: Update env
         uses: cschleiden/replace-tokens@v1.2
         with:
@@ -27,6 +27,6 @@ jobs:
         env:
           GOOGLE_MAPS_API_KEY: ${{ secrets.TEST_SECRET }}
         
-#       - name: Run Tests
-#         working-directory: ./app/WhereIsThePower
-#         run: npm run test
+      - name: Run Tests
+        working-directory: ./app/WhereIsThePower
+        run: npm run test
