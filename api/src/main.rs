@@ -1,6 +1,8 @@
 use log::LevelFilter;
 use rocket::{get, routes, Build, Rocket};
 use std::time::SystemTime;
+mod scraper;
+mod scrapers;
 
 #[cfg(test)]
 mod tests;
@@ -40,7 +42,6 @@ fn build_rocket() -> Rocket<Build> {
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
     setup_logger().expect("Couldn't setup logger!");
-
     build_rocket().launch().await?;
 
     Ok(())
