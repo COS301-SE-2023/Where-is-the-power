@@ -28,6 +28,5 @@ fn main() {
     copy_dir::copy_dir("../app/WhereIsThePower/www", "./www")
         .expect("Couldn't copy www directory!");
 
-    // Rerun this script if the front-end project changes
-    println!("cargo:rerun-if-changed=../app/WhereIsThePower/")
+    println!("cargo:rerun-if-changed=build.rs");
 }
