@@ -8,7 +8,7 @@ mod user;
 use api::ApiError;
 use auth::{AuthRequest, AuthResponder, AuthType, JWTAuthToken};
 use db::Entity;
-use log::LevelFilter;
+use log::{warn, LevelFilter};
 use mongodb::options::ClientOptions;
 use mongodb::Client;
 use rocket::serde::json::Json;
@@ -35,11 +35,19 @@ async fn authenticate(
 
 #[post("/user", format = "application/json", data = "<new_user>")]
 async fn create_user(
-    state: &State<Client>,
+    state: &State<Option<Client>>,
     new_user: Json<User>,
 ) -> Result<&'static str, Json<ApiError<'static>>> {
+    if state.is_none() {
+        return Err(Json(ApiError::ServerError(
+            "Database is unavailable. Please try again later!",
+        )));
+    }
+
+    let state = state.inner().as_ref().unwrap();
+
     new_user
-        .insert(&state.inner().database("wip"))
+        .insert(&state.database("wip"))
         .await
         .expect("Couldn't inser new user!");
 
@@ -74,19 +82,37 @@ fn setup_logger() -> Result<(), fern::InitError> {
 }
 
 async fn build_rocket() -> Rocket<Build> {
-    dotenvy::dotenv().expect("Couldn't load .env file");
-    let db_uri = env::var("DATABASE_URI").expect("DATABASE_URI must be set in .env file");
-    let client_options = ClientOptions::parse(&db_uri)
-        .await
-        .expect("Couldn't setup database client configuration");
-
-    let db_client = Client::with_options(client_options).expect("Couldn't connect to database");
-
     let figment = rocket::Config::figment();
-    rocket::custom(figment)
-        .mount("/hello", routes![hi])
-        .mount("/api", routes![authenticate, create_user])
-        .manage(db_client)
+
+    if let Err(err) = dotenvy::dotenv() {
+        warn!("Couldn't read .env file! {err:?}");
+    }
+
+    let db_uri = env::var("DATABASE_URI").unwrap_or(String::from(""));
+
+    let rocket_no_state = || {
+        rocket::custom(figment.clone())
+            .mount("/hello", routes![hi])
+            .mount("/api", routes!(authenticate, create_user))
+            .manage::<Option<Client>>(None)
+    };
+
+    match ClientOptions::parse(&db_uri).await {
+        Ok(client_options) => match Client::with_options(client_options) {
+            Ok(client) => rocket::custom(figment.clone())
+                .mount("/hello", routes![hi])
+                .mount("/api", routes![authenticate, create_user])
+                .manage(Some(client)),
+            Err(err) => {
+                warn!("Couldn't create database client! {err:?}");
+                rocket_no_state()
+            }
+        },
+        Err(err) => {
+            warn!("Couldn't create database config! {err:?}");
+            rocket_no_state()
+        }
+    }
 }
 
 #[rocket::main]
