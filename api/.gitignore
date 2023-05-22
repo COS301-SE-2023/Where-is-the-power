@@ -1,0 +1,5 @@
+*.pem
+!test_pk.pem
+!test_sk.pem
+.env
+macros/target

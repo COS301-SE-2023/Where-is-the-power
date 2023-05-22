@@ -4,17 +4,17 @@ import { FormsModule } from '@angular/forms';
 
 import { IonicModule } from '@ionic/angular';
 
-import { FolderPageRoutingModule } from './folder-routing.module';
+import { TabStatisticsPageRoutingModule } from './tab-statistics-routing.module';
 
-import { FolderPage } from './folder.page';
+import { TabStatisticsPage } from './tab-statistics.page';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    FolderPageRoutingModule
+    TabStatisticsPageRoutingModule
   ],
-  declarations: [FolderPage]
+  declarations: [TabStatisticsPage]
 })
-export class FolderPageModule {}
+export class TabStatisticsPageModule { }

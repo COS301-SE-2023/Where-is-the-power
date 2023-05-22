@@ -8,6 +8,17 @@ edition = "2021"
 [dependencies]
 fern = "0.6.2"
 humantime = "2.1.0"
+jsonwebtoken = "8.3.0"
 log = "0.4.17"
-rocket = "=0.5.0-rc.3"
+mongodb = "2.5.0"
+rocket = { version = "=0.5.0-rc.3", features = ["json", "default", "tls"] }
+serde = { version = "1.0.162", features = ["derive"] }
+macros = { path = "macros" }
+async-trait = "0.1.68"
+bson = "2.6.1"
+dotenvy = "0.15.7"
+tokio = "1.28.0"
 scraper = "0.16.0"
+
+[build-dependencies]
+copy_dir = "0.1.2"

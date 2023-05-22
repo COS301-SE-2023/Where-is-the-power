@@ -1,3 +1,4 @@
 export const environment = {
-  production: true
+  production: true,
+  googleMapsApiKey: '{GOOGLE_MAPS_API_KEY}'
 };
