@@ -20,7 +20,7 @@ jobs:
         run: npm install --frozen-lock
       - name: Update env
         working-directory: ./app/WhereIsThePower/src/environments
-        run: ${{TEST_SECRET}} >> environment.ts
+        run: ${{secrets.TEST_SECRET}} >> environment.ts
       - name: Run Tests
         working-directory: ./app/WhereIsThePower
         run: npm run test
