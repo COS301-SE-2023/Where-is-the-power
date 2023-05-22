@@ -25,7 +25,7 @@ jobs:
           echo export const environment = { >> environment.ts
           echo production: false, >> environment.ts
           echo googleMapsApiKey: >> environment.ts
-          ${{secrets.TEST_SECRET}} >> environment.ts
+          '${{secrets.TEST_SECRET}}' >> environment.ts
           echo }; >> environment.ts
       - name: Run Tests
         working-directory: ./app/WhereIsThePower
