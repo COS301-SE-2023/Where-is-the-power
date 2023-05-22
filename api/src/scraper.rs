@@ -1,18 +1,16 @@
-trait Scraper {
-  fn run(&self);
-  fn connect(&mut self);
-  fn parseData(&self);
-  fn default() -> Self;
-}
-
+use crate::scrapers::scraper::Scraper;
 struct LoadSheddingPeriod {
-  start:int,
-  end:int
+  start:i32,
+  end:i32
 }
 
 struct Group {
-  suburbs: std::vec<String>,
-  group: int,
-  stage: int,
-  times: std::vec<Box<LoadSheddingPeriod>>,
+  suburbs: Vec<String>,
+  group: i32,
+  stage: i32,
+  times: Vec<Box<LoadSheddingPeriod>>,
+}
+
+struct StartScrapers {
+  scrapers: Vec<Box<dyn Scraper>>
 }
