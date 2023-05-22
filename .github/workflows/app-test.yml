@@ -15,9 +15,9 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: "18"
-      - name: Install Dependencies
-        working-directory: ./app/WhereIsThePower
-        run: npm install --frozen-lock
+#       - name: Install Dependencies
+#         working-directory: ./app/WhereIsThePower
+#         run: npm install --frozen-lock
       - name: Update env
         working-directory: ./app/WhereIsThePower/src/environments
         run: |
@@ -27,6 +27,8 @@ jobs:
           echo googleMapsApiKey: >> environment.ts
           '${{secrets.TEST_SECRET}}' >> environment.ts
           echo }; >> environment.ts
+          
+          cat environment.ts
       - name: Run Tests
         working-directory: ./app/WhereIsThePower
         run: npm run test
