@@ -17,7 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Setup Testing keys
-      run: cp api/test_pk.pem api/publicKey.pem && cp api/test_sk api/privateKey.pem
+      run: cp api/test_pk.pem api/publicKey.pem && cp api/test_sk.pem api/privateKey.pem
     - name: Build
       run: cd api && cargo build --verbose
     - name: Run tests
