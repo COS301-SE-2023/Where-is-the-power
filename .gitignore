@@ -69,3 +69,4 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+app/WhereIsThePower/src/environments/environment.ts
