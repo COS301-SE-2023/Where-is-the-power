@@ -10,6 +10,8 @@ import { ModalController } from '@ionic/angular';
 import { MapModalModule } from './map-modal.module';
 import { environment } from 'src/environments/environment';
 
+declare const google: any;
+
 @Component({
   selector: 'app-map-modal',
   templateUrl: './map-modal.component.html',
@@ -22,6 +24,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     private modalCtrl: ModalController,
     private renderer: Renderer2
   ) { }
+  map: any;
 
   ngOnInit() { }
 
@@ -37,6 +40,24 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         googleMaps.event.addListenerOnce(map, 'idle', () => {
           this.renderer.addClass(mapEl, 'visible');
         });
+        
+        // Define the LatLng coordinates for the polygon's path.
+        const triangleCoords = [
+          { lat: -25.925, lng: 28.2712 },
+          { lat: -25.9227, lng: 28.2384 },
+          { lat: -25.9034, lng: 28.185 }, 
+        ];
+        
+        // Construct the polygon.
+        const Triangle = new google.maps.Polygon({
+          paths: triangleCoords,
+          strokeColor: "#FF0000",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#FF0000",
+          fillOpacity: 0.35,
+        });
+        Triangle.setMap(map);
 
         // tap for locations
         map.addListener('click', (event: { latLng: { lat: () => any; lng: () => any; }; }) => {
@@ -50,6 +71,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       .catch(err => {
         console.log(err);
       });
+
   }
 
   onCancel() {
