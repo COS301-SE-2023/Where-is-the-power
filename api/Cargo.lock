@@ -20,6 +20,7 @@ version = "0.1.0"
 dependencies = [
  "fern",
  "humantime",
+ "lazy_static",
  "log",
  "reqwest",
  "rocket",
