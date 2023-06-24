@@ -186,8 +186,8 @@
   },
   "cli": {
     "schematicCollections": [
-      "@cypress/schematic",
       "@ionic/angular-toolkit",
+      "@cypress/schematic",
       "@schematics/angular"
     ]
   },
