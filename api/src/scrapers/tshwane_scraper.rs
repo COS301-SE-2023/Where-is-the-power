@@ -1,3 +1,7 @@
+/*
+This is now legacy code which we will repurpouse in future if we decide to use AI
+for power outage and out of date data detection
+ */
 use crate::{scraper::Group, scrapers::scraper::Scraper};
 use log;
 use reqwest;
