@@ -52,7 +52,28 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       'top-left'
     );
 
+    this.map.on('load', () => {
+      // Add a data source containing GeoJSON data.
+      this.map.addSource('polygons', {
+        'type': 'geojson',
+        'data': 'assets/suburbs.json'
 
+      });
+      // console.log('./suburbs.geojson');
+      // Add a new layer to visualize the polygon.
+      this.map.addLayer({
+        'id': 'polygons-layer',
+        'type': 'fill',
+        'source': 'polygons', // reference the data source
+        'layout': {},
+        'paint': {
+          'fill-color': '#0080ff', // blue color fill
+          'fill-opacity': 0.5
+        }
+      });
+      // Add a black outline around the polygon.
+
+    });
 
   }
 }
