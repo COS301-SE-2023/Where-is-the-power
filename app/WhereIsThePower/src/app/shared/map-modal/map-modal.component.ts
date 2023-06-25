@@ -72,7 +72,16 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         }
       });
       // Add a black outline around the polygon.
-
+      this.map.addLayer({
+        'id': 'outline',
+        'type': 'line',
+        'source': 'polygons',
+        'layout': {},
+        'paint': {
+          'line-color': '#000',
+          'line-width': 0.5
+        }
+      });
     });
 
   }
