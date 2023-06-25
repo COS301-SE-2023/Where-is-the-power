@@ -30,6 +30,7 @@
     "@capacitor/keyboard": "5.0.2",
     "@capacitor/status-bar": "5.0.2",
     "@ionic/angular": "^7.0.7",
+    "@mapbox/mapbox-gl-geocoder": "^5.0.1",
     "ionicons": "^7.0.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
@@ -53,6 +54,7 @@
     "@types/node": "^12.11.1",
     "@typescript-eslint/eslint-plugin": "5.3.0",
     "@typescript-eslint/parser": "5.3.0",
+    "cypress": "latest",
     "eslint": "^7.26.0",
     "eslint-plugin-import": "2.22.1",
     "eslint-plugin-jsdoc": "30.7.6",
@@ -65,9 +67,9 @@
     "karma-coverage-istanbul-reporter": "~3.0.2",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.0.0",
+    "node-sass": "^8.0.0",
     "ts-node": "^8.3.0",
-    "typescript": "~5.0.2",
-    "cypress": "latest"
+    "typescript": "~5.0.2"
   },
   "description": "An Ionic project"
 }
