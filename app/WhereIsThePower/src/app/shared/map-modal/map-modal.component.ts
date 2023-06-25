@@ -67,8 +67,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         'source': 'polygons', // reference the data source
         'layout': {},
         'paint': {
-          'fill-color': '#0080ff', // blue color fill
-          'fill-opacity': 0.5
+          'fill-color': '#12960e', // blue color fill
+          'fill-opacity': 0.4
         }
       });
       // Add a black outline around the polygon.
