@@ -21,6 +21,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
+    // Render the Map
     (mapboxgl as any).accessToken = environment.MapboxApiKey;
     this.map = new mapboxgl.Map({
       container: 'map', // container ID
@@ -32,6 +33,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     this.map.on('load', () => {
       this.map.resize(); // Trigger map resize after the initial rendering
     });
+
     /*
     const geocoder = new MapboxGeocoder({
       // Initialize the geocoder
@@ -40,20 +42,38 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       marker: false, // Do not use the default marker style
       placeholder: 'Search for places', // Placeholder text for the search bar
 
-    });*/
+    });
+    Add the geocoder to the map
+    this.map.addControl(geocoder);
+    */
 
-    // Add the geocoder to the map
-    // this.map.addControl(geocoder);
+    // Add the Navigation Control
     let exclusionArea: string = 'point(28.278153 -25.781812),point(28.277781 -25.78166),point(28.276252 -25.781039),point(28.274805 -25.780169),point(28.271878 -25.778368),point(28.271868 -25.778362),point(28.271357 -25.780567),point(28.272005 -25.780674),point(28.272028 -25.780909),point(28.272131 -25.781988)';
     this.navigate(exclusionArea);
 
+    // Populate Map(suburbs) with Polygons
+    this.populatePolygons();
+
+  }
+
+  navigate(exclusionArea: string) {
+    this.map.addControl(
+      new MapboxDirections({
+        accessToken: mapboxgl.accessToken,
+        unit: 'metric',
+        exclude: ['motorway', exclusionArea]
+      }),
+      'top-left'
+    );
+  }
+
+  populatePolygons() {
     this.map.on('load', () => {
 
       // Add a data source containing GeoJSON data.
       this.map.addSource('polygons', {
         'type': 'geojson',
         'data': 'assets/suburbs.json'
-
       });
       // console.log('./suburbs.geojson');
       // Add a new layer to visualize the polygon.
@@ -116,17 +136,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         }
       });
     });
-  }
-
-  navigate(exclusionArea: string) {
-    this.map.addControl(
-      new MapboxDirections({
-        accessToken: mapboxgl.accessToken,
-        unit: 'metric',
-        exclude: ['motorway', exclusionArea]
-      }),
-      'top-left'
-    );
   }
 }
 
