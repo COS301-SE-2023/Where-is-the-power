@@ -8,28 +8,56 @@ Chart.register(...registerables)
   styleUrls: ['./tab-statistics.page.scss'],
 })
 export class TabStatisticsPage implements OnInit {
-  @ViewChild('barChartRef') barChartRef!: ElementRef;
-  //@ViewChild('doughnutChart') doughnutChartRef!: ElementRef;
+  @ViewChild('barChart') barChartRef!: ElementRef;
+  @ViewChild('doughnutChart') doughnutChartRef!: ElementRef;
 
-  chart: any;
+  doughnutChart: any = null;
+  barChart: any = null;
   constructor() { }
-  ngOnInit() { }
+  ngOnInit() {
+    // Data for Doughnut Chart (Uptime/Downtime for Today)
+    const doughnutData = {
+      labels: ['Uptime', 'Downtime'],
+      datasets: [{
+        label: 'Loadshedding',
+        data: [20, 4], // Uptime vs Downtime
+        borderWidth: 0,
+        backgroundColor: [
+          '#007A4D',
+          '#DE3831',
+        ],
+      }]
+    };
+    this.populateDoughnutChart(doughnutData);
 
-  ionViewDidEnter() {
-    this.chart = new Chart("doughnutChart", {
+
+    // Data for Bar Chart (Uptime/Downtime for the week)
+    const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const barData = {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Uptime',
+          data: [20, 16, 20, 20, 12, 20, 24], // Uptime(No. of hours without Loadshedding)
+          borderColor: '#007A4D',
+          backgroundColor: '#007A4D',
+        },
+        {
+          label: 'Downtime',
+          data: [-4, -8, -4, -4, -12, -4, 0], // Downtime(Loadshedding hours)
+          borderColor: '#DE3831',
+          backgroundColor: '#DE3831',
+        }
+      ]
+    };
+
+    this.populateBarChart(barData);
+  }
+
+  populateDoughnutChart(doughnutData: any) {
+    this.doughnutChart = new Chart("doughnutChart", {
       type: 'doughnut',
-      data: {
-        labels: ['Uptime', 'Downtime'],
-        datasets: [{
-          label: 'Loadshedding',
-          data: [20, 4],
-          borderWidth: 0,
-          backgroundColor: [
-            '#007A4D',
-            '#DE3831',
-          ],
-        }]
-      },
+      data: doughnutData,
       options: {
         responsive: true,
         plugins: {
@@ -39,29 +67,12 @@ export class TabStatisticsPage implements OnInit {
         }
       }
     });
+  }
 
-    const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    const data = {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Uptime',
-          data: [20, 16, 20, 20, 12, 20, 24],
-          borderColor: '#007A4D',
-          backgroundColor: '#007A4D',
-        },
-        {
-          label: 'Downtime',
-          data: [-4, -8, -4, -4, -12, -4, 0],
-          borderColor: '#DE3831',
-          backgroundColor: '#DE3831',
-        }
-      ]
-    };
-
-    new Chart(this.barChartRef.nativeElement, {
+  populateBarChart(barData: any) {
+    this.barChart = new Chart("barChart", {
       type: 'bar',
-      data: data,
+      data: barData,
       options: {
         responsive: true,
         plugins: {
@@ -92,4 +103,19 @@ export class TabStatisticsPage implements OnInit {
       },
     });
   }
+
+  clearDoughnutChart() {
+    this.doughnutChart = null;
+  }
+
+  clearBarChart() {
+    this.barChart = null;
+  }
+
+  clearAllCharts() {
+    this.clearBarChart();
+    this.clearDoughnutChart();
+  }
+
 }
+
