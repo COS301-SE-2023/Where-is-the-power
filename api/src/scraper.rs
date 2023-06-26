@@ -2,33 +2,35 @@ use rocket::Responder;
 use serde::{Deserialize, Serialize};
 use crate::scrapers::scraper::Scraper;
 
+#[derive(Responder)]
+pub struct UploadResponse(String);
+
 // Upload Request
 #[derive(Serialize, Deserialize,Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct UploadRequest {
-    pub groups: Vec<GroupData>,
-    pub times: Vec<TimeRange>,
+    pub groups: Vec<GroupJSONData>,
+    pub times: Vec<TimeRangeJSON>,
+    pub municipality: String
 }
 
-#[derive(Responder)]
-pub struct UploadResponse(String);
 
 #[derive(Serialize, Deserialize,Debug)]
-pub struct GroupData {
+pub struct GroupJSONData {
     pub group: i32,
     pub suburbs: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize,Debug)]
-pub struct TimeRange {
-    timePeriod: String,
-    stageData: Vec<StageData>,
+pub struct TimeRangeJSON {
+    time_period: String,
+    stage_data: Vec<StageJSONData>,
 }
 
 #[derive(Serialize, Deserialize,Debug)]
-pub struct StageData {
+pub struct StageJSONData {
     stage: String,
-    groupsOnDay: Vec<i32>,
+    groups_on_day: Vec<i32>,
 }
 
 // this is for the clone of a group,

@@ -106,6 +106,7 @@ if (__name__ == "__main__"):
   scrapeHTML()
   scrapeXLSX()
   toSend = {
+    "municipality":"tshwane",
     "groups":groups,
     "times":loadSheddingTimes
   }

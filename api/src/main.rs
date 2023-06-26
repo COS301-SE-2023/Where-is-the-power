@@ -6,9 +6,9 @@ mod tests;
 mod user;
 mod scraper;
 mod scrapers;
+mod loadshedding; 
 
 use crate::scraper::UploadRequest;
-use crate::scraper::UploadResponse;
 use api::ApiError;
 use auth::{AuthRequest, AuthResponder, AuthType, JWTAuthToken};
 use db::Entity;
@@ -22,13 +22,13 @@ use std::net::IpAddr;
 use std::time::SystemTime;
 use user::User;
 
-#[post("/uploadData", format = "application/json", data = "<uploadData>")]
-fn uploadData(
-    uploadData: Json<UploadRequest>,
+#[post("/uploadData", format = "application/json", data = "<upload_data>")]
+fn upload_data(
+    upload_data: Json<UploadRequest>,
     ip: IpAddr
 ) -> Result<&'static str, Json<ApiError<'static>>> {
     // Access the JSON data
-    let data = uploadData.into_inner();
+    let data = upload_data.into_inner();
     println!("Received data: {:?}", data);
     // Process the data and return an appropriate response
     // ...
@@ -112,6 +112,7 @@ async fn build_rocket() -> Rocket<Build> {
         rocket::custom(figment.clone())
             .mount("/hello", routes![hi])
             .mount("/api", routes!(authenticate, create_user))
+            .mount("/upload", routes![upload_data])
             .manage::<Option<Client>>(None)
     };
 
@@ -120,6 +121,7 @@ async fn build_rocket() -> Rocket<Build> {
             Ok(client) => rocket::custom(figment.clone())
                 .mount("/hello", routes![hi])
                 .mount("/api", routes![authenticate, create_user])
+                .mount("/upload", routes![upload_data])
                 .manage(Some(client)),
             Err(err) => {
                 warn!("Couldn't create database client! {err:?}");
