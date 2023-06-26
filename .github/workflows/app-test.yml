@@ -25,7 +25,7 @@ jobs:
           tokenSuffix: '}'
           files: ./app/WhereIsThePower/src/environments/environment.ts
         env:
-          GOOGLE_MAPS_API_KEY: ${{ secrets.TEST_SECRET }}
+          MapboxApiKey: ${{ secrets.TEST_SECRET }}
         
       - name: Run Tests
         working-directory: ./app/WhereIsThePower
