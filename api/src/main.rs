@@ -1,6 +1,3 @@
-use log::LevelFilter;
-use rocket::{get, routes, Build, Rocket};
-use std::time::SystemTime;
 mod scraper;
 mod scrapers;
 
