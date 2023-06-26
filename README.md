@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/COS301-SE-2023/Where-is-the-power/branch/main/graph/badge.svg?token=V7DD9L1UAC)](https://codecov.io/gh/COS301-SE-2023/Where-is-the-power)
+
 <div align="center">
     <h1>Where is the power 💡</h1>
     <img alt="logo" height="200px" src="https://user-images.githubusercontent.com/14026724/236333707-7c8ed21b-b0e0-4166-ab95-e9a08a842a87.jpg">
