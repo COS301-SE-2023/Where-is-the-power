@@ -14,6 +14,7 @@ export class TabStatisticsPage implements OnInit {
   chart: any;
   constructor() { }
   ngOnInit() {
+    // Data for Doughnut Chart (Uptime/Downtime for Today)
     const doughnutData = {
       labels: ['Uptime', 'Downtime'],
       datasets: [{
@@ -29,6 +30,7 @@ export class TabStatisticsPage implements OnInit {
     this.populateDoughnutChart(doughnutData);
 
 
+    // Data for Bar Chart (Uptime/Downtime for the week)
     const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const barData = {
       labels: labels,
