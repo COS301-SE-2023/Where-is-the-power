@@ -93,6 +93,12 @@ pub fn insertable(input: TokenStream) -> TokenStream {
         }
     };
 
+    let find = quote! {
+        async fn query(filter: bson::document::Document, db: &mongodb::Database) -> std::result::Result<mongodb::Cursor<Output>, mongodb::error::Error> {
+            db.collection::<#ident>(#collection_name).find().await
+        }
+    };
+
     quote! {
         #[async_trait::async_trait]
         impl Entity for #ident {
@@ -100,6 +106,7 @@ pub fn insertable(input: TokenStream) -> TokenStream {
 
             #insert
             #delete
+            #find
         }
     }
     .into()

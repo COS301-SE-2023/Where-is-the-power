@@ -65,6 +65,9 @@ async fn test_anonymous_auth() {
     assert_eq!(claims.auth_type, AuthType::Anonymous);
 }
 
+#[rocket::async_test]
+async fn test_find_user() {}
+
 // #[rocket::async_test]
 // async fn test_create_user() {
 //     let rocket = build_rocket().await;

@@ -49,14 +49,14 @@ async fn create_user(
     new_user
         .insert(&state.database("wip"))
         .await
-        .expect("Couldn't inser new user!");
+        .expect("Couldn't insert new user!");
 
     Ok("User created")
 }
 
 #[get("/mock")]
 async fn mock_data() -> Result<(), Json<ApiError<'static>>> {
-    Ok(())
+    todo!("Implement")
 }
 
 #[get("/world")]
@@ -106,7 +106,7 @@ async fn build_rocket() -> Rocket<Build> {
         Ok(client_options) => match Client::with_options(client_options) {
             Ok(client) => rocket::custom(figment.clone())
                 .mount("/hello", routes![hi])
-                .mount("/api", routes![authenticate, create_user])
+                .mount("/api", routes![authenticate, create_user, mock_data])
                 .manage(Some(client)),
             Err(err) => {
                 warn!("Couldn't create database client! {err:?}");
