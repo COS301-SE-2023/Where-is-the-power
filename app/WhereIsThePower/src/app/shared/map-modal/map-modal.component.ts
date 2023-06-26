@@ -48,7 +48,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     */
 
     // Add the Navigation Control
-    let exclusionArea: string = 'point(28.278153 -25.781812),point(28.277781 -25.78166),point(28.276252 -25.781039),point(28.274805 -25.780169),point(28.271878 -25.778368),point(28.271868 -25.778362),point(28.271357 -25.780567),point(28.272005 -25.780674),point(28.272028 -25.780909),point(28.272131 -25.781988)';
+    let exclusionArea: string = 'point(28.278153 -25.781812),point(28.277781 -25.78166),point(28.276252 -25.781039),point(28.274805 -25.780169),point(28.271878 -25.778368),point(28.271868 -25.778362),point(28.271357 -25.780567),point(28.272005 -25.780674),point(28.272028 -25.780909),point(28.272131 -25.781988),point(28.27693 -25.78533),point(28.28062 -25.78286),point(28.27941 -25.78539),point(28.28524 -25.78414)';
     this.navigate(exclusionArea);
 
     // Populate Map(suburbs) with Polygons
