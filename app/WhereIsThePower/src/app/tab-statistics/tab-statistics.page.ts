@@ -11,7 +11,8 @@ export class TabStatisticsPage implements OnInit {
   @ViewChild('barChart') barChartRef!: ElementRef;
   @ViewChild('doughnutChart') doughnutChartRef!: ElementRef;
 
-  chart: any;
+  doughnutChart: any = null;
+  barChart: any = null;
   constructor() { }
   ngOnInit() {
     // Data for Doughnut Chart (Uptime/Downtime for Today)
@@ -54,7 +55,7 @@ export class TabStatisticsPage implements OnInit {
   }
 
   populateDoughnutChart(doughnutData: any) {
-    this.chart = new Chart("doughnutChart", {
+    this.doughnutChart = new Chart("doughnutChart", {
       type: 'doughnut',
       data: doughnutData,
       options: {
@@ -69,7 +70,7 @@ export class TabStatisticsPage implements OnInit {
   }
 
   populateBarChart(barData: any) {
-    new Chart("barChart", {
+    this.barChart = new Chart("barChart", {
       type: 'bar',
       data: barData,
       options: {
@@ -102,4 +103,19 @@ export class TabStatisticsPage implements OnInit {
       },
     });
   }
+
+  clearDoughnutChart() {
+    this.doughnutChart = null;
+  }
+
+  clearBarChart() {
+    this.barChart = null;
+  }
+
+  clearAllCharts() {
+    this.clearBarChart();
+    this.clearDoughnutChart();
+  }
+
 }
+
