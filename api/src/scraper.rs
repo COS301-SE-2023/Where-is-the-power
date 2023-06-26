@@ -22,6 +22,45 @@ pub struct UploadRequest {
     pub municipality: String,
 }
 
+#[derive(Debug,Clone)]
+struct Times {
+    pub start_hour:i32,
+    pub start_minute:i32,
+    pub end_hour:i32,
+    pub end_minute:i32
+}
+
+fn convert_to_ints(time_range:&str) -> Result<Times,Json<ApiError<'static>>> {
+    let stripped: String = time_range.chars().filter(|c| !c.is_whitespace()).collect();
+    let times: Vec<&str> = stripped.split("-").collect();
+    if times.len() != 2 {
+        return Err(Json(ApiError::ScraperUploadError(
+            "Unexpected time range, your time ranges are not in the format: HH:MM-HH:MM. You potentially have an aditional \"-\"",
+        )));
+    }
+    let mut integer_times = Vec::new();
+    for timestring in times {
+        // TODO string lenght validation
+        let parts: Vec<&str> = timestring.split(":").collect();
+        for part in parts {
+            let integer_value:i32 = match part.parse() {
+                Ok(hour) => hour,
+                Err(_e) =>  return Err(Json(ApiError::ScraperUploadError(
+                    "Error in time range, unable to convert to an integer. Please check that you are sending in the format \"HH:MM-HH:MM\"",
+                )))
+            };
+            integer_times.push(integer_value);
+        }
+    }
+    if integer_times.len() != 4 {
+        return Err(Json(ApiError::ScraperUploadError(
+            "Unexpected time range, your time ranges are not in the format: \"HH:MM-HH:MM\". You potentially have an additional : lingering somewhere.",
+        )));
+    } else {
+        Ok(Times {start_hour:integer_times[0],start_minute:integer_times[1],end_hour:integer_times[2],end_minute:integer_times[3]})
+    }
+}
+
 impl UploadRequest {
     pub async fn add_data(self, db: &Client, database: &str) -> Result<(), Json<ApiError<'static>>> {
         let mut groups = HashMap::new();
@@ -66,32 +105,11 @@ impl UploadRequest {
             if let Bson::ObjectId(municipality_id) = result.inserted_id {
                 for (time, stages) in self.times {
                     // strip
-                    let stripped: String = time.chars().filter(|c| !c.is_whitespace()).collect();
-                    let times: Vec<&str> = stripped.split("-").collect();
-                    if times.len() != 2 {
-                        return Err(Json(ApiError::ScraperUploadError(
-                            "Unexpected time range, your time ranges are not in the format: HH:MM-HH:MM. You potentially have an aditional \"-\"",
-                        )));
-                    }
-                    let mut integer_times = Vec::new();
-                    for timestring in times {
-                        // TODO string lenght validation
-                        let parts: Vec<&str> = timestring.split(":").collect();
-                        for part in parts {
-                            let integer_value:i32 = match part.parse() {
-                                Ok(hour) => hour,
-                                Err(_e) =>  return Err(Json(ApiError::ScraperUploadError(
-                                    "Error in time range, unable to convert to an integer. Please check that you are sending in the format \"HH:MM-HH:MM\"",
-                                )))
-                            };
-                            integer_times.push(integer_value);
-                        }
-                    }
-                    if integer_times.len() != 4 {
-                        return Err(Json(ApiError::ScraperUploadError(
-                            "Unexpected time range, your time ranges are not in the format: \"HH:MM-HH:MM\". You potentially have an additional : lingering somewhere.",
-                        )));
-                    }
+                    let times = convert_to_ints(&time);
+                    let converted_times = match times {
+                        Ok(times) => times,
+                        Err(e) => return Err(e)
+                    };
                     let mut stages_for_time: Vec<StageTimes> = Vec::new();
                     for (stage, groups_in_time) in stages {
                         let mut group_ids = Vec::new();
@@ -109,10 +127,10 @@ impl UploadRequest {
                     // make the object
                     let schedule = TimeScheduleEntity {
                         id: None,
-                        start_hour: integer_times[0],
-                        start_minute: integer_times[1],
-                        stop_hour: integer_times[2],
-                        stop_minute: integer_times[3],
+                        start_hour: converted_times.start_hour,
+                        start_minute: converted_times.start_minute,
+                        stop_hour: converted_times.end_hour,
+                        stop_minute: converted_times.end_minute,
                         stages: stages_for_time,
                         municipality: municipality_id,
                     };
