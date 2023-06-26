@@ -30,6 +30,8 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: true
+      - name: Setup Testing keys
+        run: cp api/test_pk.pem api/publicKey.pem && cp api/test_sk.pem api/privateKey.pem
       - name: Install stable
         uses: dtolnay/rust-toolchain@stable
         with:
