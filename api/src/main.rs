@@ -5,7 +5,6 @@ mod db;
 mod tests;
 mod user;
 mod scraper;
-mod scrapers;
 mod loadshedding; 
 
 use crate::scraper::UploadRequest;
