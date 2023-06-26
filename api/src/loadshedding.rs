@@ -36,7 +36,7 @@ pub struct TimeScheduleEntity {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Entity)]
 #[serde(rename_all = "camelCase")]
-#[collection_name = "timeschedule"]
+#[collection_name = "municiplaity"]
 pub struct MunicipalityEntity {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<u32>,
