@@ -1,9 +1,13 @@
-[![codecov](https://codecov.io/gh/COS301-SE-2023/Where-is-the-power/branch/main/graph/badge.svg?token=V7DD9L1UAC)](https://codecov.io/gh/COS301-SE-2023/Where-is-the-power)
-![Uptime Robot status](https://img.shields.io/uptimerobot/status/m794667493-8d7c54a86f9f4bc87befd295?label=Server%20Status)
-
 <div align="center">
-    <h1>Where is the power 💡</h1>
-    <img alt="logo" height="200px" src="https://user-images.githubusercontent.com/14026724/236333707-7c8ed21b-b0e0-4166-ab95-e9a08a842a87.jpg">
+
+[![codecov](https://codecov.io/gh/COS301-SE-2023/Where-is-the-power/branch/main/graph/badge.svg?token=V7DD9L1UAC)](https://codecov.io/gh/COS301-SE-2023/Where-is-the-power)
+
+![Uptime Robot status](https://img.shields.io/uptimerobot/status/m794667493-8d7c54a86f9f4bc87befd295?label=Server%20Status)
+[![Commits](https://img.shields.io/github/commit-activity/w/COS301-SE-2023/Where-is-the-power)](https://github.com/COS301-SE-2023/Where-is-the-power/activity)
+[![GitHub issues](https://img.shields.io/github/issues-raw/COS301-SE-2023/Where-is-the-power)](https://github.com/COS301-SE-2023/Where-is-the-power/issues)
+    
+<h1>Where is the power 💡</h1>
+<img alt="logo" height="200px" src="https://user-images.githubusercontent.com/14026724/236333707-7c8ed21b-b0e0-4166-ab95-e9a08a842a87.jpg">
 </div>
 
 <br>
