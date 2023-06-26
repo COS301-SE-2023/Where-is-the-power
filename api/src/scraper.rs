@@ -23,14 +23,14 @@ pub struct UploadRequest {
 }
 
 #[derive(Debug,Clone)]
-struct Times {
+pub struct Times {
     pub start_hour:i32,
     pub start_minute:i32,
     pub end_hour:i32,
     pub end_minute:i32
 }
 
-fn convert_to_ints(time_range:&str) -> Result<Times,Json<ApiError<'static>>> {
+pub fn convert_to_ints(time_range:&str) -> Result<Times,Json<ApiError<'static>>> {
     let stripped: String = time_range.chars().filter(|c| !c.is_whitespace()).collect();
     let times: Vec<&str> = stripped.split("-").collect();
     if times.len() != 2 {
@@ -57,7 +57,25 @@ fn convert_to_ints(time_range:&str) -> Result<Times,Json<ApiError<'static>>> {
             "Unexpected time range, your time ranges are not in the format: \"HH:MM-HH:MM\". You potentially have an additional : lingering somewhere.",
         )));
     } else {
-        Ok(Times {start_hour:integer_times[0],start_minute:integer_times[1],end_hour:integer_times[2],end_minute:integer_times[3]})
+        let potential_times = Times {start_hour:integer_times[0],start_minute:integer_times[1],end_hour:integer_times[2],end_minute:integer_times[3]};
+        if potential_times.start_hour >= 24 {
+            return Err(Json(ApiError::ScraperUploadError(
+                "You have a malformed starting hour, please fix this, HH <= 23",
+            )));
+        } else if potential_times.end_hour >= 24 {
+            return Err(Json(ApiError::ScraperUploadError(
+                "You have a malformed end hour, please fix this, HH <= 23",
+            )));
+        } else if potential_times.start_minute >= 60 {
+            return Err(Json(ApiError::ScraperUploadError(
+                "You have a malformed start minute, please fix this, MM <= 59",
+            )));
+        } else if potential_times.end_minute >= 60 {
+            return Err(Json(ApiError::ScraperUploadError(
+                "You have a malformed end minute, please fix this, MM <= 59",
+            )));
+        }
+        Ok(potential_times)
     }
 }
 
