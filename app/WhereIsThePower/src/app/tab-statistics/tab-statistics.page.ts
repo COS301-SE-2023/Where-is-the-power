@@ -8,40 +8,29 @@ Chart.register(...registerables)
   styleUrls: ['./tab-statistics.page.scss'],
 })
 export class TabStatisticsPage implements OnInit {
-  @ViewChild('barChartRef') barChartRef!: ElementRef;
-  //@ViewChild('doughnutChart') doughnutChartRef!: ElementRef;
+  @ViewChild('barChart') barChartRef!: ElementRef;
+  @ViewChild('doughnutChart') doughnutChartRef!: ElementRef;
 
   chart: any;
   constructor() { }
-  ngOnInit() { }
+  ngOnInit() {
+    const doughnutData = {
+      labels: ['Uptime', 'Downtime'],
+      datasets: [{
+        label: 'Loadshedding',
+        data: [20, 4],
+        borderWidth: 0,
+        backgroundColor: [
+          '#007A4D',
+          '#DE3831',
+        ],
+      }]
+    };
+    this.populateDoughnutChart(doughnutData);
 
-  ionViewDidEnter() {
-    this.chart = new Chart("doughnutChart", {
-      type: 'doughnut',
-      data: {
-        labels: ['Uptime', 'Downtime'],
-        datasets: [{
-          label: 'Loadshedding',
-          data: [20, 4],
-          borderWidth: 0,
-          backgroundColor: [
-            '#007A4D',
-            '#DE3831',
-          ],
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            position: 'top',
-          },
-        }
-      }
-    });
 
     const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    const data = {
+    const barData = {
       labels: labels,
       datasets: [
         {
@@ -59,9 +48,28 @@ export class TabStatisticsPage implements OnInit {
       ]
     };
 
-    new Chart(this.barChartRef.nativeElement, {
+    this.populateBarChart(barData);
+  }
+
+  populateDoughnutChart(doughnutData: any) {
+    this.chart = new Chart("doughnutChart", {
+      type: 'doughnut',
+      data: doughnutData,
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+        }
+      }
+    });
+  }
+
+  populateBarChart(barData: any) {
+    new Chart("barChart", {
       type: 'bar',
-      data: data,
+      data: barData,
       options: {
         responsive: true,
         plugins: {
