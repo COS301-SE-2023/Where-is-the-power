@@ -1,0 +1,19 @@
+# ref: https://docs.codecov.com/docs/codecovyml-reference
+coverage:
+  # Hold ourselves to a high bar
+  range: 70..100
+  round: down
+  precision: 1
+  status:
+    project:
+      default:
+        # Avoid false negatives
+        threshold: 1%
+
+ignore:
+  - "tests"
+
+comment:
+  layout: "files"
+  require_changes: yes
+
