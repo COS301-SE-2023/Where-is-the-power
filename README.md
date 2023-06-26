@@ -16,7 +16,7 @@ to help assist users navigate their routes through these dark times.
 
 # Demos
 - ## Demo 1
-    - [BytemyCode Demo 1 Video]()
+    - [BytemyCode Demo 1 Video](https://drive.google.com/file/d/10su_NZ4v-KUKky87HE0h-KsPnfg_5ynS/view)
     - [System Requirements Specifications](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Software-Requirements-Specification-(SRS))   
 
 

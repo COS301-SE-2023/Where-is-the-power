@@ -8,31 +8,31 @@ const routes: Routes = [
     component: TabsPage,
     children: [
       {
-        path: 'tab1',
-        loadChildren: () => import('../tab1/tab1.module').then(m => m.Tab1PageModule)
+        path: 'tab-navigate',
+        loadChildren: () => import('../tab-navigate/tab-navigate.module').then(m => m.TabNavigateModule)
       },
       {
-        path: 'tab2',
-        loadChildren: () => import('../tab2/tab2.module').then(m => m.Tab2PageModule)
+        path: 'tab-saved',
+        loadChildren: () => import('../tab-saved/tab-saved.module').then(m => m.TabSavedPageModule)
       },
       {
-        path: 'tab3',
-        loadChildren: () => import('../tab3/tab3.module').then(m => m.Tab3PageModule)
+        path: 'tab-schedule',
+        loadChildren: () => import('../tab-schedule/tab-schedule.module').then(m => m.TabSchedulePageModule)
       },
       {
-        path: 'tab4',
-        loadChildren: () => import('../tab4/tab4.module').then(m => m.Tab4PageModule)
+        path: 'tab-statistics',
+        loadChildren: () => import('../tab-statistics/tab-statistics.module').then(m => m.TabStatisticsPageModule)
       },
       {
         path: '',
-        redirectTo: '/tabs/tab1',
+        redirectTo: '/tabs/tab-navigate',
         pathMatch: 'full'
       }
     ]
   },
   {
     path: '',
-    redirectTo: '/tabs/tab1',
+    redirectTo: '/tabs/tab-navigate',
     pathMatch: 'full'
   }
 ];
