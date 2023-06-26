@@ -19,7 +19,7 @@ export class TabStatisticsPage implements OnInit {
       labels: ['Uptime', 'Downtime'],
       datasets: [{
         label: 'Loadshedding',
-        data: [20, 4],
+        data: [20, 4], // Uptime vs Downtime
         borderWidth: 0,
         backgroundColor: [
           '#007A4D',
@@ -37,13 +37,13 @@ export class TabStatisticsPage implements OnInit {
       datasets: [
         {
           label: 'Uptime',
-          data: [20, 16, 20, 20, 12, 20, 24],
+          data: [20, 16, 20, 20, 12, 20, 24], // Uptime(No. of hours without Loadshedding)
           borderColor: '#007A4D',
           backgroundColor: '#007A4D',
         },
         {
           label: 'Downtime',
-          data: [-4, -8, -4, -4, -12, -4, 0],
+          data: [-4, -8, -4, -4, -12, -4, 0], // Downtime(Loadshedding hours)
           borderColor: '#DE3831',
           backgroundColor: '#DE3831',
         }
