@@ -12,7 +12,7 @@ describe('My First Test', () => {
 })
 
 
-describe('Navigation', () => {
+describe('Navigation Test', () => {
   it('should navigate to different tabs', () => {
     cy.visit('/')
     // make sure we are on navigate page initially
@@ -32,3 +32,10 @@ describe('Navigation', () => {
 
   })
 })
+
+describe('Canvas Map Test', () => {
+  it('should have a canvas map', () => {
+    cy.visit('/tabs/tab-navigate')
+    cy.get('.mapboxgl-canvas').should('exist')
+  })
+ })
