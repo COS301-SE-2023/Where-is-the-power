@@ -1,5 +1,5 @@
 [![codecov](https://codecov.io/gh/COS301-SE-2023/Where-is-the-power/branch/main/graph/badge.svg?token=V7DD9L1UAC)](https://codecov.io/gh/COS301-SE-2023/Where-is-the-power)
-![Uptime Robot status](https://img.shields.io/uptimerobot/status/m794667408-783384e0b1c0596b8c741eb6)
+![Uptime Robot status](https://img.shields.io/uptimerobot/status/m794667493-8d7c54a86f9f4bc87befd295?label=Server%20Status)
 
 <div align="center">
     <h1>Where is the power 💡</h1>
