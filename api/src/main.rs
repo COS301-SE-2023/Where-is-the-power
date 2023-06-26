@@ -1,13 +1,14 @@
-mod scraper;
-mod scrapers;
-
 mod api;
 mod auth;
 mod db;
 #[cfg(test)]
 mod tests;
 mod user;
+mod scraper;
+mod scrapers;
 
+use crate::scraper::UploadRequest;
+use crate::scraper::UploadResponse;
 use api::ApiError;
 use auth::{AuthRequest, AuthResponder, AuthType, JWTAuthToken};
 use db::Entity;
@@ -17,8 +18,22 @@ use mongodb::Client;
 use rocket::serde::json::Json;
 use rocket::{get, post, routes, Build, Rocket, State};
 use std::env;
+use std::net::IpAddr;
 use std::time::SystemTime;
 use user::User;
+
+#[post("/uploadData", format = "application/json", data = "<uploadData>")]
+fn uploadData(
+    uploadData: Json<UploadRequest>,
+    ip: IpAddr
+) -> Result<&'static str, Json<ApiError<'static>>> {
+    // Access the JSON data
+    let data = uploadData.into_inner();
+    println!("Received data: {:?}", data);
+    // Process the data and return an appropriate response
+    // ...
+    Ok("200")
+}
 
 #[post("/auth", format = "application/json", data = "<auth_request>")]
 async fn authenticate(
