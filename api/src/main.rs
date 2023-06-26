@@ -54,6 +54,11 @@ async fn create_user(
     Ok("User created")
 }
 
+#[get("/mock")]
+async fn mock_data() -> Result<(), Json<ApiError<'static>>> {
+    Ok(())
+}
+
 #[get("/world")]
 async fn hi() -> &'static str {
     "Hello World!"
