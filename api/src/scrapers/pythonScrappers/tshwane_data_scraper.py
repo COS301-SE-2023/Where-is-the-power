@@ -45,11 +45,12 @@ def scrapeHTML():
     area.capitalize()
 
     # add area to relevant group
-    group = cellStrings[1]
-    if group not in groups:
-      groups[group] = [area]
-    else:
-      groups[group].append(area)
+    potentialgroups = "".join(cellStrings[1].split()).rstrip().split("&")
+    for group in potentialgroups:
+      if group not in groups:
+        groups[group] = [area]
+      else:
+        groups[group].append(area)
   if debug: print(groups)
 
 def formatTime(timeIn):
@@ -74,9 +75,9 @@ def scrapeXLSX():
         timePeriod = formatTime(data[0]) + "-" + formatTime(data[1])
         lastTime = timePeriod
         # add data
-        loadSheddingTimes[timePeriod] = {data[2]:data[3:]}
+        loadSheddingTimes[timePeriod] = {data[2]:list(map(int,data[3:]))}
         continue
-      loadSheddingTimes[lastTime].update({data[2]:data[3:]})
+      loadSheddingTimes[lastTime].update({data[2]:list(map(int,data[3:]))})
 
   if debug: print(loadSheddingTimes)
 
@@ -118,4 +119,4 @@ if (__name__ == "__main__"):
     print(jsonData)
   if (update):
     response = requests.post(url=SERVER_IP,data=jsonData,headers=headers)
-    print(response)
+    print(response.text)

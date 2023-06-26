@@ -29,15 +29,17 @@ pub struct SuburbEntity {
 pub struct TimeScheduleEntity {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<u32>,
-    pub start: i32,
-    pub stop: i32,
+    pub start_hour: i32,
+    pub start_minute: i32,
+    pub stop_hour: i32,
+    pub stop_minute: i32,
     pub stages: Vec<StageTimes>,
     pub municipality: ObjectId
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Entity)]
 #[serde(rename_all = "camelCase")]
-#[collection_name = "municiplaity"]
+#[collection_name = "municipality"]
 pub struct MunicipalityEntity {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<u32>,

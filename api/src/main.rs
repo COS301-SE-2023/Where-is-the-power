@@ -31,16 +31,19 @@ async fn upload_data(
     if !ip.is_loopback() {
         return Ok("304 you do not have access to this resource")
     }
-    // Access the JSON data
+    if state.is_none() {
+        return Err(Json(ApiError::ServerError(
+            "Database is unavailable. Please try again later!",
+        )));
+    }
     let data = upload_data.into_inner();
-    println!("Received data: {:?}", data);
     // Process the data and return an appropriate response
     // validate
-    data.add_data(&state.inner().as_ref().unwrap()).await;
-    // ...
-    //
-    Ok("200")
-
+    let add_data = data.add_data(&state.inner().as_ref().unwrap(),"staging").await;
+    match add_data {
+        Ok(()) => return Ok("Data Successfully added to staging database and ready for review"),
+        Err(e) => return Err(e)
+    }
 }
 
 #[post("/auth", format = "application/json", data = "<auth_request>")]
