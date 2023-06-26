@@ -186,10 +186,11 @@
   },
   "cli": {
     "schematicCollections": [
-      "@cypress/schematic",
       "@ionic/angular-toolkit",
+      "@cypress/schematic",
       "@schematics/angular"
-    ]
+    ],
+    "analytics": false
   },
   "schematics": {
     "@ionic/angular-toolkit:component": {
