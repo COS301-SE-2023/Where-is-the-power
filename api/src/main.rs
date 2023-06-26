@@ -23,16 +23,24 @@ use std::time::SystemTime;
 use user::User;
 
 #[post("/uploadData", format = "application/json", data = "<upload_data>")]
-fn upload_data(
+async fn upload_data(
+    state: &State<Option<Client>>,
     upload_data: Json<UploadRequest>,
     ip: IpAddr
 ) -> Result<&'static str, Json<ApiError<'static>>> {
+    if !ip.is_loopback() {
+        return Ok("304 you do not have access to this resource")
+    }
     // Access the JSON data
     let data = upload_data.into_inner();
     println!("Received data: {:?}", data);
     // Process the data and return an appropriate response
+    // validate
+    data.add_data(&state.inner().as_ref().unwrap()).await;
     // ...
+    //
     Ok("200")
+
 }
 
 #[post("/auth", format = "application/json", data = "<auth_request>")]

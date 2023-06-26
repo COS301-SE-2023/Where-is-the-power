@@ -1,4 +1,4 @@
-use crate::db::Entity;
+use crate::{db::Entity};
 use bson::oid::ObjectId;
 use macros::Entity;
 use serde::{Deserialize, Serialize};
@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 pub struct GroupEntity {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<u32>,
+    pub number: i32,
     pub suburbs: Vec<ObjectId>
 }
 
@@ -53,6 +54,6 @@ pub struct StageTimes {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CoordinatePoint {
-    long:f32,
-    lat:f32
+    pub long:f32,
+    pub lat:f32
 }
