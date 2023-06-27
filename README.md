@@ -28,7 +28,7 @@ to help assist users navigate their routes through these dark times.
 - ## Demo 2
     - [BytemyCode Demo 2 Video](https://drive.google.com/file/d/1gnUPZZERiG1_7zgNZKQTL3aRJQPowEPz/view)
     - [Coding Standards Document](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Coding-Standards)
-    - [User Manual]()
+    - [User Manual](https://github.com/COS301-SE-2023/Where-is-the-power/files/11878231/User_Manual.pdf)
     - [System Requirements Specifications](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Software-Requirements-Specification-(SRS))
     - [Architectural Requirements Document](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Architectural-Requirements-Document)    
    
