@@ -71,7 +71,7 @@ async fn test_anonymous_auth() {
 #[test]
 fn time_range_validation_test_fails() {
     let cases = vec!["giberish", "giber-ish", "gi:ber-I:sh", "1:3b-e:r", "1::30-0:00",":1:2-23", "1-2","23:60-22:00"];
-    let _ = cases.iter().map(|case| {
+    let tests = cases.iter().map(|case| {
         let result = convert_to_ints(case);
         assert!(result.is_err(),"Failed to protect against poluted Data")
     });
@@ -80,7 +80,7 @@ fn time_range_validation_test_fails() {
 #[test]
 fn time_range_validation_test_pass() {
     let cases = vec!["1:20 - 2:30", "  2:3 - 3: 0", "22:30-2:03", "1 : 3 - 2 : 3", "23:59-00:00"];
-    let _ = cases.iter().map(|case| {
+    let tests = cases.iter().map(|case| {
         let result = convert_to_ints(case);
         assert!(result.is_ok(),"False Negative")
     });
