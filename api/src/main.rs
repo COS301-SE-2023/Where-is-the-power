@@ -4,7 +4,10 @@ mod db;
 #[cfg(test)]
 mod tests;
 mod user;
+mod scraper;
+mod loadshedding; 
 
+use crate::scraper::UploadRequest;
 use api::ApiError;
 use auth::{AuthRequest, AuthResponder, AuthType, JWTAuthToken};
 use db::Entity;
@@ -14,8 +17,33 @@ use mongodb::Client;
 use rocket::serde::json::Json;
 use rocket::{get, post, routes, Build, Rocket, State};
 use std::env;
+use std::net::IpAddr;
 use std::time::SystemTime;
 use user::User;
+
+#[post("/uploadData", format = "application/json", data = "<upload_data>")]
+async fn upload_data(
+    state: &State<Option<Client>>,
+    upload_data: Json<UploadRequest>,
+    ip: IpAddr
+) -> Result<&'static str, Json<ApiError<'static>>> {
+    if !ip.is_loopback() {
+        return Ok("304 you do not have access to this resource")
+    }
+    if state.is_none() {
+        return Err(Json(ApiError::ServerError(
+            "Database is unavailable. Please try again later!",
+        )));
+    }
+    let data = upload_data.into_inner();
+    // Process the data and return an appropriate response
+    // validate
+    let add_data = data.add_data(&state.inner().as_ref().unwrap(),"staging").await;
+    match add_data {
+        Ok(()) => return Ok("Data Successfully added to staging database and ready for review"),
+        Err(e) => return Err(e)
+    }
+}
 
 #[post("/auth", format = "application/json", data = "<auth_request>")]
 async fn authenticate(
@@ -94,6 +122,7 @@ async fn build_rocket() -> Rocket<Build> {
         rocket::custom(figment.clone())
             .mount("/hello", routes![hi])
             .mount("/api", routes!(authenticate, create_user))
+            .mount("/upload", routes![upload_data])
             .manage::<Option<Client>>(None)
     };
 
@@ -102,6 +131,7 @@ async fn build_rocket() -> Rocket<Build> {
             Ok(client) => rocket::custom(figment.clone())
                 .mount("/hello", routes![hi])
                 .mount("/api", routes![authenticate, create_user])
+                .mount("/upload", routes![upload_data])
                 .manage(Some(client)),
             Err(err) => {
                 warn!("Couldn't create database client! {err:?}");
