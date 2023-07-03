@@ -1,11 +1,11 @@
 mod api;
 mod auth;
 mod db;
+mod loadshedding;
+mod scraper;
 #[cfg(test)]
 mod tests;
 mod user;
-mod scraper;
-mod loadshedding; 
 
 use crate::scraper::UploadRequest;
 use api::ApiError;
@@ -14,6 +14,8 @@ use db::Entity;
 use log::{warn, LevelFilter};
 use mongodb::options::ClientOptions;
 use mongodb::Client;
+use rocket::fs::FileServer;
+use rocket::http::ContentType;
 use rocket::serde::json::Json;
 use rocket::{get, post, routes, Build, Rocket, State};
 use std::env;
@@ -25,10 +27,10 @@ use user::User;
 async fn upload_data(
     state: &State<Option<Client>>,
     upload_data: Json<UploadRequest>,
-    ip: IpAddr
+    ip: IpAddr,
 ) -> Result<&'static str, Json<ApiError<'static>>> {
     if !ip.is_loopback() {
-        return Ok("304 you do not have access to this resource")
+        return Ok("304 you do not have access to this resource");
     }
     if state.is_none() {
         return Err(Json(ApiError::ServerError(
@@ -38,10 +40,12 @@ async fn upload_data(
     let data = upload_data.into_inner();
     // Process the data and return an appropriate response
     // validate
-    let add_data = data.add_data(&state.inner().as_ref().unwrap(),"staging").await;
+    let add_data = data
+        .add_data(&state.inner().as_ref().unwrap(), "staging")
+        .await;
     match add_data {
         Ok(()) => return Ok("Data Successfully added to staging database and ready for review"),
-        Err(e) => return Err(e)
+        Err(e) => return Err(e),
     }
 }
 
@@ -123,6 +127,7 @@ async fn build_rocket() -> Rocket<Build> {
             .mount("/hello", routes![hi])
             .mount("/api", routes!(authenticate, create_user))
             .mount("/upload", routes![upload_data])
+            .mount("/", routes![frontend])
             .manage::<Option<Client>>(None)
     };
 
@@ -132,6 +137,7 @@ async fn build_rocket() -> Rocket<Build> {
                 .mount("/hello", routes![hi])
                 .mount("/api", routes![authenticate, create_user])
                 .mount("/upload", routes![upload_data])
+                .mount("/", FileServer::from("www"))
                 .manage(Some(client)),
             Err(err) => {
                 warn!("Couldn't create database client! {err:?}");
