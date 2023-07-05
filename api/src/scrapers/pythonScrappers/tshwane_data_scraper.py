@@ -7,14 +7,16 @@ import sys
 import json
 import requests
 import pandas as pd
+import regex as re
 from lxml import etree
 
 from config import *
 
 # Globals
 excel_url = "https://www.tshwane.gov.za/wp-admin/admin-ajax.php?juwpfisadmin=false&action=wpfd&task=file.download&wpfd_category_id=293&wpfd_file_id=38390"
-groups_url = "https://www.tshwane.gov.za/?page_id=1124#293-293-wpfd-top"
-groups:dict[str,list] = {} # group number, areas in group
+groups_url = "https://www.tshwane.gov.za/?page_id=1124"
+json_url = "./tswaneJSON.json" # change to fit needs
+groups:dict[str,dict[str,list]] = {} # group number, areas in group, corresponding GeoJSON id's
 loadSheddingTimes:dict[str,dict[str,list]] = {} # level, [group, times]
 
 def scrapeHTML():
@@ -48,9 +50,9 @@ def scrapeHTML():
     potentialgroups = "".join(cellStrings[1].split()).rstrip().split("&")
     for group in potentialgroups:
       if group not in groups:
-        groups[group] = [area]
+        groups[group] = {area:list()}
       else:
-        groups[group].append(area)
+        groups[group][area] = list()
   if debug: print(groups)
 
 def formatTime(timeIn):
@@ -81,6 +83,35 @@ def scrapeXLSX():
 
   if debug: print(loadSheddingTimes)
 
+def parseGeoJSON():
+  with open('tswaneJSON.json') as json_file:
+    data = json.load(json_file)
+  # go through the suburbs
+  for key,value in groups.items():
+    for suburb in value.keys():
+      regex1 = re.compile(suburb + "*", re.IGNORECASE)
+      regex2 = re.compile(suburb.replace(" ", "")+ "*",re.IGNORECASE)
+
+      # go through the geoJSON, this is very disgusting code
+      for feature in data["features"]:
+        properties = feature["properties"]
+        mp_name = properties.get("MP_NAME")
+        sp_name = properties.get("SP_NAME")
+        potentialMatches = {
+          regex1.match(mp_name),
+          regex1.match(sp_name),
+          regex1.match(mp_name.replace(" ", "")),
+          regex1.match(sp_name.replace(" ", "")),
+          regex2.match(mp_name),
+          regex2.match(sp_name),
+          regex2.match(mp_name.replace(" ", "")),
+          regex2.match(sp_name.replace(" ", ""))
+        }
+
+        if any(potentialMatches):
+          groups[key][suburb].append(feature["id"])
+  return data
+
 # --debug: print out debug information
 # --update: send results to the server for updates
 # --dry: view output that will be sent to server
@@ -106,10 +137,12 @@ if (__name__ == "__main__"):
   ## impliment multiprocessing
   scrapeHTML()
   scrapeXLSX()
+  data = parseGeoJSON()
   toSend = {
+    "geoJson": data,
     "municipality":"tshwane",
     "groups":groups,
-    "times":loadSheddingTimes
+    "times":loadSheddingTimes,
   }
   jsonData = json.dumps(toSend)
   headers = {
@@ -117,6 +150,7 @@ if (__name__ == "__main__"):
   }
   if dry:
     print(jsonData)
+    print(groups)
   if (update):
     response = requests.post(url=SERVER_IP,data=jsonData,headers=headers)
     print(response.text)
