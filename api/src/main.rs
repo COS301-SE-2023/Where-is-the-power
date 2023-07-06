@@ -11,6 +11,7 @@ use crate::scraper::UploadRequest;
 use api::ApiError;
 use auth::{AuthRequest, AuthResponder, AuthType, JWTAuthToken};
 use db::Entity;
+use loadshedding::StageUpdater;
 use log::{warn, LevelFilter};
 use mongodb::options::ClientOptions;
 use mongodb::Client;
@@ -121,6 +122,7 @@ async fn build_rocket() -> Rocket<Build> {
 
     let rocket_no_state = || {
         rocket::custom(figment.clone())
+            .attach(StageUpdater)
             .mount("/hello", routes![hi])
             .mount("/api", routes!(authenticate, create_user))
             .mount("/upload", routes![upload_data])
@@ -130,6 +132,7 @@ async fn build_rocket() -> Rocket<Build> {
     match ClientOptions::parse(&db_uri).await {
         Ok(client_options) => match Client::with_options(client_options) {
             Ok(client) => rocket::custom(figment.clone())
+                .attach(StageUpdater)
                 .mount("/hello", routes![hi])
                 .mount("/api", routes![authenticate, create_user])
                 .mount("/upload", routes![upload_data])
