@@ -1,6 +1,7 @@
 name: APP Unit tests
 on: 
   push:
+    branches: [ "*" ]
   pull_request:
     branches:
       - main
@@ -30,3 +31,35 @@ jobs:
       - name: Run Tests
         working-directory: ./app/WhereIsThePower
         run: npm run test
+  coverage:
+    runs-on: ubuntu-latest
+    name: frontend coverage
+    steps:
+      - uses: actions/checkout@v3 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+      - name: Install Dependencies
+        working-directory: ./app/WhereIsThePower
+        run: npm install --frozen-lock
+      - name: Update env
+        uses: cschleiden/replace-tokens@v1.2
+        with:
+          tokenPrefix: '{'
+          tokenSuffix: '}'
+          files: ./app/WhereIsThePower/src/environments/environment.ts
+        env:
+          MapboxApiKey: ${{ secrets.TEST_SECRET }}
+        
+      - name: Run Tests
+        working-directory: ./app/WhereIsThePower
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-report
+          path: coverage/
+
+
+
