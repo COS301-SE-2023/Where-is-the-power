@@ -10,18 +10,61 @@ mod loadshedding;
 use crate::scraper::UploadRequest;
 use api::ApiError;
 use auth::{AuthRequest, AuthResponder, AuthType, JWTAuthToken};
+use bson::{doc, Bson};
 use db::Entity;
-use loadshedding::StageUpdater;
+use loadshedding::{StageUpdater, MapDataRequest, MunicipalityEntity, LoadSheddingStage};
 use log::{warn, LevelFilter};
-use mongodb::options::ClientOptions;
-use mongodb::Client;
+use mongodb::options::{ClientOptions, FindOptions};
+use mongodb::{Client, Cursor};
 use rocket::data::{Limits, ToByteUnit};
+use rocket::futures::lock::Mutex;
 use rocket::serde::json::Json;
 use rocket::{get, post, routes, Build, Rocket, State};
 use std::env;
 use std::net::IpAddr;
 use std::time::SystemTime;
 use user::User;
+
+#[post("/fetchMapData", format = "application/json", data = "<request>")]
+async fn fetch_map_data (
+    db: &State<Option<Client>>,
+    loadshedding_stage : &State<Option<Mutex<LoadSheddingStage>>>,
+    request: Json<MapDataRequest>,
+) -> Result<&'static str, Json<ApiError<'static>>> {
+    let connection = &db.inner()
+        .as_ref()
+        .unwrap()
+        .database("production");
+    let south_west:Vec<Bson> = request.bottom_left.iter()
+        .cloned()
+        .map(Bson::from)
+        .collect();
+    let north_east:Vec<Bson> = request.top_right.iter()
+        .cloned()
+        .map(Bson::from)
+        .collect();
+    let query = doc! {
+        "geometry.bounds" : {
+            "$geoWithin" : {
+                "$box" : [south_west, north_east]
+            }
+        }
+    };
+    let options = FindOptions::default();
+    let cursor: Cursor<MunicipalityEntity> = match connection
+        .collection("municipality")
+        .find(query, options)
+        .await {
+            Ok(cursor) => cursor,
+            Err(err) => {
+                log::error!("Database error occured when handling geo query: {err}");
+                return Err(Json(ApiError::ServerError("Database error occured when handling request. Check logs.")));
+            }
+        };
+    let stage = &loadshedding_stage.inner().as_ref().unwrap().lock().await.stage;
+    
+    todo!()
+}
 
 #[post("/uploadData", format = "application/json", data = "<upload_data>")]
 async fn upload_data(

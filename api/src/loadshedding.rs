@@ -1,15 +1,17 @@
 use std::{thread, time::Duration, sync::{Mutex, Arc}};
 
-use crate::db::Entity;
+use crate::{db::Entity, api::ApiError};
 use async_trait::async_trait;
-use bson::oid::ObjectId;
-use log::warn;
+use bson::{oid::ObjectId, doc};
+use chrono::{Local, NaiveDateTime, DateTime, FixedOffset, Timelike, Datelike};
+use log::{warn, Log};
 use macros::Entity;
-use rocket::{fairing::{Fairing, Info, Kind, self}, Rocket};
+use mongodb::{Database, Cursor};
+use rocket::{fairing::{Fairing, Info, Kind, self}, Rocket, futures::StreamExt};
 use serde::{Deserialize, Serialize};
 use tokio::runtime::Runtime;
 
-// Loadshedding Data Structs
+// Rocket Persistent Data Structs
 pub struct StageUpdater;
 
 #[derive(Debug)]
@@ -17,58 +19,20 @@ pub struct LoadSheddingStage {
     pub stage: i32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Entity)]
-#[serde(rename_all = "camelCase")]
-#[collection_name = "groups"]
-pub struct GroupEntity {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<u32>,
-    pub number: i32,
-    pub suburbs: Vec<ObjectId>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Entity)]
-#[serde(rename_all = "camelCase")]
-#[collection_name = "suburbs"]
-pub struct SuburbEntity {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<u32>,
-    pub name: String,
-    pub geometry: Vec<i32>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Entity)]
-#[serde(rename_all = "camelCase")]
-#[collection_name = "timeschedule"]
-pub struct TimeScheduleEntity {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<u32>,
-    pub start_hour: i32,
-    pub start_minute: i32,
-    pub stop_hour: i32,
-    pub stop_minute: i32,
-    pub stages: Vec<StageTimes>,
-    pub municipality: ObjectId,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Entity)]
-#[serde(rename_all = "camelCase")]
-#[collection_name = "municipality"]
-pub struct MunicipalityEntity {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<u32>,
-    pub name: String,
-    pub geometry: GeoJson,
+// GeoJson Struct
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum GeometryType {
+    Polygon,
+    MultiPolygon,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct StageTimes {
-    pub stage: i32,
-    pub groups: Vec<ObjectId>,
+#[serde(untagged)]
+pub enum Coordinates {
+    Polygon(Vec<Vec<Vec<f64>>>),
+    MultiPolygon(Vec<Vec<Vec<Vec<f64>>>>),
 }
 
-// GeoJSON structures
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GeoJson {
     pub name: String,
@@ -165,20 +129,150 @@ pub struct Geometry {
     pub coordinates: Coordinates,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum GeometryType {
-    Polygon,
-    MultiPolygon,
+// Loadshedding Data Structures
+#[derive(Debug, Serialize, Deserialize, Clone, Entity)]
+#[serde(rename_all = "camelCase")]
+#[collection_name = "groups"]
+pub struct GroupEntity {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<u32>,
+    pub number: i32,
+    pub suburbs: Vec<ObjectId>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Entity)]
+#[serde(rename_all = "camelCase")]
+#[collection_name = "suburbs"]
+pub struct SuburbEntity {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<u32>,
+    pub municipality: ObjectId,
+    pub name: String,
+    pub geometry: Vec<i32>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Entity)]
+#[serde(rename_all = "camelCase")]
+#[collection_name = "timeschedule"]
+pub struct TimeScheduleEntity {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<u32>,
+    pub start_hour: i32,
+    pub start_minute: i32,
+    pub stop_hour: i32,
+    pub stop_minute: i32,
+    pub stages: Vec<StageTimes>,
+    pub municipality: ObjectId,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Entity)]
+#[serde(rename_all = "camelCase")]
+#[collection_name = "municipality"]
+pub struct MunicipalityEntity {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<u32>,
+    pub name: String,
+    pub geometry: GeoJson,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(untagged)]
-pub enum Coordinates {
-    Polygon(Vec<Vec<Vec<f64>>>),
-    MultiPolygon(Vec<Vec<Vec<Vec<f64>>>>),
+#[serde(rename_all = "camelCase")]
+pub struct StageTimes {
+    pub stage: i32,
+    pub groups: Vec<ObjectId>,
 }
 
-impl MunicipalityEntity {}
+// Requests
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct MapDataRequest {
+    pub bottom_left: [f64;2],
+    pub top_right: [f64;2],
+    pub time: i64
+}
+// Responses
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct MapDataDefaultResponse {
+    pub map_polygons: Vec<GeoJson>,
+    pub on: Vec<SuburbEntity>,
+    pub off: Vec<SuburbEntity>
+}
+
+
+impl MunicipalityEntity {
+    pub async fn get_regions_at_time(&self, stage:i32, time:Option<i64>, connection:&Database) -> Result<MapDataDefaultResponse,ApiError>{
+        let sast = FixedOffset::east_opt(2*3600).unwrap();
+        let time_to_search: DateTime<FixedOffset>;
+        if let Some(time) = time {
+            time_to_search = DateTime::from_utc(
+                NaiveDateTime::from_timestamp_opt(time, 0).unwrap(),
+                sast
+            );
+        } else {
+            time_to_search = Local::now().with_timezone(&sast);
+        }
+
+        let query = doc! {
+            "$and": [
+                {
+                    "start_hour": {
+                        "$lte": time_to_search.hour()
+                    },
+                    "start_minute": {
+                        "$lte": time_to_search.minute()
+                    }
+                },
+                {
+                    "end_hour": {
+                        "$gte": time_to_search.hour()
+                    },
+                    "end_minute": {
+                        "$gte": time_to_search.minute()
+                    }
+                },
+                {
+                    "municipality": self.id.unwrap()
+                }
+            ]
+        };
+    
+        let mut schedule_cursor: Cursor<TimeScheduleEntity> = match connection
+            .collection("timeschedule")
+            .find(query, mongodb::options::FindOptions::default())
+            .await {
+                Ok(cursor) => cursor,
+                Err(err) => {
+                    log::error!("Database error occured when querying timeschedules: {err}");
+                    todo!();
+                }
+        };
+
+        let query = doc!{
+            "municipality" : self.id
+        };
+
+        while let Some(doc) = schedule_cursor.next().await {
+            match doc {
+                Ok(doc) => {
+                    let times: Vec<StageTimes> = doc.stages.iter()
+                        .filter(|&times| times.stage <= stage)
+                        .cloned()
+                        .map(|stage_time| stage_time)
+                        .collect();
+                    let groups: Vec<ObjectId> = times.iter()
+                        .map(|schedule| schedule.groups.get((time_to_search.day()-1) as usize).unwrap())
+                        .cloned()
+                        .collect();
+                },
+                Err(err) => {
+                    todo!()
+                }
+            }
+        }
+        todo!()
+    }
+}
 
 // Rocket State Loop Objects
 impl LoadSheddingStage {
@@ -193,6 +287,8 @@ impl LoadSheddingStage {
                 }
                 Err(_) => warn!("Eskom API did not return a integer when we queried it."),
             }
+        } else {
+            warn!("Connection to Eskom Dropped before any operations could take place");
         }
         Ok(self.stage)
     }

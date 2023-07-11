@@ -82,38 +82,6 @@ pub fn convert_to_ints(time_range:&str) -> Result<Times,Json<ApiError<'static>>>
 
 impl UploadRequest {
     pub async fn add_data(self, db: &Client, database: &str) -> Result<(), Json<ApiError<'static>>> {
-        let mut groups = HashMap::new();
-        for (group, group_suburbs) in self.groups {
-            let mut suburbs: Vec<SuburbEntity> = Vec::new();
-            let mut object_ids = Vec::new();
-            for (suburb, geometry) in group_suburbs {
-                suburbs.push(SuburbEntity {
-                    id: None,
-                    name: String::from(suburb),
-                    geometry: geometry
-                })
-            }
-            for suburb in suburbs.iter() {
-                let result = suburb.insert(&db.database(database)).await;
-                if let Ok(result) = result {
-                    if let Bson::ObjectId(object_id) = result.inserted_id {
-                        object_ids.push(object_id);
-                    }
-                }
-            }
-            let group_entity = GroupEntity {
-                id: None,
-                suburbs: object_ids,
-                number: group,
-            };
-            let result = group_entity.insert(&db.database(database)).await;
-            if let Ok(result) = result {
-                if let Bson::ObjectId(object_id) = result.inserted_id {
-                    groups.insert(group, object_id);
-                }
-            }
-        } // end of group for
-
         // we need refactoring, and we need it immediately
         let municipality = MunicipalityEntity {
             id: None,
@@ -123,6 +91,42 @@ impl UploadRequest {
         let result = municipality.insert(&db.database(database)).await;
         if let Ok(result) = result {
             if let Bson::ObjectId(municipality_id) = result.inserted_id {
+
+                // suburb insertion
+                let mut groups = HashMap::new();
+                for (group, group_suburbs) in self.groups {
+                    let mut suburbs: Vec<SuburbEntity> = Vec::new();
+                    let mut object_ids = Vec::new();
+                    for (suburb, geometry) in group_suburbs {
+                        suburbs.push(SuburbEntity {
+                            id: None,
+                            municipality: municipality_id,
+                            name: String::from(suburb),
+                            geometry: geometry
+                        })
+                    }
+                    for suburb in suburbs.iter() {
+                        let result = suburb.insert(&db.database(database)).await;
+                        if let Ok(result) = result {
+                            if let Bson::ObjectId(object_id) = result.inserted_id {
+                                object_ids.push(object_id);
+                            }
+                        }
+                    }
+                    let group_entity = GroupEntity {
+                        id: None,
+                        suburbs: object_ids,
+                        number: group,
+                    };
+                    let result = group_entity.insert(&db.database(database)).await;
+                    if let Ok(result) = result {
+                        if let Bson::ObjectId(object_id) = result.inserted_id {
+                            groups.insert(group, object_id);
+                        }
+                    }
+                } // end of suburb for
+
+                // timeschedule and group insertion
                 for (time, stages) in self.times {
                     // strip
                     let times = convert_to_ints(&time);
