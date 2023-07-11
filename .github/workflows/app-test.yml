@@ -61,7 +61,6 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           name: frontend coverage-report
-          files: ./app/WhereIsThePower/coverage/app
           fail_ci_if_error: true
 
 
