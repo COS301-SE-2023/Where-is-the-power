@@ -32,6 +32,8 @@ jobs:
         working-directory: ./app/WhereIsThePower
         run: npm run test
   coverage:
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     runs-on: ubuntu-latest
     name: frontend coverage
     steps:
