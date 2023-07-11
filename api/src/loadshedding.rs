@@ -1,13 +1,22 @@
-use std::{thread, time::Duration, sync::{Mutex, Arc}};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+    thread,
+    time::Duration,
+};
 
-use crate::{db::Entity, api::ApiError};
+use crate::{api::ApiError, db::Entity};
 use async_trait::async_trait;
-use bson::{oid::ObjectId, doc};
-use chrono::{Local, NaiveDateTime, DateTime, FixedOffset, Timelike, Datelike};
-use log::{warn, Log};
+use bson::doc;
+use chrono::{DateTime, Datelike, FixedOffset, Local, NaiveDateTime, Timelike};
+use log::warn;
 use macros::Entity;
-use mongodb::{Database, Cursor};
-use rocket::{fairing::{Fairing, Info, Kind, self}, Rocket, futures::StreamExt};
+use mongodb::{Cursor, Database};
+use rocket::{
+    fairing::{self, Fairing, Info, Kind},
+    futures::{StreamExt, TryStreamExt},
+    Rocket,
+};
 use serde::{Deserialize, Serialize};
 use tokio::runtime::Runtime;
 
@@ -137,7 +146,7 @@ pub struct GroupEntity {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<u32>,
     pub number: i32,
-    pub suburbs: Vec<ObjectId>,
+    pub suburbs: Vec<u32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Entity)]
@@ -146,7 +155,7 @@ pub struct GroupEntity {
 pub struct SuburbEntity {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<u32>,
-    pub municipality: ObjectId,
+    pub municipality: u32,
     pub name: String,
     pub geometry: Vec<i32>,
 }
@@ -162,7 +171,7 @@ pub struct TimeScheduleEntity {
     pub stop_hour: i32,
     pub stop_minute: i32,
     pub stages: Vec<StageTimes>,
-    pub municipality: ObjectId,
+    pub municipality: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Entity)]
@@ -179,16 +188,16 @@ pub struct MunicipalityEntity {
 #[serde(rename_all = "camelCase")]
 pub struct StageTimes {
     pub stage: i32,
-    pub groups: Vec<ObjectId>,
+    pub groups: Vec<u32>,
 }
 
 // Requests
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct MapDataRequest {
-    pub bottom_left: [f64;2],
-    pub top_right: [f64;2],
-    pub time: i64
+    pub bottom_left: [f64; 2],
+    pub top_right: [f64; 2],
+    pub time: i64,
 }
 // Responses
 #[derive(Serialize, Deserialize, Debug)]
@@ -196,19 +205,21 @@ pub struct MapDataRequest {
 pub struct MapDataDefaultResponse {
     pub map_polygons: Vec<GeoJson>,
     pub on: Vec<SuburbEntity>,
-    pub off: Vec<SuburbEntity>
+    pub off: Vec<SuburbEntity>,
 }
 
-
 impl MunicipalityEntity {
-    pub async fn get_regions_at_time(&self, stage:i32, time:Option<i64>, connection:&Database) -> Result<MapDataDefaultResponse,ApiError>{
-        let sast = FixedOffset::east_opt(2*3600).unwrap();
+    pub async fn get_regions_at_time(
+        &self,
+        stage: i32,
+        time: Option<i64>,
+        connection: &Database,
+    ) -> Result<MapDataDefaultResponse, ApiError> {
+        let sast = FixedOffset::east_opt(2 * 3600).unwrap();
         let time_to_search: DateTime<FixedOffset>;
         if let Some(time) = time {
-            time_to_search = DateTime::from_utc(
-                NaiveDateTime::from_timestamp_opt(time, 0).unwrap(),
-                sast
-            );
+            time_to_search =
+                DateTime::from_utc(NaiveDateTime::from_timestamp_opt(time, 0).unwrap(), sast);
         } else {
             time_to_search = Local::now().with_timezone(&sast);
         }
@@ -236,38 +247,85 @@ impl MunicipalityEntity {
                 }
             ]
         };
-    
+
         let mut schedule_cursor: Cursor<TimeScheduleEntity> = match connection
             .collection("timeschedule")
             .find(query, mongodb::options::FindOptions::default())
-            .await {
+            .await
+        {
+            Ok(cursor) => cursor,
+            Err(err) => {
+                log::error!("Database error occured when querying timeschedules: {err}");
+                todo!();
+            }
+        };
+
+        let query = doc! {
+            "municipality" : self.id
+        };
+
+        let suburbs_cursor: Cursor<SuburbEntity> = match connection
+            .collection("suburbs")
+            .find(query, mongodb::options::FindOptions::default())
+            .await
+        {
+            Ok(cursor) => cursor,
+            Err(err) => {
+                log::error!("Database error occured when querying timeschedules: {err}");
+                todo!();
+            }
+        };
+
+        let suburbs: Vec<SuburbEntity> = match suburbs_cursor.try_collect().await {
+            Ok(item) => item,
+            Err(e) => todo!(),
+        };
+
+        let mut suburbs: HashMap<u32, SuburbEntity> = suburbs
+            .into_iter()
+            .map(|suburb| (suburb.id.unwrap(), suburb))
+            .collect();
+        let mut suburbs_off = Vec::<SuburbEntity>::new();
+
+        while let Some(Ok(doc)) = schedule_cursor.next().await {
+            let times: Vec<StageTimes> = doc
+                .stages
+                .iter()
+                .filter(|&times| times.stage <= stage)
+                .cloned()
+                .map(|stage_time| stage_time)
+                .collect();
+            let groups: Vec<u32> = times
+                .iter()
+                .map(|schedule| {
+                    schedule
+                        .groups
+                        .get((time_to_search.day() - 1) as usize)
+                        .unwrap()
+                })
+                .cloned()
+                .collect();
+
+            let query = doc! {
+                "_id" : {"$in": groups}
+            };
+
+            let mut groups_cursor: Cursor<GroupEntity> = match connection
+                .collection("suburbs")
+                .find(query, mongodb::options::FindOptions::default())
+                .await
+            {
                 Ok(cursor) => cursor,
                 Err(err) => {
                     log::error!("Database error occured when querying timeschedules: {err}");
                     todo!();
                 }
-        };
-
-        let query = doc!{
-            "municipality" : self.id
-        };
-
-        while let Some(doc) = schedule_cursor.next().await {
-            match doc {
-                Ok(doc) => {
-                    let times: Vec<StageTimes> = doc.stages.iter()
-                        .filter(|&times| times.stage <= stage)
-                        .cloned()
-                        .map(|stage_time| stage_time)
-                        .collect();
-                    let groups: Vec<ObjectId> = times.iter()
-                        .map(|schedule| schedule.groups.get((time_to_search.day()-1) as usize).unwrap())
-                        .cloned()
-                        .collect();
-                },
-                Err(err) => {
-                    todo!()
-                }
+            };
+            while let Some(Ok(group)) = groups_cursor.next().await {
+                let removed: Vec<SuburbEntity>= group.suburbs.iter()
+                    .filter_map(|key| suburbs.remove(key))
+                    .collect();
+                suburbs_off.extend(removed);
             }
         }
         todo!()
@@ -296,7 +354,7 @@ impl LoadSheddingStage {
 
 #[async_trait]
 impl Fairing for StageUpdater {
-	fn info(&self) -> Info {
+    fn info(&self) -> Info {
         Info {
             name: "Stage Updater",
             kind: Kind::Ignite,
@@ -304,18 +362,16 @@ impl Fairing for StageUpdater {
     }
 
     async fn on_ignite(&self, rocket: Rocket<rocket::Build>) -> fairing::Result {
-        let stage_info = Arc::new(Mutex::new(LoadSheddingStage {
-			stage : 0
-        }));
+        let stage_info = Arc::new(Mutex::new(LoadSheddingStage { stage: 0 }));
 
-		let stage_info_ref = stage_info.clone();
+        let stage_info_ref = stage_info.clone();
         thread::spawn(move || {
             loop {
-				let mut stage_info = stage_info_ref.lock().unwrap();
-				let runtime = Runtime::new().unwrap();
-				let stage = stage_info.fetch_stage();
-				let _ = runtime.block_on(stage);
-				// Perform any other necessary processing on stage info
+                let mut stage_info = stage_info_ref.lock().unwrap();
+                let runtime = Runtime::new().unwrap();
+                let stage = stage_info.fetch_stage();
+                let _ = runtime.block_on(stage);
+                // Perform any other necessary processing on stage info
                 thread::sleep(Duration::from_secs(600)); // Sleep for 10 minutes
             }
         });
