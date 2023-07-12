@@ -215,7 +215,11 @@ impl MunicipalityEntity {
         time: Option<i64>,
         connection: &Database,
     ) -> Result<MapDataDefaultResponse, ApiError> {
-        let sast = FixedOffset::east_opt(2 * 3600).unwrap();
+        let mut suburbs_off = Vec::<SuburbEntity>::new();
+        let suburbs_on: Vec<SuburbEntity>;
+
+        // get search time
+        let sast = FixedOffset::east_opt(2 * 3600).unwrap(); // SAST
         let time_to_search: DateTime<FixedOffset>;
         if let Some(time) = time {
             time_to_search =
@@ -224,6 +228,7 @@ impl MunicipalityEntity {
             time_to_search = Local::now().with_timezone(&sast);
         }
 
+        // schedule query: all that fit the search time
         let query = doc! {
             "$and": [
                 {
@@ -247,7 +252,6 @@ impl MunicipalityEntity {
                 }
             ]
         };
-
         let mut schedule_cursor: Cursor<TimeScheduleEntity> = match connection
             .collection("timeschedule")
             .find(query, mongodb::options::FindOptions::default())
@@ -256,14 +260,17 @@ impl MunicipalityEntity {
             Ok(cursor) => cursor,
             Err(err) => {
                 log::error!("Database error occured when querying timeschedules: {err}");
-                todo!();
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
             }
         };
+        // schedule query end
 
+        // suburbs query: all suburbs
         let query = doc! {
             "municipality" : self.id
         };
-
         let suburbs_cursor: Cursor<SuburbEntity> = match connection
             .collection("suburbs")
             .find(query, mongodb::options::FindOptions::default())
@@ -271,23 +278,32 @@ impl MunicipalityEntity {
         {
             Ok(cursor) => cursor,
             Err(err) => {
-                log::error!("Database error occured when querying timeschedules: {err}");
-                todo!();
+                log::error!("Database error occured when querying suburbs: {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
             }
         };
-
         let suburbs: Vec<SuburbEntity> = match suburbs_cursor.try_collect().await {
             Ok(item) => item,
-            Err(e) => todo!(),
+            Err(err) => {
+                log::error!("Unable to Collect suburbs from cursor {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
+            }
         };
+        // end of suburbs query
 
+        // collect suburbs into a map for quick lookup and moving
         let mut suburbs: HashMap<u32, SuburbEntity> = suburbs
             .into_iter()
             .map(|suburb| (suburb.id.unwrap(), suburb))
             .collect();
-        let mut suburbs_off = Vec::<SuburbEntity>::new();
 
+        // go through schedules
         while let Some(Ok(doc)) = schedule_cursor.next().await {
+            // All the groups that could be affected by the current stage
             let times: Vec<StageTimes> = doc
                 .stages
                 .iter()
@@ -295,6 +311,7 @@ impl MunicipalityEntity {
                 .cloned()
                 .map(|stage_time| stage_time)
                 .collect();
+            // All the filtered groups affected on this day at this time
             let groups: Vec<u32> = times
                 .iter()
                 .map(|schedule| {
@@ -306,29 +323,44 @@ impl MunicipalityEntity {
                 .cloned()
                 .collect();
 
+            // groups query: find all affected groups
             let query = doc! {
                 "_id" : {"$in": groups}
             };
-
             let mut groups_cursor: Cursor<GroupEntity> = match connection
-                .collection("suburbs")
+                .collection("groups")
                 .find(query, mongodb::options::FindOptions::default())
                 .await
             {
                 Ok(cursor) => cursor,
                 Err(err) => {
                     log::error!("Database error occured when querying timeschedules: {err}");
-                    todo!();
+                    return Err(ApiError::ServerError(
+                        "Error occured on the server, sorry :<",
+                    ));
                 }
             };
+            // groups query end
+
+            // go through the relevant groups and place the affected suburbs into
+            //  the suburbs_off array
             while let Some(Ok(group)) = groups_cursor.next().await {
-                let removed: Vec<SuburbEntity>= group.suburbs.iter()
+                let removed: Vec<SuburbEntity> = group
+                    .suburbs
+                    .iter()
                     .filter_map(|key| suburbs.remove(key))
                     .collect();
                 suburbs_off.extend(removed);
             }
         }
-        todo!()
+        // place all the remaining suburbs after checking into the on array
+        suburbs_on = suburbs.drain().map(|(_, value)| value).collect();
+
+        Ok(MapDataDefaultResponse {
+            map_polygons: vec![self.geometry.clone()],
+            on: suburbs_on,
+            off: suburbs_off,
+        })
     }
 }
 
