@@ -1,23 +1,27 @@
 mod api;
 mod auth;
 mod db;
+mod loadshedding;
+mod scraper;
 #[cfg(test)]
 mod tests;
 mod user;
-mod scraper;
-mod loadshedding; 
 
 use crate::scraper::UploadRequest;
 use api::ApiError;
 use auth::{AuthRequest, AuthResponder, AuthType, JWTAuthToken};
 use bson::{doc, Bson};
 use db::Entity;
-use loadshedding::{StageUpdater, MapDataRequest, MunicipalityEntity, LoadSheddingStage};
+use loadshedding::{
+    LoadSheddingStage, MapDataDefaultResponse, MapDataRequest, MunicipalityEntity, StageUpdater,
+};
 use log::{warn, LevelFilter};
 use mongodb::options::{ClientOptions, FindOptions};
 use mongodb::{Client, Cursor};
 use rocket::data::{Limits, ToByteUnit};
+use rocket::futures::future::try_join_all;
 use rocket::futures::lock::Mutex;
+use rocket::futures::TryStreamExt;
 use rocket::serde::json::Json;
 use rocket::{get, post, routes, Build, Rocket, State};
 use std::env;
@@ -26,23 +30,19 @@ use std::time::SystemTime;
 use user::User;
 
 #[post("/fetchMapData", format = "application/json", data = "<request>")]
-async fn fetch_map_data (
+async fn fetch_map_data(
     db: &State<Option<Client>>,
-    loadshedding_stage : &State<Option<Mutex<LoadSheddingStage>>>,
+    loadshedding_stage: &State<Option<Mutex<LoadSheddingStage>>>,
     request: Json<MapDataRequest>,
-) -> Result<&'static str, Json<ApiError<'static>>> {
-    let connection = &db.inner()
-        .as_ref()
-        .unwrap()
-        .database("production");
-    let south_west:Vec<Bson> = request.bottom_left.iter()
+) -> Result<Json<MapDataDefaultResponse>, Json<ApiError<'static>>> {
+    let connection = &db.inner().as_ref().unwrap().database("production");
+    let south_west: Vec<Bson> = request
+        .bottom_left
+        .iter()
         .cloned()
         .map(Bson::from)
         .collect();
-    let north_east:Vec<Bson> = request.top_right.iter()
-        .cloned()
-        .map(Bson::from)
-        .collect();
+    let north_east: Vec<Bson> = request.top_right.iter().cloned().map(Bson::from).collect();
     let query = doc! {
         "geometry.bounds" : {
             "$geoWithin" : {
@@ -54,26 +54,61 @@ async fn fetch_map_data (
     let cursor: Cursor<MunicipalityEntity> = match connection
         .collection("municipality")
         .find(query, options)
-        .await {
-            Ok(cursor) => cursor,
-            Err(err) => {
-                log::error!("Database error occured when handling geo query: {err}");
-                return Err(Json(ApiError::ServerError("Database error occured when handling request. Check logs.")));
-            }
-        };
-    let stage = &loadshedding_stage.inner().as_ref().unwrap().lock().await.stage;
-    
-    todo!()
+        .await
+    {
+        Ok(cursor) => cursor,
+        Err(err) => {
+            log::error!("Database error occured when handling geo query: {err}");
+            return Err(Json(ApiError::ServerError(
+                "Database error occured when handling request. Check logs.",
+            )));
+        }
+    };
+    let stage = &loadshedding_stage
+        .inner()
+        .as_ref()
+        .unwrap()
+        .lock()
+        .await
+        .stage;
+    let municipalities: Vec<MunicipalityEntity> = match cursor.try_collect().await {
+        Ok(item) => item,
+        Err(err) => {
+            log::error!("Unable to Collect suburbs from cursor {err}");
+            return Err(Json(ApiError::ServerError(
+                "Error occured on the server, sorry :<",
+            )));
+        }
+    };
+    let future_data = municipalities.iter().map(|municipality| {
+        municipality.get_regions_at_time(stage.to_owned(), request.time, connection)
+    });
+    let response = try_join_all(future_data).await;
+    if let Ok(data) = response {
+        return Ok(Json(data.into_iter().fold(
+            MapDataDefaultResponse {
+                map_polygons: vec![],
+                on: vec![],
+                off: vec![],
+            },
+            |acc, obj| acc + obj,
+        )));
+    } else {
+        log::error!("Unable to fold MapDataResponse");
+        return Err(Json(ApiError::ServerError(
+            "Error occured on the server, sorry :<",
+        )));
+    }
 }
 
 #[post("/uploadData", format = "application/json", data = "<upload_data>")]
 async fn upload_data(
     state: &State<Option<Client>>,
     upload_data: Json<UploadRequest>,
-    ip: IpAddr
+    ip: IpAddr,
 ) -> Result<&'static str, Json<ApiError<'static>>> {
     if !ip.is_loopback() {
-        return Ok("304 you do not have access to this resource")
+        return Ok("304 you do not have access to this resource");
     }
     if state.is_none() {
         return Err(Json(ApiError::ServerError(
@@ -83,10 +118,12 @@ async fn upload_data(
     let data = upload_data.into_inner();
     // Process the data and return an appropriate response
     // validate
-    let add_data = data.add_data(&state.inner().as_ref().unwrap(),"staging").await;
+    let add_data = data
+        .add_data(&state.inner().as_ref().unwrap(), "staging")
+        .await;
     match add_data {
         Ok(()) => return Ok("Data Successfully added to staging database and ready for review"),
-        Err(e) => return Err(e)
+        Err(e) => return Err(e),
     }
 }
 
@@ -155,7 +192,8 @@ fn setup_logger() -> Result<(), fern::InitError> {
 }
 
 async fn build_rocket() -> Rocket<Build> {
-    let figment = rocket::Config::figment().merge(("limits", Limits::new().limit("json", 7.megabytes())));
+    let figment =
+        rocket::Config::figment().merge(("limits", Limits::new().limit("json", 7.megabytes())));
 
     if let Err(err) = dotenvy::dotenv() {
         warn!("Couldn't read .env file! {err:?}");
@@ -167,7 +205,7 @@ async fn build_rocket() -> Rocket<Build> {
         rocket::custom(figment.clone())
             .attach(StageUpdater)
             .mount("/hello", routes![hi])
-            .mount("/api", routes!(authenticate, create_user))
+            .mount("/api", routes!(authenticate, create_user,fetch_map_data))
             .mount("/upload", routes![upload_data])
             .manage::<Option<Client>>(None)
     };
@@ -177,7 +215,7 @@ async fn build_rocket() -> Rocket<Build> {
             Ok(client) => rocket::custom(figment.clone())
                 .attach(StageUpdater)
                 .mount("/hello", routes![hi])
-                .mount("/api", routes![authenticate, create_user])
+                .mount("/api", routes![authenticate, create_user,fetch_map_data])
                 .mount("/upload", routes![upload_data])
                 .manage(Some(client)),
             Err(err) => {

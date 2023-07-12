@@ -197,7 +197,7 @@ pub struct StageTimes {
 pub struct MapDataRequest {
     pub bottom_left: [f64; 2],
     pub top_right: [f64; 2],
-    pub time: i64,
+    pub time: Option<i64>,
 }
 // Responses
 #[derive(Serialize, Deserialize, Debug)]
@@ -206,6 +206,18 @@ pub struct MapDataDefaultResponse {
     pub map_polygons: Vec<GeoJson>,
     pub on: Vec<SuburbEntity>,
     pub off: Vec<SuburbEntity>,
+}
+
+impl std::ops::Add for MapDataDefaultResponse {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        let mut merged = self;
+        merged.map_polygons.extend(other.map_polygons);
+        merged.on.extend(other.on);
+        merged.off.extend(other.off);
+        merged
+    }
 }
 
 impl MunicipalityEntity {
