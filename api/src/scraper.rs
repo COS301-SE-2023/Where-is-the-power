@@ -90,7 +90,7 @@ impl UploadRequest {
         let result = municipality.insert(&db.database(database)).await;
         if let Ok(result) = result {
             // suburb insertion
-            let municipality_id = result.inserted_id.as_i32().unwrap() as u32;
+            let municipality_id = result.inserted_id.as_object_id().unwrap();
             let mut groups = HashMap::new();
             for (group, group_suburbs) in self.groups {
                 let mut suburbs: Vec<SuburbEntity> = Vec::new();
@@ -106,7 +106,7 @@ impl UploadRequest {
                 for suburb in suburbs.iter() {
                     let result = suburb.insert(&db.database(database)).await;
                     if let Ok(result) = result {
-                        object_ids.push(result.inserted_id.as_i32().unwrap() as u32);
+                        object_ids.push(result.inserted_id.as_object_id().unwrap());
                     }
                 }
                 let group_entity = GroupEntity {
@@ -116,7 +116,7 @@ impl UploadRequest {
                 };
                 let result = group_entity.insert(&db.database(database)).await;
                 if let Ok(result) = result {
-                    groups.insert(group, result.inserted_id.as_i32().unwrap() as u32);
+                    groups.insert(group, result.inserted_id.as_object_id().unwrap());
                 }
             } // end of suburb for
 
@@ -133,7 +133,7 @@ impl UploadRequest {
                     let mut group_ids = Vec::new();
                     for group in groups_in_time {
                         if let Some(group_id) = groups.get(&group) {
-                            group_ids.push(*group_id);
+                            group_ids.push(group_id.clone());
                         }
                     }
                     let stage_times = StageTimes {

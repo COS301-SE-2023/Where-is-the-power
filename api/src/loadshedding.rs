@@ -7,18 +7,18 @@ use std::{
 
 use crate::{api::ApiError, db::Entity};
 use async_trait::async_trait;
-use bson::doc;
+use bson::{doc, oid::ObjectId};
 use chrono::{DateTime, Datelike, FixedOffset, Local, NaiveDateTime, Timelike};
 use log::warn;
 use macros::Entity;
 use mongodb::{Cursor, Database};
 use rocket::{
     fairing::{self, Fairing, Info, Kind},
-    futures::{StreamExt, TryStreamExt, lock::Mutex},
+    futures::{StreamExt, TryStreamExt},
     Rocket,
 };
 use serde::{Deserialize, Serialize};
-use tokio::runtime::Runtime;
+use tokio::{runtime::Runtime, sync::RwLock};
 
 // Rocket Persistent Data Structs
 pub struct StageUpdater;
@@ -144,9 +144,10 @@ pub struct Geometry {
 #[collection_name = "groups"]
 pub struct GroupEntity {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<u32>,
+    #[serde(rename = "_id")]
+    pub id: Option<ObjectId>,
     pub number: i32,
-    pub suburbs: Vec<u32>,
+    pub suburbs: Vec<ObjectId>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Entity)]
@@ -154,8 +155,9 @@ pub struct GroupEntity {
 #[collection_name = "suburbs"]
 pub struct SuburbEntity {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<u32>,
-    pub municipality: u32,
+    #[serde(rename = "_id")]
+    pub id: Option<ObjectId>,
+    pub municipality: ObjectId,
     pub name: String,
     pub geometry: Vec<i32>,
 }
@@ -165,13 +167,14 @@ pub struct SuburbEntity {
 #[collection_name = "timeschedule"]
 pub struct TimeScheduleEntity {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<u32>,
+    #[serde(rename = "_id")]
+    pub id: Option<ObjectId>,
     pub start_hour: i32,
     pub start_minute: i32,
     pub stop_hour: i32,
     pub stop_minute: i32,
     pub stages: Vec<StageTimes>,
-    pub municipality: u32,
+    pub municipality: ObjectId,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Entity)]
@@ -179,7 +182,8 @@ pub struct TimeScheduleEntity {
 #[collection_name = "municipality"]
 pub struct MunicipalityEntity {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<u32>,
+    #[serde(rename = "_id")]
+    pub id: Option<ObjectId>,
     pub name: String,
     pub geometry: GeoJson,
 }
@@ -188,7 +192,7 @@ pub struct MunicipalityEntity {
 #[serde(rename_all = "camelCase")]
 pub struct StageTimes {
     pub stage: i32,
-    pub groups: Vec<u32>,
+    pub groups: Vec<ObjectId>,
 }
 
 // Requests
@@ -308,7 +312,7 @@ impl MunicipalityEntity {
         // end of suburbs query
 
         // collect suburbs into a map for quick lookup and moving
-        let mut suburbs: HashMap<u32, SuburbEntity> = suburbs
+        let mut suburbs: HashMap<ObjectId, SuburbEntity> = suburbs
             .into_iter()
             .map(|suburb| (suburb.id.unwrap(), suburb))
             .collect();
@@ -324,7 +328,7 @@ impl MunicipalityEntity {
                 .map(|stage_time| stage_time)
                 .collect();
             // All the filtered groups affected on this day at this time
-            let groups: Vec<u32> = times
+            let groups: Vec<ObjectId> = times
                 .iter()
                 .map(|schedule| {
                     schedule
@@ -406,21 +410,22 @@ impl Fairing for StageUpdater {
     }
 
     async fn on_ignite(&self, rocket: Rocket<rocket::Build>) -> fairing::Result {
-        let stage_info = Arc::new(Mutex::new(LoadSheddingStage { stage: 0 }));
+        let stage_info = Arc::new(RwLock::new(LoadSheddingStage { stage: 0 }));
         let stage_info_ref = stage_info.clone();
         thread::spawn(move || {
             loop {
-                let stage_info = stage_info_ref.lock();
-                let runtime = Runtime::new().unwrap();
-                let mut info = runtime.block_on(stage_info);
-                let stage = info.fetch_stage();
-                let _ = runtime.block_on(stage);
+                {
+                    let stage_info = stage_info_ref.write();
+                    let runtime = Runtime::new().unwrap();
+                    let mut info = runtime.block_on(stage_info);
+                    let stage = info.fetch_stage();
+                    let _ = runtime.block_on(stage);
+                }
                 // Perform any other necessary processing on stage info
                 thread::sleep(Duration::from_secs(600)); // Sleep for 10 minutes
             }
         });
         let rocket = rocket.manage(Some(stage_info));
-        warn!("The status in fairing is {:?}", rocket.state::<Option<Arc<Mutex<LoadSheddingStage>>>>());
         Ok(rocket)
     }
 }

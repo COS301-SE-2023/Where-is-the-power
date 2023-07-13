@@ -10,7 +10,7 @@ mod user;
 use crate::scraper::UploadRequest;
 use api::ApiError;
 use auth::{AuthRequest, AuthResponder, AuthType, JWTAuthToken};
-use bson::{doc, Bson};
+use bson::doc;
 use db::Entity;
 use loadshedding::{
     LoadSheddingStage, MapDataDefaultResponse, MapDataRequest, MunicipalityEntity, StageUpdater,
@@ -20,7 +20,6 @@ use mongodb::options::{ClientOptions, FindOptions};
 use mongodb::{Client, Cursor};
 use rocket::data::{Limits, ToByteUnit};
 use rocket::futures::future::try_join_all;
-use rocket::futures::lock::Mutex;
 use rocket::futures::TryStreamExt;
 use rocket::serde::json::Json;
 use rocket::{get, post, routes, Build, Rocket, State};
@@ -28,22 +27,18 @@ use std::env;
 use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::SystemTime;
+use tokio::sync::RwLock;
 use user::User;
 
 #[post("/fetchMapData", format = "application/json", data = "<request>")]
 async fn fetch_map_data(
     db: &State<Option<Client>>,
-    loadshedding_stage: &State<Option<Arc<Mutex<LoadSheddingStage>>>>,
+    loadshedding_stage: &State<Option<Arc<RwLock<LoadSheddingStage>>>>,
     request: Json<MapDataRequest>,
 ) -> Result<Json<MapDataDefaultResponse>, Json<ApiError<'static>>> {
-    let connection = &db.inner().as_ref().unwrap().database("production");
-    let south_west: Vec<Bson> = request
-        .bottom_left
-        .iter()
-        .cloned()
-        .map(Bson::from)
-        .collect();
-    let north_east: Vec<Bson> = request.top_right.iter().cloned().map(Bson::from).collect();
+    let connection = &db.inner().as_ref().unwrap().database("staging");
+    let south_west: Vec<f64> = request.bottom_left.iter().cloned().map(|x| x).collect();
+    let north_east: Vec<f64> = request.top_right.iter().cloned().map(|x| x).collect();
     let query = doc! {
         "geometry.bounds" : {
             "$geoWithin" : {
@@ -68,8 +63,9 @@ async fn fetch_map_data(
     let stage = &loadshedding_stage
         .inner()
         .as_ref()
+        .clone()
         .unwrap()
-        .lock()
+        .read()
         .await
         .stage;
     let municipalities: Vec<MunicipalityEntity> = match cursor.try_collect().await {
@@ -205,7 +201,7 @@ async fn build_rocket() -> Rocket<Build> {
     let rocket_no_state = || {
         rocket::custom(figment.clone())
             .mount("/hello", routes![hi])
-            .mount("/api", routes!(authenticate, create_user,fetch_map_data))
+            .mount("/api", routes!(authenticate, create_user, fetch_map_data))
             .mount("/upload", routes![upload_data])
             .attach(StageUpdater)
             .manage::<Option<Client>>(None)
@@ -234,11 +230,6 @@ async fn build_rocket() -> Rocket<Build> {
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
     setup_logger().expect("Couldn't setup logger!");
-
-    let rocket = build_rocket().await;
-    warn!("The status of this is {:?}", rocket.state::<Option<Arc<Mutex<LoadSheddingStage>>>>());
-    let rocket = rocket.launch().await?;
-    warn!("The status of this is {:?}", rocket.state::<Option<Arc<Mutex<LoadSheddingStage>>>>());
-    warn!("Rocket launched");
+    build_rocket().await.launch().await?;
     Ok(())
 }
