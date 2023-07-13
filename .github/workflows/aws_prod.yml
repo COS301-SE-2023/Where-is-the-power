@@ -12,13 +12,13 @@ name: Deploy to Amazon ECS
 on:
   push:
     branches:
-      - dev
+      - main
 
 env:
   AWS_REGION: eu-central-1
   ECR_REPOSITORY: witp
   ECS_SERVICE: witp-server
-  ECS_CLUSTER: DevCluster
+  ECS_CLUSTER: ProdCluster
   ECS_TASK_DEFINITION: .aws/task-definition.json
   CONTAINER_NAME: witp
 
@@ -26,7 +26,7 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    environment: Development 
+    environment: Production 
 
     steps:
       - name: Checkout
