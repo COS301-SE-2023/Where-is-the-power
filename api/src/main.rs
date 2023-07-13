@@ -14,6 +14,7 @@ use db::Entity;
 use log::{warn, LevelFilter};
 use mongodb::options::ClientOptions;
 use mongodb::Client;
+use rocket::data::{Limits, ToByteUnit};
 use rocket::fs::FileServer;
 use rocket::http::ContentType;
 use rocket::serde::json::Json;
@@ -114,7 +115,8 @@ fn setup_logger() -> Result<(), fern::InitError> {
 }
 
 async fn build_rocket() -> Rocket<Build> {
-    let figment = rocket::Config::figment();
+    let figment =
+        rocket::Config::figment().merge(("limits", Limits::new().limit("json", 7.megabytes())));
 
     if let Err(err) = dotenvy::dotenv() {
         warn!("Couldn't read .env file! {err:?}");

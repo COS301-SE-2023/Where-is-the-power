@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     api::ApiError,
     db::Entity,
-    loadshedding::{GroupEntity, MunicipalityEntity, StageTimes, SuburbEntity, TimeScheduleEntity},
+    loadshedding::{GroupEntity, MunicipalityEntity, StageTimes, SuburbEntity, TimeScheduleEntity, GeoJson},
 };
 use bson::Bson;
 use mongodb::Client;
@@ -17,9 +17,10 @@ pub struct UploadResponse(String);
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct UploadRequest {
-    pub groups: HashMap<i32, Vec<String>>,
+    pub groups: HashMap<i32, HashMap<String, Vec<i32>>>,
     pub times: HashMap<String, HashMap<i32, Vec<i32>>>,
     pub municipality: String,
+    pub geo_json: GeoJson
 }
 
 #[derive(Debug,Clone)]
@@ -85,11 +86,11 @@ impl UploadRequest {
         for (group, group_suburbs) in self.groups {
             let mut suburbs: Vec<SuburbEntity> = Vec::new();
             let mut object_ids = Vec::new();
-            for suburb in group_suburbs {
+            for (suburb, geometry) in group_suburbs {
                 suburbs.push(SuburbEntity {
                     id: None,
                     name: String::from(suburb),
-                    geometry: None,
+                    geometry: geometry
                 })
             }
             for suburb in suburbs.iter() {
@@ -117,6 +118,7 @@ impl UploadRequest {
         let municipality = MunicipalityEntity {
             id: None,
             name: self.municipality,
+            geometry: self.geo_json,
         };
         let result = municipality.insert(&db.database(database)).await;
         if let Ok(result) = result {
