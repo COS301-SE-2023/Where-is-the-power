@@ -129,7 +129,6 @@ async fn build_rocket() -> Rocket<Build> {
             .mount("/hello", routes![hi])
             .mount("/api", routes!(authenticate, create_user))
             .mount("/upload", routes![upload_data])
-            .mount("/", FileServer::from("www"))
             .manage::<Option<Client>>(None)
     };
 
@@ -139,7 +138,6 @@ async fn build_rocket() -> Rocket<Build> {
                 .mount("/hello", routes![hi])
                 .mount("/api", routes![authenticate, create_user])
                 .mount("/upload", routes![upload_data])
-                .mount("/", FileServer::from("www"))
                 .manage(Some(client)),
             Err(err) => {
                 warn!("Couldn't create database client! {err:?}");
