@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    sync::{Arc, Mutex},
+    sync::Arc,
     thread,
     time::Duration,
 };
@@ -14,7 +14,7 @@ use macros::Entity;
 use mongodb::{Cursor, Database};
 use rocket::{
     fairing::{self, Fairing, Info, Kind},
-    futures::{StreamExt, TryStreamExt},
+    futures::{StreamExt, TryStreamExt, lock::Mutex},
     Rocket,
 };
 use serde::{Deserialize, Serialize};
@@ -407,19 +407,20 @@ impl Fairing for StageUpdater {
 
     async fn on_ignite(&self, rocket: Rocket<rocket::Build>) -> fairing::Result {
         let stage_info = Arc::new(Mutex::new(LoadSheddingStage { stage: 0 }));
-
         let stage_info_ref = stage_info.clone();
         thread::spawn(move || {
             loop {
-                let mut stage_info = stage_info_ref.lock().unwrap();
+                let stage_info = stage_info_ref.lock();
                 let runtime = Runtime::new().unwrap();
-                let stage = stage_info.fetch_stage();
+                let mut info = runtime.block_on(stage_info);
+                let stage = info.fetch_stage();
                 let _ = runtime.block_on(stage);
                 // Perform any other necessary processing on stage info
                 thread::sleep(Duration::from_secs(600)); // Sleep for 10 minutes
             }
         });
-
-        fairing::Result::Ok(rocket.manage(stage_info))
+        let rocket = rocket.manage(Some(stage_info));
+        warn!("The status in fairing is {:?}", rocket.state::<Option<Arc<Mutex<LoadSheddingStage>>>>());
+        Ok(rocket)
     }
 }

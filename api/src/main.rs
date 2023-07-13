@@ -26,13 +26,14 @@ use rocket::serde::json::Json;
 use rocket::{get, post, routes, Build, Rocket, State};
 use std::env;
 use std::net::IpAddr;
+use std::sync::Arc;
 use std::time::SystemTime;
 use user::User;
 
 #[post("/fetchMapData", format = "application/json", data = "<request>")]
 async fn fetch_map_data(
     db: &State<Option<Client>>,
-    loadshedding_stage: &State<Option<Mutex<LoadSheddingStage>>>,
+    loadshedding_stage: &State<Option<Arc<Mutex<LoadSheddingStage>>>>,
     request: Json<MapDataRequest>,
 ) -> Result<Json<MapDataDefaultResponse>, Json<ApiError<'static>>> {
     let connection = &db.inner().as_ref().unwrap().database("production");
@@ -203,20 +204,20 @@ async fn build_rocket() -> Rocket<Build> {
 
     let rocket_no_state = || {
         rocket::custom(figment.clone())
-            .attach(StageUpdater)
             .mount("/hello", routes![hi])
             .mount("/api", routes!(authenticate, create_user,fetch_map_data))
             .mount("/upload", routes![upload_data])
+            .attach(StageUpdater)
             .manage::<Option<Client>>(None)
     };
 
     match ClientOptions::parse(&db_uri).await {
         Ok(client_options) => match Client::with_options(client_options) {
             Ok(client) => rocket::custom(figment.clone())
-                .attach(StageUpdater)
                 .mount("/hello", routes![hi])
-                .mount("/api", routes![authenticate, create_user,fetch_map_data])
+                .mount("/api", routes!(authenticate, create_user, fetch_map_data))
                 .mount("/upload", routes![upload_data])
+                .attach(StageUpdater)
                 .manage(Some(client)),
             Err(err) => {
                 warn!("Couldn't create database client! {err:?}");
@@ -234,7 +235,10 @@ async fn build_rocket() -> Rocket<Build> {
 async fn main() -> Result<(), rocket::Error> {
     setup_logger().expect("Couldn't setup logger!");
 
-    build_rocket().await.launch().await?;
-
+    let rocket = build_rocket().await;
+    warn!("The status of this is {:?}", rocket.state::<Option<Arc<Mutex<LoadSheddingStage>>>>());
+    let rocket = rocket.launch().await?;
+    warn!("The status of this is {:?}", rocket.state::<Option<Arc<Mutex<LoadSheddingStage>>>>());
+    warn!("Rocket launched");
     Ok(())
 }
