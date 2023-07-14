@@ -5,7 +5,6 @@ use crate::{
     db::Entity,
     loadshedding::{GroupEntity, MunicipalityEntity, StageTimes, SuburbEntity, TimeScheduleEntity, GeoJson},
 };
-use bson::Bson;
 use mongodb::Client;
 use rocket::{serde::json::Json, Responder};
 use serde::{Deserialize, Serialize};
@@ -82,38 +81,6 @@ pub fn convert_to_ints(time_range:&str) -> Result<Times,Json<ApiError<'static>>>
 
 impl UploadRequest {
     pub async fn add_data(self, db: &Client, database: &str) -> Result<(), Json<ApiError<'static>>> {
-        let mut groups = HashMap::new();
-        for (group, group_suburbs) in self.groups {
-            let mut suburbs: Vec<SuburbEntity> = Vec::new();
-            let mut object_ids = Vec::new();
-            for (suburb, geometry) in group_suburbs {
-                suburbs.push(SuburbEntity {
-                    id: None,
-                    name: String::from(suburb),
-                    geometry: geometry
-                })
-            }
-            for suburb in suburbs.iter() {
-                let result = suburb.insert(&db.database(database)).await;
-                if let Ok(result) = result {
-                    if let Bson::ObjectId(object_id) = result.inserted_id {
-                        object_ids.push(object_id);
-                    }
-                }
-            }
-            let group_entity = GroupEntity {
-                id: None,
-                suburbs: object_ids,
-                number: group,
-            };
-            let result = group_entity.insert(&db.database(database)).await;
-            if let Ok(result) = result {
-                if let Bson::ObjectId(object_id) = result.inserted_id {
-                    groups.insert(group, object_id);
-                }
-            }
-        } // end of group for
-
         // we need refactoring, and we need it immediately
         let municipality = MunicipalityEntity {
             id: None,
@@ -122,50 +89,76 @@ impl UploadRequest {
         };
         let result = municipality.insert(&db.database(database)).await;
         if let Ok(result) = result {
-            if let Bson::ObjectId(municipality_id) = result.inserted_id {
-                for (time, stages) in self.times {
-                    // strip
-                    let times = convert_to_ints(&time);
-                    let converted_times = match times {
-                        Ok(times) => times,
-                        Err(e) => return Err(e)
-                    };
-                    let mut stages_for_time: Vec<StageTimes> = Vec::new();
-                    for (stage, groups_in_time) in stages {
-                        let mut group_ids = Vec::new();
-                        for group in groups_in_time {
-                            if let Some(group_id) = groups.get(&group) {
-                                group_ids.push(*group_id);
-                            }
-                        }
-                        let stage_times = StageTimes {
-                            stage: stage,
-                            groups: group_ids,
-                        };
-                        stages_for_time.push(stage_times);
-                    }
-                    // make the object
-                    let schedule = TimeScheduleEntity {
+            // suburb insertion
+            let municipality_id = result.inserted_id.as_object_id().unwrap();
+            let mut groups = HashMap::new();
+            for (group, group_suburbs) in self.groups {
+                let mut suburbs: Vec<SuburbEntity> = Vec::new();
+                let mut object_ids = Vec::new();
+                for (suburb, geometry) in group_suburbs {
+                    suburbs.push(SuburbEntity {
                         id: None,
-                        start_hour: converted_times.start_hour,
-                        start_minute: converted_times.start_minute,
-                        stop_hour: converted_times.end_hour,
-                        stop_minute: converted_times.end_minute,
-                        stages: stages_for_time,
                         municipality: municipality_id,
+                        name: String::from(suburb),
+                        geometry: geometry
+                    })
+                }
+                for suburb in suburbs.iter() {
+                    let result = suburb.insert(&db.database(database)).await;
+                    if let Ok(result) = result {
+                        object_ids.push(result.inserted_id.as_object_id().unwrap());
+                    }
+                }
+                let group_entity = GroupEntity {
+                    id: None,
+                    suburbs: object_ids,
+                    number: group,
+                };
+                let result = group_entity.insert(&db.database(database)).await;
+                if let Ok(result) = result {
+                    groups.insert(group, result.inserted_id.as_object_id().unwrap());
+                }
+            } // end of suburb for
+
+            // timeschedule and group insertion
+            for (time, stages) in self.times {
+                // strip
+                let times = convert_to_ints(&time);
+                let converted_times = match times {
+                    Ok(times) => times,
+                    Err(e) => return Err(e)
+                };
+                let mut stages_for_time: Vec<StageTimes> = Vec::new();
+                for (stage, groups_in_time) in stages {
+                    let mut group_ids = Vec::new();
+                    for group in groups_in_time {
+                        if let Some(group_id) = groups.get(&group) {
+                            group_ids.push(group_id.clone());
+                        }
+                    }
+                    let stage_times = StageTimes {
+                        stage: stage,
+                        groups: group_ids,
                     };
-                    let _ = schedule.insert(&db.database(database)).await;
-                } // end of times loop
-            } else {
-                return Err(Json(ApiError::ServerError(
-                    "For some reason the municpality was not added to the database, this could have happened elsewhere aswell.",
-                )));
-            }
+                    stages_for_time.push(stage_times);
+                }
+                // make the object
+                let schedule = TimeScheduleEntity {
+                    id: None,
+                    start_hour: converted_times.start_hour,
+                    start_minute: converted_times.start_minute,
+                    stop_hour: converted_times.end_hour,
+                    stop_minute: converted_times.end_minute,
+                    stages: stages_for_time,
+                    municipality: municipality_id,
+                };
+                let _ = schedule.insert(&db.database(database)).await;
+            } // end of times loop
         } else {
             return Err(Json(ApiError::ServerError(
                 "For some reason the municpality was not added to the database, this could have happened elsewhere aswell.",
             )));
         }
-        Ok(())
+    Ok(())
     }
 }
