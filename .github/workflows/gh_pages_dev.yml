@@ -26,6 +26,10 @@ jobs:
       env:
         MapboxApiKey: ${{ secrets.TEST_SECRET }}
 
+    - name: Build App
+      woking-directory: ./app/WhereIsThePower
+      run: ionic build --engine=browser
+
     - name: Deploy dev to GitHub Pages
       uses: crazy-max/ghaction-github-pages@v3
       with:
