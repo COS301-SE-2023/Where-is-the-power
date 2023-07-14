@@ -30,6 +30,6 @@ jobs:
       uses: crazy-max/ghaction-github-pages@v3
       with:
         target_branch: gh-test
-        build_dir: ./app/WhereIsThePower/dist/dev
+        build_dir: ./app/WhereIsThePower/www
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
