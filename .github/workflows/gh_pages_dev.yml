@@ -27,7 +27,7 @@ jobs:
         MapboxApiKey: ${{ secrets.TEST_SECRET }}
 
     - name: Build App
-      woking-directory: ./app/WhereIsThePower
+      working-directory: ./app/WhereIsThePower
       run: ionic build --engine=browser
 
     - name: Deploy dev to GitHub Pages
