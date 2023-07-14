@@ -1,0 +1,36 @@
+name: GitHub Pages deployment Dev
+on: 
+  push:
+  pull_request:
+    branches:
+      - dev
+      
+jobs:
+  build-and-deploy-gh-pages:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3 
+    - uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: "npm"
+    - name: Install Dependencies
+      working-directory: ./app/WhereIsThePower
+      run: npm ci
+
+    - name: Update env
+      uses: cschleiden/replace-tokens@v1.2
+      with:
+        tokenPrefix: '{'
+        tokenSuffix: '}'
+        files: ./app/WhereIsThePower/src/environments/environment.ts
+      env:
+        MapboxApiKey: ${{ secrets.TEST_SECRET }}
+
+    - name: Deploy dev to GitHub Pages
+        uses: crazy-max/ghaction-github-pages@v3
+        with:
+          target_branch: gh-test
+          build_dir: dist/dev
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
