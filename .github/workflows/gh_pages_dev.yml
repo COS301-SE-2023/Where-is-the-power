@@ -28,7 +28,7 @@ jobs:
 
     - name: Build App
       working-directory: ./app/WhereIsThePower
-      run: ionic build --engine=browser
+      run: npm run buid:dev
 
     - name: Deploy dev to GitHub Pages
       uses: crazy-max/ghaction-github-pages@v3
