@@ -28,9 +28,9 @@ jobs:
         MapboxApiKey: ${{ secrets.TEST_SECRET }}
 
     - name: Deploy dev to GitHub Pages
-        uses: crazy-max/ghaction-github-pages@v3
-        with:
-          target_branch: gh-test
-          build_dir: dist/dev
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: crazy-max/ghaction-github-pages@v3
+      with:
+        target_branch: gh-test
+        build_dir: dist/dev
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
