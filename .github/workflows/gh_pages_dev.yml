@@ -28,7 +28,7 @@ jobs:
 
     - name: Build App
       working-directory: ./app/WhereIsThePower
-      run: npm run buid:dev
+      run: npm run build:dev
 
     - name: Deploy dev to GitHub Pages
       uses: crazy-max/ghaction-github-pages@v3
