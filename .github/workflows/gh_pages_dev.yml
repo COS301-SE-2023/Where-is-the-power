@@ -13,8 +13,14 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: "18"
-        cache: "npm"
-        cache-dependency-path: ./app/WhereIsThePower/package-lock.json
+      
+    - name: Cache dependencies
+      uses: actions/cache@v2
+      with:
+        path: ~/.npm
+        key: npm-${{ hashFiles('package-lock.json') }}
+        restore-keys: npm-
+
     - name: Install Dependencies
       working-directory: ./app/WhereIsThePower
       run: npm ci
