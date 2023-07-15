@@ -7,5 +7,5 @@ use serde::Serialize;
 pub enum ApiError<'a> {
     AuthError(&'a str),
     ServerError(&'a str),
-    ScraperUploadError(&'a str)
+    ScraperUploadError(&'a str),
 }

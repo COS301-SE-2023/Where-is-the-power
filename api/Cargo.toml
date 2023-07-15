@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+chrono = "0.4"
 fern = "0.6.2"
 humantime = "2.1.0"
 jsonwebtoken = "8.3.0"
