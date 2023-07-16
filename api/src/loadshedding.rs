@@ -1,9 +1,4 @@
-use std::{
-    collections::HashMap,
-    sync::Arc,
-    thread,
-    time::Duration,
-};
+use std::{collections::HashMap, sync::Arc, thread, time::Duration};
 
 use crate::{api::ApiError, db::Entity};
 use async_trait::async_trait;
@@ -11,11 +6,11 @@ use bson::{doc, oid::ObjectId};
 use chrono::{DateTime, Datelike, FixedOffset, Local, NaiveDateTime, Timelike};
 use log::warn;
 use macros::Entity;
-use mongodb::{Cursor, Database};
+use mongodb::{options::FindOneOptions, Client, Cursor, Database};
 use rocket::{
     fairing::{self, Fairing, Info, Kind},
     futures::{StreamExt, TryStreamExt},
-    Rocket,
+    Rocket, Orbit,
 };
 use serde::{Deserialize, Serialize};
 use tokio::{runtime::Runtime, sync::RwLock};
@@ -23,9 +18,17 @@ use tokio::{runtime::Runtime, sync::RwLock};
 // Rocket Persistent Data Structs
 pub struct StageUpdater;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone, Entity)]
+#[serde(rename_all = "camelCase")]
+#[collection_name = "stage_log"]
 pub struct LoadSheddingStage {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "_id")]
+    pub id: Option<ObjectId>,
     pub stage: i32,
+    pub time: i64,
+    #[serde(skip_serializing, skip_deserializing)]
+    db: Option<Client>,
 }
 
 // GeoJson Struct
@@ -389,6 +392,8 @@ impl LoadSheddingStage {
                 Ok(num) => {
                     if num >= 1 {
                         self.stage = num - 1;
+                        self.time = Local::now().timestamp();
+                        self.log_stage_data().await;
                     }
                 }
                 Err(_) => warn!("Eskom API did not return a integer when we queried it."),
@@ -398,6 +403,40 @@ impl LoadSheddingStage {
         }
         Ok(self.stage)
     }
+
+    pub async fn log_stage_data(&self) {
+        if let Some(client) = &self.db {
+            let db_con = &client.database("production");
+            let query = doc! {
+                "time" : 1
+            };
+            let find_options = FindOneOptions::builder().sort(query).build();
+
+            // Execute the query to find the latest item
+            let result: LoadSheddingStage = match db_con
+                .collection("stage_log")
+                .find_one(None, find_options)
+                .await
+                .unwrap()
+            {
+                Some(data) => data,
+                None => LoadSheddingStage {
+                    id: None,
+                    stage: -1,
+                    time: 0,
+                    db: None,
+                },
+            };
+            if result.stage != self.stage {
+                let _ = self.insert(db_con).await;
+            }
+        } else {
+            return ();
+        }
+    }
+    pub fn set_db(&mut self, db: &Client) {
+        self.db = Some(db.to_owned());
+    }
 }
 
 #[async_trait]
@@ -405,12 +444,17 @@ impl Fairing for StageUpdater {
     fn info(&self) -> Info {
         Info {
             name: "Stage Updater",
-            kind: Kind::Ignite,
+            kind: Kind::Ignite|Kind::Liftoff,
         }
     }
 
     async fn on_ignite(&self, rocket: Rocket<rocket::Build>) -> fairing::Result {
-        let stage_info = Arc::new(RwLock::new(LoadSheddingStage { stage: 0 }));
+        let stage_info = Arc::new(RwLock::new(LoadSheddingStage {
+            id: None,
+            stage: 0,
+            time: Local::now().timestamp(),
+            db: None,
+        }));
         let stage_info_ref = stage_info.clone();
         thread::spawn(move || {
             loop {
@@ -427,5 +471,13 @@ impl Fairing for StageUpdater {
         });
         let rocket = rocket.manage(Some(stage_info));
         Ok(rocket)
+    }
+    async fn on_liftoff(&self, rocket: & Rocket<Orbit>) {
+        let db = rocket.state::<Option<Client>>().unwrap();
+        let stage_updater = rocket.state::<Option<Arc<RwLock<LoadSheddingStage>>>>().unwrap();
+        if let Some(stage) = stage_updater {
+            let mut stage_ref = stage.as_ref().clone().write().await;
+            stage_ref.set_db(&db.clone().unwrap());
+        }
     }
 }
