@@ -25,7 +25,6 @@ struct DnsSecret {
 
 pub async fn update_dns() -> Result<(), reqwest::Error> {
     if let Ok(secret) = env::var("DNS_SECRETS") {
-        debug!("Secrets: {secret}");
         let secret: DnsSecret =
             serde_json::from_str::<DnsSecret>(&secret).expect("Couldn't parse DNS_SECRETS env var");
 
