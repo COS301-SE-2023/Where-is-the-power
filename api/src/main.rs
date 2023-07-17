@@ -1,6 +1,7 @@
 mod api;
 mod auth;
 mod db;
+mod dns;
 mod loadshedding;
 mod scraper;
 #[cfg(test)]
@@ -194,10 +195,6 @@ async fn build_rocket() -> Rocket<Build> {
     let figment =
         rocket::Config::figment().merge(("limits", Limits::new().limit("json", 7.megabytes())));
 
-    if let Err(err) = dotenvy::dotenv() {
-        warn!("Couldn't read .env file! {err:?}");
-    }
-
     let db_uri = env::var("DATABASE_URI").unwrap_or(String::from(""));
 
     let rocket_no_state = || {
@@ -232,6 +229,14 @@ async fn build_rocket() -> Rocket<Build> {
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
     setup_logger().expect("Couldn't setup logger!");
+
+    if let Err(err) = dotenvy::dotenv() {
+        warn!("Couldn't read .env file! {err:?}");
+    }
+    if let Err(err) = dns::update_dns().await {
+        warn!("Couldn't setup DNS: {err:?}");
+    }
+
     build_rocket().await.launch().await?;
     Ok(())
 }

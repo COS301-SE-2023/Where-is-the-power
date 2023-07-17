@@ -3,3 +3,4 @@
 !test_sk.pem
 .env
 macros/target
+Cargo.lock
