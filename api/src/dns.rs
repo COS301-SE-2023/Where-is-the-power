@@ -1,5 +1,5 @@
-use log::debug;
-use serde::Serialize;
+use log::{debug, warn};
+use serde::{Deserialize, Serialize};
 use std::env;
 use std::net::Ipv4Addr;
 use std::str::FromStr;
@@ -13,16 +13,27 @@ pub struct DnsRecord {
     pub proxied: Option<bool>,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+struct DnsSecret {
+    pub cloudflare_api_key: String,
+    pub cloudflare_auth_email: String,
+    pub cloudflare_zone_id: String,
+    pub dns_record_name: String,
+    pub dns_record_id: String,
+}
+
 pub async fn update_dns() -> Result<(), reqwest::Error> {
-    if let Ok(record) = env::var("UPDATE_DNS") {
-        let api_key = env::var("CLOUDFLARE_API_KEY")
-            .expect("CLOUDFLARE_API_KEY environment variable not set");
-        let zone_id = env::var("CLOUDFLARE_ZONE_ID")
-            .expect("CLOUDFLARE_ZONE_ID environment variable not set");
-        let auth_email = env::var("CLOUDFLARE_AUTH_EMAIL")
-            .expect("CLOUDFLARE_AUTH_EMAIL environment variable not set");
-        let record_name = env::var("UPDATE_DNS_RECORD_NAME")
-            .expect("UPDATE_DNS_RECORD_NAME environment variable not set");
+    if let Ok(secret) = env::var("DNS_SECRETS") {
+        debug!("Secrets: {secret}");
+        let secret: DnsSecret =
+            serde_json::from_str::<DnsSecret>(&secret).expect("Couldn't parse DNS_SECRETS env var");
+
+        let zone_id = secret.cloudflare_zone_id;
+        let api_key = secret.cloudflare_api_key;
+        let auth_email = secret.cloudflare_auth_email;
+        let record_id = secret.dns_record_id;
+        let record_name = secret.dns_record_name;
 
         let client = reqwest::Client::new();
         let ip = Ipv4Addr::from_str(
@@ -45,7 +56,7 @@ pub async fn update_dns() -> Result<(), reqwest::Error> {
 
         let res = client
             .put(format!(
-                "https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records/{record}"
+                "https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records/{record_id}"
             ))
             .header("X-Auth-Email", auth_email)
             .header("X-Auth-Key", &api_key)
@@ -55,6 +66,8 @@ pub async fn update_dns() -> Result<(), reqwest::Error> {
 
         debug!("DNS update response: {res:?}");
         debug!("Response body: {}", res.text().await?);
+    } else {
+        warn!("DNS_SECRETS environment variable not set. Won't attempt to update DNS records");
     }
     Ok(())
 }
