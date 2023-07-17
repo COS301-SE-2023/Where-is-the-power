@@ -477,7 +477,9 @@ impl Fairing for StageUpdater {
         let stage_updater = rocket.state::<Option<Arc<RwLock<LoadSheddingStage>>>>().unwrap();
         if let Some(stage) = stage_updater {
             let mut stage_ref = stage.as_ref().clone().write().await;
-            stage_ref.set_db(&db.clone().unwrap());
+            if let Some(db) = db {
+                stage_ref.set_db(&db.clone());
+            }
         }
     }
 }
