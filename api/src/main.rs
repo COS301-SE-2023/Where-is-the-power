@@ -1,11 +1,12 @@
 mod api;
 mod auth;
 mod db;
+mod dns;
+mod loadshedding;
+mod scraper;
 #[cfg(test)]
 mod tests;
 mod user;
-mod scraper;
-mod loadshedding; 
 
 use crate::scraper::UploadRequest;
 use api::ApiError;
@@ -26,10 +27,10 @@ use user::User;
 async fn upload_data(
     state: &State<Option<Client>>,
     upload_data: Json<UploadRequest>,
-    ip: IpAddr
+    ip: IpAddr,
 ) -> Result<&'static str, Json<ApiError<'static>>> {
     if !ip.is_loopback() {
-        return Ok("304 you do not have access to this resource")
+        return Ok("304 you do not have access to this resource");
     }
     if state.is_none() {
         return Err(Json(ApiError::ServerError(
@@ -39,10 +40,12 @@ async fn upload_data(
     let data = upload_data.into_inner();
     // Process the data and return an appropriate response
     // validate
-    let add_data = data.add_data(&state.inner().as_ref().unwrap(),"staging").await;
+    let add_data = data
+        .add_data(&state.inner().as_ref().unwrap(), "staging")
+        .await;
     match add_data {
         Ok(()) => return Ok("Data Successfully added to staging database and ready for review"),
-        Err(e) => return Err(e)
+        Err(e) => return Err(e),
     }
 }
 
@@ -111,11 +114,8 @@ fn setup_logger() -> Result<(), fern::InitError> {
 }
 
 async fn build_rocket() -> Rocket<Build> {
-    let figment = rocket::Config::figment().merge(("limits", Limits::new().limit("json", 7.megabytes())));
-
-    if let Err(err) = dotenvy::dotenv() {
-        warn!("Couldn't read .env file! {err:?}");
-    }
+    let figment =
+        rocket::Config::figment().merge(("limits", Limits::new().limit("json", 7.megabytes())));
 
     let db_uri = env::var("DATABASE_URI").unwrap_or(String::from(""));
 
@@ -150,7 +150,13 @@ async fn build_rocket() -> Rocket<Build> {
 async fn main() -> Result<(), rocket::Error> {
     setup_logger().expect("Couldn't setup logger!");
 
-    build_rocket().await.launch().await?;
+    if let Err(err) = dotenvy::dotenv() {
+        warn!("Couldn't read .env file! {err:?}");
+    }
+    if let Err(err) = dns::update_dns().await {
+        warn!("Couldn't setup DNS: {err:?}");
+    }
 
+    build_rocket().await.launch().await?;
     Ok(())
 }
