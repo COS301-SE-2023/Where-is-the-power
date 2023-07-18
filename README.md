@@ -1,6 +1,13 @@
 <div align="center">
-    <h1>Where is the power 💡</h1>
-    <img alt="logo" height="200px" src="https://user-images.githubusercontent.com/14026724/236333707-7c8ed21b-b0e0-4166-ab95-e9a08a842a87.jpg">
+
+[![codecov](https://codecov.io/gh/COS301-SE-2023/Where-is-the-power/branch/main/graph/badge.svg?token=V7DD9L1UAC)](https://codecov.io/gh/COS301-SE-2023/Where-is-the-power)
+
+![Uptime Robot status](https://img.shields.io/uptimerobot/status/m794667493-8d7c54a86f9f4bc87befd295?label=Server%20Status)
+[![Commits](https://img.shields.io/github/commit-activity/w/COS301-SE-2023/Where-is-the-power)](https://github.com/COS301-SE-2023/Where-is-the-power/activity)
+[![GitHub issues](https://img.shields.io/github/issues-raw/COS301-SE-2023/Where-is-the-power)](https://github.com/COS301-SE-2023/Where-is-the-power/issues)
+    
+<h1>Where is the power 💡</h1>
+<img alt="logo" height="200px" src="https://user-images.githubusercontent.com/14026724/236333707-7c8ed21b-b0e0-4166-ab95-e9a08a842a87.jpg">
 </div>
 
 <br>
@@ -17,7 +24,14 @@ to help assist users navigate their routes through these dark times.
 # Demos
 - ## Demo 1
     - [BytemyCode Demo 1 Video](https://drive.google.com/file/d/10su_NZ4v-KUKky87HE0h-KsPnfg_5ynS/view)
-    - [System Requirements Specifications](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Software-Requirements-Specification-(SRS))   
+    - [System Requirements Specifications](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Software-Requirements-Specification-(SRS))
+- ## Demo 2
+    - [BytemyCode Demo 2 Video](https://drive.google.com/file/d/1gnUPZZERiG1_7zgNZKQTL3aRJQPowEPz/view)
+    - [Coding Standards Document](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Coding-Standards)
+    - [User Manual](https://github.com/COS301-SE-2023/Where-is-the-power/files/11878231/User_Manual.pdf)
+    - [System Requirements Specifications](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Software-Requirements-Specification-(SRS))
+    - [Architectural Requirements Document](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Architectural-Requirements-Document)    
+   
 
 
 # About the repo ℹ️

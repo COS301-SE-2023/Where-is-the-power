@@ -1,15 +1,28 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>
-      Tab 4
+      Statistics
     </ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Tab 4</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <ion-content>
+    <ion-grid>
+      <ion-row class="ion-justify-content-center ion-padding-bottom">
+        <ion-col size="10" offset="1" size-md="4" offset-md="0" class="ion-text-center">
+          <ion-text><h2>Loadshedding for Today</h2></ion-text>
+          <div class="doughnutChart-container ion-justify-content-center">
+            <canvas #doughnutChartRef id="doughnutChart"></canvas>
+          </div>
+        </ion-col>
+        <ion-col size="12" size-md="7" offset-md="1" class="ion-text-center ion-padding-vertical ion-justify-content-center ion-padding-vertical">
+          <ion-text><h2>Loadshedding for this Week</h2></ion-text>
+          <div class="chart-container">
+            <canvas #barChartRef id="barChart"></canvas>
+          </div>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </ion-content>
 </ion-content>

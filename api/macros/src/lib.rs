@@ -63,7 +63,8 @@ pub fn insertable(input: TokenStream) -> TokenStream {
                             ..
                         })) = args.first().unwrap()
                         {
-                            has_id = segments.last().unwrap().ident.to_string() == "u32";
+                            let last_segment = segments.last().unwrap().ident.to_string();
+                            has_id = last_segment == "ObjectId" || last_segment == "u32";
                         }
                     }
                 }

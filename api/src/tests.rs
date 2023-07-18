@@ -1,11 +1,12 @@
 use super::build_rocket;
 use crate::auth::{AuthClaims, AuthRequest, AuthType, JWTAuthToken};
+use crate::scraper::convert_to_ints;
 // use crate::db::Entity;
 // use crate::user::User;
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
 use rocket::http::{ContentType, Status};
 use rocket::local::asynchronous::Client;
-use rocket::serde::json;
+use rocket::serde::json::{self};
 use rocket::uri;
 use tokio::io::AsyncReadExt;
 use tokio::task::spawn_blocking;
@@ -67,6 +68,45 @@ async fn test_anonymous_auth() {
 
 #[rocket::async_test]
 async fn test_find_user() {}
+
+#[test]
+fn time_range_validation_test_fails() {
+    let cases = vec![
+        "giberish",
+        "giber-ish",
+        "gi:ber-I:sh",
+        "1:3b-e:r",
+        "1::30-0:00",
+        ":1:2-23",
+        "1-2",
+        "23:60-22:00",
+    ];
+    let _ = cases
+        .iter()
+        .map(|case| {
+            let result = convert_to_ints(case);
+            assert!(result.is_err(), "Failed to protect against poluted Data")
+        })
+        .collect::<Vec<_>>();
+}
+
+#[test]
+fn time_range_validation_test_pass() {
+    let cases = vec![
+        "1:20 - 2:30",
+        "  2:3 - 3: 0",
+        "22:30-2:03",
+        "1 : 3 - 2 : 3",
+        "23:59-00:00",
+    ];
+    let _ = cases
+        .iter()
+        .map(|case| {
+            let result = convert_to_ints(case);
+            assert!(result.is_ok(), "False Negative")
+        })
+        .collect::<Vec<_>>();
+}
 
 // #[rocket::async_test]
 // async fn test_create_user() {
