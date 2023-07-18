@@ -95,8 +95,14 @@ pub fn insertable(input: TokenStream) -> TokenStream {
     };
 
     let find = quote! {
-        async fn query(filter: bson::document::Document, db: &mongodb::Database) -> std::result::Result<mongodb::Cursor<Output>, mongodb::error::Error> {
-            db.collection::<#ident>(#collection_name).find().await
+        async fn query(filter: bson::document::Document, db: &mongodb::Database) -> std::result::Result<mongodb::Cursor<Self::Output>, mongodb::error::Error> {
+            db.collection::<#ident>(#collection_name).find(filter, None).await
+        }
+    };
+
+    let update = quote! {
+        async fn update(&mut self, update: mongodb::options::UpdateModifications, db: &mongodb::Database) -> std::result::Result<mongodb::results::UpdateResult, mongodb::error::Error> {
+            db.collection::<#ident>(#collection_name).update_one(bson::ser::to_document(&self).unwrap(), update, None).await
         }
     };
 
@@ -108,6 +114,7 @@ pub fn insertable(input: TokenStream) -> TokenStream {
             #insert
             #delete
             #find
+            #update
         }
     }
     .into()

@@ -10,20 +10,20 @@ mod user;
 
 use crate::scraper::UploadRequest;
 use api::ApiError;
+use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use auth::{AuthRequest, AuthResponder, AuthType, JWTAuthToken};
-use bson::doc;
+use bson::{doc, Document};
 use db::Entity;
 use loadshedding::{
     LoadSheddingStage, MapDataDefaultResponse, MapDataRequest, MunicipalityEntity, StageUpdater,
 };
-use log::{warn, LevelFilter};
+use log::{error, info, warn, LevelFilter};
 use mongodb::options::{ClientOptions, FindOptions};
 use mongodb::{Client, Cursor};
 use rocket::data::{Limits, ToByteUnit};
-use rocket::fs::FileServer;
 use rocket::futures::future::try_join_all;
+use rocket::futures::stream::TryNext;
 use rocket::futures::TryStreamExt;
-use rocket::http::ContentType;
 use rocket::serde::json::Json;
 use rocket::{get, post, routes, Build, Rocket, State};
 use std::env;
@@ -31,7 +31,7 @@ use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::SystemTime;
 use tokio::sync::RwLock;
-use user::User;
+use user::{NewUser, User};
 
 #[post("/fetchMapData", format = "application/json", data = "<request>")]
 async fn fetch_map_data(
@@ -130,6 +130,7 @@ async fn upload_data(
 #[post("/auth", format = "application/json", data = "<auth_request>")]
 async fn authenticate(
     auth_request: Json<AuthRequest>,
+    state: &State<Option<Client>>,
 ) -> Result<AuthResponder, Json<ApiError<'static>>> {
     match auth_request.auth_type {
         AuthType::Anonymous => Ok(AuthResponder {
@@ -139,14 +140,62 @@ async fn authenticate(
                 "cookie=some_cookie;expires=0;path=/;SameSite=Strict".to_string(),
             ),
         }),
-        AuthType::User => unimplemented!(),
+        AuthType::User => {
+            let db = state.inner().as_ref().unwrap();
+
+            let email = auth_request.email.clone();
+
+            if auth_request.password.is_none() {
+                return Err(Json(ApiError::AuthError("Missing password")));
+            }
+
+            let password = auth_request.password.clone().unwrap();
+            let mut doc = Document::new();
+            doc.insert("email", email);
+
+            match User::query(doc, &db.database("witp")).await {
+                Ok(mut result) => match result.try_next().await {
+                    Ok(user) => {
+                        if user.is_none() {
+                            return Err(Json(ApiError::AuthError("No such user")));
+                        }
+                        let user = user.unwrap();
+
+                        let argon = Argon2::default();
+                        let hash = PasswordHash::new(&user.password_hash).unwrap();
+                        match argon.verify_password(password.as_bytes(), &hash) {
+                            Ok(_) => Ok(AuthResponder {
+                                inner: Json(JWTAuthToken::new(auth_request.auth_type).unwrap()),
+                                header: rocket::http::Header::new(
+                                    "Set-Cookie",
+                                    "cookie=some_cookie;expires=0;path=/;SameSite=Strict"
+                                        .to_string(),
+                                ),
+                            }),
+                            Err(err) => {
+                                info!("Password hash incorrect, rejecting user login: {err:?}");
+                                Err(Json(ApiError::AuthError("Incorrect password")))
+                            }
+                        }
+                    }
+                    Err(err) => {
+                        error!("Couldn't fetch user from result: {err:?}");
+                        Err(Json(ApiError::ServerError("Couldn't resolve user")))
+                    }
+                },
+                Err(err) => {
+                    error!("Couldn't query database: {err:?}");
+                    Err(Json(ApiError::ServerError("Couldn't query database")))
+                }
+            }
+        }
     }
 }
 
 #[post("/user", format = "application/json", data = "<new_user>")]
 async fn create_user(
     state: &State<Option<Client>>,
-    new_user: Json<User>,
+    new_user: Json<NewUser>,
 ) -> Result<&'static str, Json<ApiError<'static>>> {
     if state.is_none() {
         return Err(Json(ApiError::ServerError(
@@ -156,7 +205,7 @@ async fn create_user(
 
     let state = state.inner().as_ref().unwrap();
 
-    new_user
+    User::from(new_user.into_inner())
         .insert(&state.database("wip"))
         .await
         .expect("Couldn't insert new user!");
@@ -165,6 +214,7 @@ async fn create_user(
 }
 
 #[get("/mock")]
+#[allow(dead_code)]
 async fn mock_data() -> Result<(), Json<ApiError<'static>>> {
     todo!("Implement")
 }
