@@ -6,11 +6,12 @@ use bson::{doc, oid::ObjectId};
 use chrono::{DateTime, Datelike, FixedOffset, Local, NaiveDateTime, Timelike};
 use log::warn;
 use macros::Entity;
-use mongodb::{options::FindOneOptions, Client, Cursor, Database};
+use mongodb::{options::FindOneOptions, options::FindOptions, Client, Cursor, Database};
 use rocket::{
     fairing::{self, Fairing, Info, Kind},
     futures::{StreamExt, TryStreamExt},
-    Rocket, Orbit,
+    time::Time,
+    Orbit, Rocket,
 };
 use serde::{Deserialize, Serialize};
 use tokio::{runtime::Runtime, sync::RwLock};
@@ -227,6 +228,7 @@ impl std::ops::Add for MapDataDefaultResponse {
     }
 }
 
+// entity implimentations:
 impl MunicipalityEntity {
     pub async fn get_regions_at_time(
         &self,
@@ -236,9 +238,9 @@ impl MunicipalityEntity {
     ) -> Result<MapDataDefaultResponse, ApiError> {
         let mut suburbs_off = Vec::<SuburbEntity>::new();
         let suburbs_on: Vec<SuburbEntity>;
-
+        // South African Standard Time Offset
+        let sast = FixedOffset::east_opt(2 * 3600).unwrap();
         // get search time
-        let sast = FixedOffset::east_opt(2 * 3600).unwrap(); // SAST
         let time_to_search: DateTime<FixedOffset>;
         if let Some(time) = time {
             time_to_search =
@@ -383,6 +385,95 @@ impl MunicipalityEntity {
     }
 }
 
+impl SuburbEntity {
+    pub async fn get_data(&mut self, connection: &Database) -> Result<SuburbEntity, ApiError> {
+        // queries
+        // get the relevant group
+        let query = doc! {
+            "suburbs" : {
+                "$in" : [self.id]
+            },
+            "municipality": self.municipality
+        };
+        let group: GroupEntity = match connection
+            .collection("groups")
+            .find_one(query, None)
+            .await
+            .unwrap()
+        {
+            Some(group) => group,
+            None => {
+                warn!("Error, a suburb is not associated with a group: {:?}", self);
+                return Err(ApiError::ServerError(
+                    "Group cannot be identified for specified suburb",
+                ));
+            }
+        };
+
+        // get all the stage changes from the past week
+        let one_week_ago = (Local::now() - chrono::Duration::weeks(1)).timestamp();
+        let query = doc! {
+            "timestamp": {
+                "$gte": one_week_ago
+            }
+        };
+        let find_options = FindOptions::builder()
+            .sort(doc! { "timestamp": -1 })
+            .build();
+        let stage_change_cursor: Cursor<LoadSheddingStage> = match connection
+            .collection("stage_log")
+            .find(query, find_options)
+            .await
+        {
+            Ok(cursor) => cursor,
+            Err(err) => {
+                log::error!("Database error occured when querying suburbs: {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
+            }
+        };
+        let stage_changes: Vec<LoadSheddingStage> = match stage_change_cursor.try_collect().await {
+            Ok(item) => item,
+            Err(err) => {
+                log::error!("Unable to Collect suburbs from cursor {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
+            }
+        };
+
+        // get the timeschedules
+        let query = doc! {
+            "municipality" : self.municipality,
+        };
+        let timeschedule_cursor: Cursor<TimeScheduleEntity> = match connection
+            .collection("timeschedule")
+            .find(query, None)
+            .await
+        {
+            Ok(cursor) => cursor,
+            Err(err) => {
+                log::error!("Database error occured when querying suburbs: {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
+            }
+        };
+        let schedule: Vec<TimeScheduleEntity> = match timeschedule_cursor.try_collect().await {
+            Ok(item) => item,
+            Err(err) => {
+                log::error!("Unable to Collect suburbs from cursor {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
+            }
+        };
+
+        todo!();
+    }
+}
+
 // Rocket State Loop Objects
 impl LoadSheddingStage {
     pub async fn fetch_stage(&mut self) -> Result<i32, reqwest::Error> {
@@ -444,7 +535,7 @@ impl Fairing for StageUpdater {
     fn info(&self) -> Info {
         Info {
             name: "Stage Updater",
-            kind: Kind::Ignite|Kind::Liftoff,
+            kind: Kind::Ignite | Kind::Liftoff,
         }
     }
 
@@ -472,9 +563,11 @@ impl Fairing for StageUpdater {
         let rocket = rocket.manage(Some(stage_info));
         Ok(rocket)
     }
-    async fn on_liftoff(&self, rocket: & Rocket<Orbit>) {
+    async fn on_liftoff(&self, rocket: &Rocket<Orbit>) {
         let db = rocket.state::<Option<Client>>().unwrap();
-        let stage_updater = rocket.state::<Option<Arc<RwLock<LoadSheddingStage>>>>().unwrap();
+        let stage_updater = rocket
+            .state::<Option<Arc<RwLock<LoadSheddingStage>>>>()
+            .unwrap();
         if let Some(stage) = stage_updater {
             let mut stage_ref = stage.as_ref().clone().write().await;
             if let Some(db) = db {

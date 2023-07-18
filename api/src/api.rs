@@ -8,4 +8,5 @@ pub enum ApiError<'a> {
     AuthError(&'a str),
     ServerError(&'a str),
     ScraperUploadError(&'a str),
+    RequestError(&'a str),
 }
