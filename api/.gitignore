@@ -1,4 +1,5 @@
 *.pem
+!global-bundle.pem
 !test_pk.pem
 !test_sk.pem
 .env
