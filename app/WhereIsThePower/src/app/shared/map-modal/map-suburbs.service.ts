@@ -9,7 +9,7 @@ export class MapSuburbsService {
 
   httpOptions = {
     headers: new HttpHeaders({
-      ContentType: 'application/json'
+      'Content-Type': 'application/json'
     })
   }
 
@@ -21,8 +21,6 @@ export class MapSuburbsService {
   constructor(private httpClient: HttpClient) { }
 
   getSuburbData() {
-    this.httpClient.post(this.apiUrl, this.body, this.httpOptions).subscribe((data) => {
-      console.log(data);
-    });
+    return this.httpClient.post(this.apiUrl, this.body, this.httpOptions);
   }
 }
