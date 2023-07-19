@@ -19,6 +19,9 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   constructor(private mapSuburbsService: MapSuburbsService) { }
   map: any;
   ngOnInit() {
+    this.mapSuburbsService.getSuburbData().subscribe((data: any) => {
+      console.log(data);
+    });
   }
 
   ngAfterViewInit() {
