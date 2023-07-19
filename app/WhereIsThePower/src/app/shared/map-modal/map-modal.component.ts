@@ -138,7 +138,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       });
     });
 
-
+    this.mapSuburbsService.getSuburbData();
   }
 }
 

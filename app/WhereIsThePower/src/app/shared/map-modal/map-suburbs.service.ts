@@ -5,7 +5,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
   providedIn: 'root'
 })
 export class MapSuburbsService {
-  apiUrl = 'https://witpa.codelog.co.za:8000/api/fetchMapData'
+  apiUrl = 'http://witpa.codelog.co.za/api/fetchMapData'
 
   httpOptions = {
     headers: new HttpHeaders({
@@ -16,7 +16,7 @@ export class MapSuburbsService {
   body = {
     "bottomLeft": [-90, -180],
     "topRight": [90, 180]
-  };
+  }
 
   constructor(private httpClient: HttpClient) { }
 
