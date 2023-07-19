@@ -13,9 +13,16 @@ export class MapSuburbsService {
     })
   }
 
-  constructor(private _httpClient: HttpClient) { }
+  body = {
+    "bottomLeft": [-90, -180],
+    "topRight": [90, 180]
+  };
+
+  constructor(private httpClient: HttpClient) { }
 
   getSuburbData() {
-
+    this.httpClient.post(this.apiUrl, this.body, this.httpOptions).subscribe((data) => {
+      console.log(data);
+    });
   }
 }
