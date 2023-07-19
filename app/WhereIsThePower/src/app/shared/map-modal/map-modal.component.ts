@@ -6,6 +6,7 @@ import {
 import { environment } from 'src/environments/environment';
 //import * as mapboxgl from 'mapbox-gl';
 //import * as MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
+import { MapSuburbsService } from './map-suburbs.service';
 declare let MapboxDirections: any;
 declare let mapboxgl: any;
 
@@ -15,7 +16,7 @@ declare let mapboxgl: any;
   styleUrls: ['./map-modal.component.scss'],
 })
 export class MapModalComponent implements OnInit, AfterViewInit {
-  constructor() { }
+  constructor(private mapSuburbsService: MapSuburbsService) { }
   map: any;
   ngOnInit() {
   }
@@ -136,6 +137,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         }
       });
     });
+
+
   }
 }
 
