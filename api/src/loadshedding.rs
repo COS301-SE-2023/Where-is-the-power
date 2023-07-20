@@ -1,16 +1,15 @@
-use std::{collections::HashMap, sync::Arc, thread, time::Duration};
+use std::{collections::HashMap, sync::Arc, thread};
 
 use crate::{api::ApiError, db::Entity};
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId};
-use chrono::{DateTime, Datelike, FixedOffset, Local, NaiveDateTime, Timelike};
+use chrono::{DateTime, Datelike, FixedOffset, Local, NaiveDateTime, Timelike, Duration};
 use log::warn;
 use macros::Entity;
 use mongodb::{options::FindOneOptions, options::FindOptions, Client, Cursor, Database};
 use rocket::{
     fairing::{self, Fairing, Info, Kind},
     futures::{StreamExt, TryStreamExt},
-    time::Time,
     Orbit, Rocket,
 };
 use serde::{Deserialize, Serialize};
@@ -229,6 +228,16 @@ impl std::ops::Add for MapDataDefaultResponse {
 }
 
 // entity implimentations:
+fn get_date_time(time: Option<i64>) -> DateTime<FixedOffset> {
+    // South African Standard Time Offset
+    let sast = FixedOffset::east_opt(2 * 3600).unwrap();
+    // get search time
+    match time {
+        Some(time) => DateTime::from_utc(NaiveDateTime::from_timestamp_opt(time, 0).unwrap(), sast),
+        None => Local::now().with_timezone(&sast),
+    }
+}
+
 impl MunicipalityEntity {
     pub async fn get_regions_at_time(
         &self,
@@ -238,16 +247,7 @@ impl MunicipalityEntity {
     ) -> Result<MapDataDefaultResponse, ApiError> {
         let mut suburbs_off = Vec::<SuburbEntity>::new();
         let suburbs_on: Vec<SuburbEntity>;
-        // South African Standard Time Offset
-        let sast = FixedOffset::east_opt(2 * 3600).unwrap();
-        // get search time
-        let time_to_search: DateTime<FixedOffset>;
-        if let Some(time) = time {
-            time_to_search =
-                DateTime::from_utc(NaiveDateTime::from_timestamp_opt(time, 0).unwrap(), sast);
-        } else {
-            time_to_search = Local::now().with_timezone(&sast);
-        }
+        let time_to_search: DateTime<FixedOffset> = get_date_time(time);
 
         // schedule query: all that fit the search time
         let query = doc! {
@@ -411,6 +411,7 @@ impl SuburbEntity {
         };
 
         // get all the stage changes from the past week
+        let time_now = Local::now();
         let one_week_ago = (Local::now() - chrono::Duration::weeks(1)).timestamp();
         let query = doc! {
             "timestamp": {
@@ -418,7 +419,7 @@ impl SuburbEntity {
             }
         };
         let find_options = FindOptions::builder()
-            .sort(doc! { "timestamp": -1 })
+            .sort(doc! { "timestamp": 1 })
             .build();
         let stage_change_cursor: Cursor<LoadSheddingStage> = match connection
             .collection("stage_log")
@@ -433,7 +434,7 @@ impl SuburbEntity {
                 ));
             }
         };
-        let stage_changes: Vec<LoadSheddingStage> = match stage_change_cursor.try_collect().await {
+        let mut all_stages: Vec<LoadSheddingStage> = match stage_change_cursor.try_collect().await {
             Ok(item) => item,
             Err(err) => {
                 log::error!("Unable to Collect suburbs from cursor {err}");
@@ -441,6 +442,34 @@ impl SuburbEntity {
                     "Error occured on the server, sorry :<",
                 ));
             }
+        };
+        all_stages.reverse();
+
+        // find first timestamp after one week ago
+        let query = doc! {
+            "timestamp": {
+                "$lte": one_week_ago
+            }
+        };
+        let find_options = FindOneOptions::builder()
+            .sort(doc! { "timestamp": -1 })
+            .build();
+        let first_stage_change: Option<LoadSheddingStage> = match connection
+            .collection("stage_log")
+            .find_one(query, find_options)
+            .await
+        {
+            Ok(cursor) => cursor,
+            Err(err) => {
+                log::error!("Database error occured when querying suburbs: {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
+            }
+        };
+        match first_stage_change {
+            Some(item) => all_stages.push(item),
+            None => ()
         };
 
         // get the timeschedules
@@ -470,6 +499,58 @@ impl SuburbEntity {
             }
         };
 
+        // Time
+        let mut time_to_search: DateTime<FixedOffset> = get_date_time(Some(one_week_ago));
+        time_to_search = time_to_search.with_minute(0).unwrap();
+        let mut down_time = 0;
+        while time_to_search <= time_now {
+            let hour = time_to_search.hour() as i32;
+            let minute = time_to_search.minute() as i32;
+            let day = time_to_search.day() as i32;
+            // get the timeslots for the current time interval
+            let time_slots: Vec<TimeScheduleEntity> = schedule
+                .clone()
+                .into_iter()
+                .filter(|time| {
+                    // check what time it falls under
+                    if time.stop_hour >= hour
+                        && time.stop_minute >= minute
+                        && time.start_hour <= hour
+                        && time.start_minute <= minute
+                    {
+                        true
+                    } else {
+                        false
+                    }
+                })
+                .collect();
+            // check next to see if its less than the current TTS
+            if all_stages.len() >= 2 {
+                if all_stages[1].time <= time_to_search.timestamp() {
+                    all_stages.remove(0);
+                }
+            }
+
+            let mut add_time = false;
+            for time_slot in time_slots {
+                let count:usize = 0;
+                let stage = all_stages.first().unwrap();
+                while (count as i32) < stage.stage {
+                    if time_slot.stages.get(count).unwrap().groups[(day-1) as usize] == group.id.unwrap() {
+                        add_time = true;
+                        break;
+                    }
+                }
+                if add_time {
+                    break;
+                }
+            }
+            if add_time {
+                down_time += 30;
+            }
+            // update times
+            time_to_search = time_to_search.checked_add_signed(Duration::minutes(30)).unwrap();
+        }
         todo!();
     }
 }
@@ -557,7 +638,7 @@ impl Fairing for StageUpdater {
                     let _ = runtime.block_on(stage);
                 }
                 // Perform any other necessary processing on stage info
-                thread::sleep(Duration::from_secs(600)); // Sleep for 10 minutes
+                thread::sleep(std::time::Duration::from_secs(600)); // Sleep for 10 minutes
             }
         });
         let rocket = rocket.manage(Some(stage_info));
