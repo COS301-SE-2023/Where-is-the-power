@@ -215,6 +215,13 @@ pub struct MapDataDefaultResponse {
     pub off: Vec<SuburbEntity>,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct WeeklyStatsGeneralResponse {
+    pub on: i32,
+    pub off: i32
+}
+
 impl std::ops::Add for MapDataDefaultResponse {
     type Output = Self;
 
@@ -386,7 +393,7 @@ impl MunicipalityEntity {
 }
 
 impl SuburbEntity {
-    pub async fn get_data(&mut self, connection: &Database) -> Result<SuburbEntity, ApiError> {
+    pub async fn get_data(&mut self, connection: &Database) -> Result<WeeklyStatsGeneralResponse, ApiError> {
         // queries
         // get the relevant group
         let query = doc! {
@@ -551,7 +558,12 @@ impl SuburbEntity {
             // update times
             time_to_search = time_to_search.checked_add_signed(Duration::minutes(30)).unwrap();
         }
-        todo!();
+        let total_time = 10080;
+        let uptime =  total_time - down_time;
+        Ok(WeeklyStatsGeneralResponse {
+            on : uptime,
+            off : down_time
+        })
     }
 }
 

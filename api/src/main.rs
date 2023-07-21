@@ -30,6 +30,15 @@ use std::time::SystemTime;
 use tokio::sync::RwLock;
 use user::User;
 
+#[post("/getStats", format = "application/json", data = "<request>")]
+async fn getStats(
+    db: &State<Option<Client>>,
+    loadshedding_stage: &State<Option<Arc<RwLock<LoadSheddingStage>>>>,
+    request: Json<MapDataRequest>,
+) -> Result<Json<MapDataDefaultResponse>, Json<ApiError<'static>>> {
+    todo!()
+}
+
 #[post("/fetchMapData", format = "application/json", data = "<request>")]
 async fn fetch_map_data(
     db: &State<Option<Client>>,
