@@ -151,6 +151,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       // Listen for the click event on the map
       this.map.on('click', 'polygons-layer', (e: any) => {
         const clickedFeature = e.features[0];
+        console.log(e);
+
         if (clickedFeature) {
           // Handle the click event here, for example, you can log the properties of the clicked feature
           console.log(clickedFeature.properties);
