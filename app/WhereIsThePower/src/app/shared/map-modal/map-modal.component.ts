@@ -125,33 +125,10 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         }
       });
 
-      // Add a new layer to visualize the polygon.
-      this.map.addLayer({
-        'id': 'menlyn',
-        'type': 'fill',
-        'source': 'menlyn', // reference the data source
-        'layout': {},
-        'paint': {
-          'fill-color': '#eb3434', // red color fill
-          'fill-opacity': 0.4
-        }
-      });
-      // Add a black outline around the polygon.
-      this.map.addLayer({
-        'id': 'outlineLoadshedding',
-        'type': 'line',
-        'source': 'menlyn',
-        'layout': {},
-        'paint': {
-          'line-color': '#8a1616',
-          'line-width': 0.5
-        }
-      });
-
       // Listen for the click event on the map
       this.map.on('click', 'polygons-layer', (e: any) => {
         const clickedFeature = e.features[0];
-        console.log(e);
+        //console.log(e);
 
         if (clickedFeature) {
           // Handle the click event here, for example, you can log the properties of the clicked feature
