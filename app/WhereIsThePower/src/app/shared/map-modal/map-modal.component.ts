@@ -6,6 +6,7 @@ import {
 import { environment } from 'src/environments/environment';
 //import * as mapboxgl from 'mapbox-gl';
 //import * as MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
+import { MapSuburbsService } from './map-suburbs.service';
 declare let MapboxDirections: any;
 declare let mapboxgl: any;
 
@@ -15,9 +16,20 @@ declare let mapboxgl: any;
   styleUrls: ['./map-modal.component.scss'],
 })
 export class MapModalComponent implements OnInit, AfterViewInit {
-  constructor() { }
+  constructor(private mapSuburbsService: MapSuburbsService) { }
   map: any;
+  dat: any;
   ngOnInit() {
+    this.mapSuburbsService.getSuburbData().subscribe((data: any) => {
+      console.log(data);
+      this.dat = data.mapPolygons;
+      //  console.log(this.dat);
+
+    },
+      (error: any) => {
+        console.log(error);
+      }
+    );
   }
 
   ngAfterViewInit() {
@@ -69,7 +81,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
   populatePolygons() {
     this.map.on('load', () => {
-
       // Add a data source containing GeoJSON data.
       this.map.addSource('polygons', {
         'type': 'geojson',
@@ -87,6 +98,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           'fill-opacity': 0.4
         }
       });
+
       // Add a black outline around the polygon.
       this.map.addLayer({
         'id': 'outline',
@@ -135,7 +147,17 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           'line-width': 0.5
         }
       });
+
+      // Listen for the click event on the map
+      this.map.on('click', 'polygons-layer', (e: any) => {
+        const clickedFeature = e.features[0];
+        if (clickedFeature) {
+          // Handle the click event here, for example, you can log the properties of the clicked feature
+          console.log(clickedFeature.properties);
+        }
+      });
     });
+    this.mapSuburbsService.getSuburbData();
   }
 }
 
