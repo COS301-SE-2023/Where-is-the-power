@@ -22,7 +22,6 @@ use mongodb::options::{ClientOptions, FindOptions};
 use mongodb::{Client, Cursor};
 use rocket::data::{Limits, ToByteUnit};
 use rocket::futures::future::try_join_all;
-
 use rocket::futures::TryStreamExt;
 use rocket::http::Method;
 use rocket::serde::json::Json;
@@ -34,8 +33,14 @@ use std::sync::Arc;
 use std::time::SystemTime;
 use tokio::sync::RwLock;
 use user::{NewUser, User};
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 const DB_NAME: &'static str = "wip";
+
+#[derive(OpenApi)]
+#[openapi()]
+struct ApiDoc {}
 
 #[post("/fetchMapData", format = "application/json", data = "<request>")]
 async fn fetch_map_data(
@@ -288,6 +293,10 @@ async fn build_rocket() -> Rocket<Build> {
 
     let rocket_no_state = || {
         rocket::custom(figment.clone())
+            .mount(
+                "/swagger",
+                SwaggerUi::new("ui/{_:.*}").url("api-docs/openapi.json", ApiDoc::openapi()),
+            )
             .mount("/hello", routes![hi])
             .mount("/api", routes!(authenticate, create_user, fetch_map_data))
             .mount("/upload", routes![upload_data])
@@ -299,6 +308,10 @@ async fn build_rocket() -> Rocket<Build> {
     match ClientOptions::parse(&db_uri).await {
         Ok(client_options) => match Client::with_options(client_options) {
             Ok(client) => rocket::custom(figment.clone())
+                .mount(
+                    "/swagger",
+                    SwaggerUi::new("/ui/<_..>").url("/api-docs/openapi.json", ApiDoc::openapi()),
+                )
                 .mount("/hello", routes![hi])
                 .mount("/api", routes!(authenticate, create_user, fetch_map_data))
                 .mount("/upload", routes![upload_data])
