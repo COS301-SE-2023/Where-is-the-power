@@ -155,7 +155,7 @@ async fn authenticate(
             let mut doc = Document::new();
             doc.insert("email", email);
 
-            match User::query(doc, &db.database("witp")).await {
+            match User::query(doc, &db.database(DB_NAME)).await {
                 Ok(mut result) => match result.try_next().await {
                     Ok(user) => {
                         if user.is_none() {

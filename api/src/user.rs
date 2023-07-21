@@ -27,7 +27,7 @@ pub struct User {
     pub phone_number: Option<String>,
     pub email: String,
 
-    #[serde(skip)]
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub password_hash: String,
 }
 
