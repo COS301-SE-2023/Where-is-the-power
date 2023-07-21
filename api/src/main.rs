@@ -33,6 +33,8 @@ use std::time::SystemTime;
 use tokio::sync::RwLock;
 use user::{NewUser, User};
 
+const DB_NAME: &'static str = "wip";
+
 #[post("/fetchMapData", format = "application/json", data = "<request>")]
 async fn fetch_map_data(
     db: &State<Option<Client>>,
@@ -205,8 +207,25 @@ async fn create_user(
 
     let state = state.inner().as_ref().unwrap();
 
+    let mut query = Document::new();
+    query.insert("email", new_user.email.clone());
+    let mut result = User::query(query, &state.database(DB_NAME))
+        .await
+        .expect("Couldn't query users");
+
+    while result.advance().await.expect("Couldn't advance cursor") {
+        let user = result
+            .deserialize_current()
+            .expect("Couldn't deserialize database user");
+        if user.email == new_user.email {
+            return Err(Json(ApiError::UserCreationError(
+                "A user with that email already exists",
+            )));
+        }
+    }
+
     User::from(new_user.into_inner())
-        .insert(&state.database("wip"))
+        .insert(&state.database(DB_NAME))
         .await
         .expect("Couldn't insert new user!");
 

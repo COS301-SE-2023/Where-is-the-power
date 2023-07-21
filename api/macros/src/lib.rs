@@ -108,7 +108,7 @@ pub fn insertable(input: TokenStream) -> TokenStream {
 
     quote! {
         #[async_trait::async_trait]
-        impl Entity for #ident {
+       impl Entity for #ident {
             type Output = Self;
 
             #insert
