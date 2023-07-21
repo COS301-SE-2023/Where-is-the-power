@@ -22,7 +22,7 @@ use mongodb::options::{ClientOptions, FindOptions};
 use mongodb::{Client, Cursor};
 use rocket::data::{Limits, ToByteUnit};
 use rocket::futures::future::try_join_all;
-use rocket::futures::stream::TryNext;
+
 use rocket::futures::TryStreamExt;
 use rocket::http::Method;
 use rocket::serde::json::Json;
