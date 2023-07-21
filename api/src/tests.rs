@@ -66,6 +66,9 @@ async fn test_anonymous_auth() {
     assert_eq!(claims.auth_type, AuthType::Anonymous);
 }
 
+#[rocket::async_test]
+async fn test_find_user() {}
+
 #[test]
 fn time_range_validation_test_fails() {
     let cases = vec![

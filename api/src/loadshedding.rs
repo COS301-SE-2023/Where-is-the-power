@@ -1,9 +1,4 @@
-use std::{
-    collections::HashMap,
-    sync::Arc,
-    thread,
-    time::Duration,
-};
+use std::{collections::HashMap, sync::Arc, thread, time::Duration};
 
 use crate::{api::ApiError, db::Entity};
 use async_trait::async_trait;

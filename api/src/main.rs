@@ -10,28 +10,32 @@ mod user;
 
 use crate::scraper::UploadRequest;
 use api::ApiError;
+use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use auth::{AuthRequest, AuthResponder, AuthType, JWTAuthToken};
-use bson::doc;
+use bson::{doc, Document};
 use db::Entity;
 use loadshedding::{
     LoadSheddingStage, MapDataDefaultResponse, MapDataRequest, MunicipalityEntity, StageUpdater,
 };
-use log::{warn, LevelFilter};
+use log::{error, info, warn, LevelFilter};
 use mongodb::options::{ClientOptions, FindOptions};
 use mongodb::{Client, Cursor};
 use rocket::data::{Limits, ToByteUnit};
 use rocket::futures::future::try_join_all;
+
 use rocket::futures::TryStreamExt;
 use rocket::http::Method;
-use rocket_cors::{CorsOptions, AllowedHeaders};
 use rocket::serde::json::Json;
-use rocket::{get, post, routes, Build,Rocket, State};
+use rocket::{get, post, routes, Build, Rocket, State};
+use rocket_cors::{AllowedHeaders, CorsOptions};
 use std::env;
 use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::SystemTime;
 use tokio::sync::RwLock;
-use user::User;
+use user::{NewUser, User};
+
+const DB_NAME: &'static str = "wip";
 
 #[post("/fetchMapData", format = "application/json", data = "<request>")]
 async fn fetch_map_data(
@@ -130,6 +134,7 @@ async fn upload_data(
 #[post("/auth", format = "application/json", data = "<auth_request>")]
 async fn authenticate(
     auth_request: Json<AuthRequest>,
+    state: &State<Option<Client>>,
 ) -> Result<AuthResponder, Json<ApiError<'static>>> {
     match auth_request.auth_type {
         AuthType::Anonymous => Ok(AuthResponder {
@@ -139,14 +144,62 @@ async fn authenticate(
                 "cookie=some_cookie;expires=0;path=/;SameSite=Strict".to_string(),
             ),
         }),
-        AuthType::User => unimplemented!(),
+        AuthType::User => {
+            let db = state.inner().as_ref().unwrap();
+
+            let email = auth_request.email.clone();
+
+            if auth_request.password.is_none() {
+                return Err(Json(ApiError::AuthError("Missing password")));
+            }
+
+            let password = auth_request.password.clone().unwrap();
+            let mut doc = Document::new();
+            doc.insert("email", email);
+
+            match User::query(doc, &db.database(DB_NAME)).await {
+                Ok(mut result) => match result.try_next().await {
+                    Ok(user) => {
+                        if user.is_none() {
+                            return Err(Json(ApiError::AuthError("No such user")));
+                        }
+                        let user = user.unwrap();
+
+                        let argon = Argon2::default();
+                        let hash = PasswordHash::new(&user.password_hash).unwrap();
+                        match argon.verify_password(password.as_bytes(), &hash) {
+                            Ok(_) => Ok(AuthResponder {
+                                inner: Json(JWTAuthToken::new(auth_request.auth_type).unwrap()),
+                                header: rocket::http::Header::new(
+                                    "Set-Cookie",
+                                    "cookie=some_cookie;expires=0;path=/;SameSite=Strict"
+                                        .to_string(),
+                                ),
+                            }),
+                            Err(err) => {
+                                info!("Password hash incorrect, rejecting user login: {err:?}");
+                                Err(Json(ApiError::AuthError("Incorrect password")))
+                            }
+                        }
+                    }
+                    Err(err) => {
+                        error!("Couldn't fetch user from result: {err:?}");
+                        Err(Json(ApiError::ServerError("Couldn't resolve user")))
+                    }
+                },
+                Err(err) => {
+                    error!("Couldn't query database: {err:?}");
+                    Err(Json(ApiError::ServerError("Couldn't query database")))
+                }
+            }
+        }
     }
 }
 
 #[post("/user", format = "application/json", data = "<new_user>")]
 async fn create_user(
     state: &State<Option<Client>>,
-    new_user: Json<User>,
+    new_user: Json<NewUser>,
 ) -> Result<&'static str, Json<ApiError<'static>>> {
     if state.is_none() {
         return Err(Json(ApiError::ServerError(
@@ -156,12 +209,35 @@ async fn create_user(
 
     let state = state.inner().as_ref().unwrap();
 
-    new_user
-        .insert(&state.database("wip"))
+    let mut query = Document::new();
+    query.insert("email", new_user.email.clone());
+    let mut result = User::query(query, &state.database(DB_NAME))
         .await
-        .expect("Couldn't inser new user!");
+        .expect("Couldn't query users");
+
+    while result.advance().await.expect("Couldn't advance cursor") {
+        let user = result
+            .deserialize_current()
+            .expect("Couldn't deserialize database user");
+        if user.email == new_user.email {
+            return Err(Json(ApiError::UserCreationError(
+                "A user with that email already exists",
+            )));
+        }
+    }
+
+    User::from(new_user.into_inner())
+        .insert(&state.database(DB_NAME))
+        .await
+        .expect("Couldn't insert new user!");
 
     Ok("User created")
+}
+
+#[get("/mock")]
+#[allow(dead_code)]
+async fn mock_data() -> Result<(), Json<ApiError<'static>>> {
+    todo!("Implement")
 }
 
 #[get("/world")]
@@ -198,13 +274,17 @@ async fn build_rocket() -> Rocket<Build> {
     let db_uri = env::var("DATABASE_URI").unwrap_or(String::from(""));
     // Cors Options, we should modify to our needs but leave as default for now.
     let cors = CorsOptions {
-        allowed_origins : rocket_cors::AllOrSome::All,
-        allowed_methods : vec![Method::Get, Method::Post].into_iter().map(From::from).collect(),
+        allowed_origins: rocket_cors::AllOrSome::All,
+        allowed_methods: vec![Method::Get, Method::Post]
+            .into_iter()
+            .map(From::from)
+            .collect(),
         allowed_headers: AllowedHeaders::some(&["Authorization", "Accept", "Content-Type"]),
         allow_credentials: true,
         ..Default::default()
     }
-    .to_cors().unwrap();
+    .to_cors()
+    .unwrap();
 
     let rocket_no_state = || {
         rocket::custom(figment.clone())
