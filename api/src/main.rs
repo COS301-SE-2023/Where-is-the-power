@@ -24,8 +24,10 @@ use rocket::data::{Limits, ToByteUnit};
 use rocket::futures::future::try_join_all;
 use rocket::futures::stream::TryNext;
 use rocket::futures::TryStreamExt;
+use rocket::http::Method;
 use rocket::serde::json::Json;
 use rocket::{get, post, routes, Build, Rocket, State};
+use rocket_cors::{AllowedHeaders, CorsOptions};
 use std::env;
 use std::net::IpAddr;
 use std::sync::Arc;
@@ -270,6 +272,19 @@ async fn build_rocket() -> Rocket<Build> {
         rocket::Config::figment().merge(("limits", Limits::new().limit("json", 7.megabytes())));
 
     let db_uri = env::var("DATABASE_URI").unwrap_or(String::from(""));
+    // Cors Options, we should modify to our needs but leave as default for now.
+    let cors = CorsOptions {
+        allowed_origins: rocket_cors::AllOrSome::All,
+        allowed_methods: vec![Method::Get, Method::Post]
+            .into_iter()
+            .map(From::from)
+            .collect(),
+        allowed_headers: AllowedHeaders::some(&["Authorization", "Accept", "Content-Type"]),
+        allow_credentials: true,
+        ..Default::default()
+    }
+    .to_cors()
+    .unwrap();
 
     let rocket_no_state = || {
         rocket::custom(figment.clone())
@@ -277,6 +292,7 @@ async fn build_rocket() -> Rocket<Build> {
             .mount("/api", routes!(authenticate, create_user, fetch_map_data))
             .mount("/upload", routes![upload_data])
             .attach(StageUpdater)
+            .attach(cors.clone())
             .manage::<Option<Client>>(None)
     };
 
@@ -287,6 +303,7 @@ async fn build_rocket() -> Rocket<Build> {
                 .mount("/api", routes!(authenticate, create_user, fetch_map_data))
                 .mount("/upload", routes![upload_data])
                 .attach(StageUpdater)
+                .attach(cors)
                 .manage(Some(client)),
             Err(err) => {
                 warn!("Couldn't create database client! {err:?}");

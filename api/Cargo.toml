@@ -26,6 +26,6 @@ bson = "2.6.1"
 dotenvy = "0.15.7"
 tokio = "1.28.0"
 serde_json = "1.0.103"
-
+rocket_cors = "0.6.0-alpha2"
 [build-dependencies]
 copy_dir = "0.1.2"
