@@ -52,6 +52,9 @@ export class TabSavedPage {
 
   addSavedPlace(place: any) {
     this.savedPlaces.push(place);
+    this.places = this.places.filter((sPlace: any) => {
+      if(sPlace.id !== place.id) return sPlace; 
+    });
     console.log(this.savedPlaces);
   }
 

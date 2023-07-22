@@ -30,23 +30,12 @@
 
             </ion-label>
             <!-- ADD -->
-            <div *ngIf="isPlaceSaved(place); else elseBlock">
-              <ion-button 
-                color="success" 
-                fill="clear" 
-                (click)="addSavedPlace(place)">
-                <ion-icon slot="icon-only" name="add-outline"></ion-icon>
-              </ion-button>
-            </div>   
-            <ng-template #elseBlock>
-              <!-- DELETE -->
-              <ion-button 
-                color="danger"
-                fill="clear" 
-                (click)="removeSavedPlace(place)">
-                <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
-              </ion-button>
-            </ng-template>
+            <ion-button 
+              color="success" 
+              fill="clear" 
+              (click)="addSavedPlace(place)">
+              <ion-icon slot="icon-only" name="bookmark-outline"></ion-icon>
+            </ion-button>
           </ion-item>
         </ion-list>
       </ion-col>
@@ -66,6 +55,13 @@
                 </p>
 
               </ion-label>
+              <!-- DELETE -->
+              <ion-button 
+                color="success"
+                fill="clear" 
+                (click)="removeSavedPlace(savedPlace)">
+                <ion-icon slot="icon-only" name="bookmark"></ion-icon>
+              </ion-button>
             </ion-item>
           </ion-list>
         </ion-toolbar>
