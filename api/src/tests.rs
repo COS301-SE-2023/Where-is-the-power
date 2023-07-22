@@ -37,7 +37,7 @@ async fn test_anonymous_auth() {
     .unwrap();
 
     let mut response = client
-        .post(format!("/api{}", uri!(super::authenticate)))
+        .post(format!("/api{}", uri!(super::auth::authenticate)))
         .header(ContentType::JSON)
         .body(body)
         .dispatch()

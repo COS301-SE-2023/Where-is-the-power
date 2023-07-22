@@ -10,17 +10,15 @@ mod user;
 
 use crate::scraper::UploadRequest;
 use api::ApiError;
-use argon2::{Argon2, PasswordHash, PasswordVerifier};
-use auth::{AuthRequest, AuthResponder, AuthType, JWTAuthToken};
-use bson::{doc, Document};
-use db::Entity;
+
+use bson::doc;
 use loadshedding::StageUpdater;
-use log::{error, info, warn, LevelFilter};
+use log::{warn, LevelFilter};
 use mongodb::options::ClientOptions;
 use mongodb::Client;
 use rocket::data::{Limits, ToByteUnit};
 use rocket::fs::FileServer;
-use rocket::futures::TryStreamExt;
+
 use rocket::http::Method;
 use rocket::serde::json::Json;
 use rocket::{get, post, routes, Build, Rocket, State};
@@ -28,7 +26,6 @@ use rocket_cors::{AllowedHeaders, CorsOptions};
 use std::env;
 use std::net::IpAddr;
 use std::time::SystemTime;
-use user::User;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -36,8 +33,18 @@ const DB_NAME: &'static str = "wip";
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(user::create_user, loadshedding::fetch_map_data),
-    components(schemas(user::NewUser, user::UserLocation, loadshedding::MapDataRequest))
+    paths(user::create_user, loadshedding::fetch_map_data, auth::authenticate),
+    components(schemas(
+        auth::AuthRequest,
+        auth::AuthType,
+        user::NewUser,
+        user::UserLocation,
+        loadshedding::MapDataRequest,
+        loadshedding::MapDataDefaultResponse,
+        api::ResponseString,
+        api::ApiError
+    )),
+    info(title = "Where Is The Power API Specification")
 )]
 pub struct ApiDoc;
 
@@ -64,71 +71,6 @@ async fn upload_data(
     match add_data {
         Ok(()) => return Ok("Data Successfully added to staging database and ready for review"),
         Err(e) => return Err(e),
-    }
-}
-
-#[post("/auth", format = "application/json", data = "<auth_request>")]
-async fn authenticate(
-    auth_request: Json<AuthRequest>,
-    state: &State<Option<Client>>,
-) -> Result<AuthResponder, Json<ApiError<'static>>> {
-    match auth_request.auth_type {
-        AuthType::Anonymous => Ok(AuthResponder {
-            inner: Json(JWTAuthToken::new(auth_request.auth_type).unwrap()),
-            header: rocket::http::Header::new(
-                "Set-Cookie",
-                "cookie=some_cookie;expires=0;path=/;SameSite=Strict".to_string(),
-            ),
-        }),
-        AuthType::User => {
-            let db = state.inner().as_ref().unwrap();
-
-            let email = auth_request.email.clone();
-
-            if auth_request.password.is_none() {
-                return Err(Json(ApiError::AuthError("Missing password")));
-            }
-
-            let password = auth_request.password.clone().unwrap();
-            let mut doc = Document::new();
-            doc.insert("email", email);
-
-            match User::query(doc, &db.database(DB_NAME)).await {
-                Ok(mut result) => match result.try_next().await {
-                    Ok(user) => {
-                        if user.is_none() {
-                            return Err(Json(ApiError::AuthError("No such user")));
-                        }
-                        let user = user.unwrap();
-
-                        let argon = Argon2::default();
-                        let hash = PasswordHash::new(&user.password_hash).unwrap();
-                        match argon.verify_password(password.as_bytes(), &hash) {
-                            Ok(_) => Ok(AuthResponder {
-                                inner: Json(JWTAuthToken::new(auth_request.auth_type).unwrap()),
-                                header: rocket::http::Header::new(
-                                    "Set-Cookie",
-                                    "cookie=some_cookie;expires=0;path=/;SameSite=Strict"
-                                        .to_string(),
-                                ),
-                            }),
-                            Err(err) => {
-                                info!("Password hash incorrect, rejecting user login: {err:?}");
-                                Err(Json(ApiError::AuthError("Incorrect password")))
-                            }
-                        }
-                    }
-                    Err(err) => {
-                        error!("Couldn't fetch user from result: {err:?}");
-                        Err(Json(ApiError::ServerError("Couldn't resolve user")))
-                    }
-                },
-                Err(err) => {
-                    error!("Couldn't query database: {err:?}");
-                    Err(Json(ApiError::ServerError("Couldn't query database")))
-                }
-            }
-        }
     }
 }
 
@@ -195,7 +137,7 @@ async fn build_rocket() -> Rocket<Build> {
             .mount(
                 "/api",
                 routes!(
-                    authenticate,
+                    auth::authenticate,
                     user::create_user,
                     loadshedding::fetch_map_data
                 ),
@@ -222,7 +164,7 @@ async fn build_rocket() -> Rocket<Build> {
                 .mount(
                     "/api",
                     routes!(
-                        authenticate,
+                        auth::authenticate,
                         user::create_user,
                         loadshedding::fetch_map_data
                     ),

@@ -1,4 +1,8 @@
-use crate::{api::ApiError, db::Entity, DB_NAME};
+use crate::{
+    api::{ApiError, ApiResponse},
+    db::Entity,
+    DB_NAME,
+};
 use argon2::{
     password_hash::{rand_core::OsRng, SaltString},
     Argon2, PasswordHasher,
@@ -10,18 +14,16 @@ use rocket::{post, serde::json::Json, State};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-#[utoipa::path(post, path = "/api/user", request_body = NewUser, responses(
-    (status = 200, description = "User creation result")
+#[utoipa::path(post, tag = "Create User", path = "/api/user", request_body = NewUser, responses(
+    (status = 200, description = "User creation result", body = ResponseString)
 ))]
 #[post("/user", format = "application/json", data = "<new_user>")]
 pub async fn create_user(
     state: &State<Option<Client>>,
     new_user: Json<NewUser>,
-) -> Result<&'static str, Json<ApiError<'static>>> {
+) -> ApiResponse<&'static str> {
     if state.is_none() {
-        return Err(Json(ApiError::ServerError(
-            "Database is unavailable. Please try again later!",
-        )));
+        return ApiError::ServerError("Database is unavailable. Please try again later!").into();
     }
 
     let state = state.inner().as_ref().unwrap();
@@ -37,9 +39,7 @@ pub async fn create_user(
             .deserialize_current()
             .expect("Couldn't deserialize database user");
         if user.email == new_user.email {
-            return Err(Json(ApiError::UserCreationError(
-                "A user with that email already exists",
-            )));
+            return ApiError::UserCreationError("A user with that email already exists").into();
         }
     }
 
@@ -48,7 +48,7 @@ pub async fn create_user(
         .await
         .expect("Couldn't insert new user!");
 
-    Ok("User created")
+    ApiResponse::Ok("User created")
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
@@ -78,6 +78,14 @@ pub struct User {
 
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
+#[schema(example = r#"
+    {
+        "firstName": "Joe",
+        "lastName": "Average",
+        "email": "joe@average.net",
+        "password": "super_secure_p@ssword"
+    }
+"#)]
 pub struct NewUser {
     pub first_name: String,
     pub last_name: String,
