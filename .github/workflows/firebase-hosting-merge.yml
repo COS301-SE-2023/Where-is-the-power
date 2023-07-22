@@ -10,8 +10,23 @@ jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - run: npm ci && npm run build
+      - uses: actions/checkout@v3 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+      - name: Install Dependencies
+        working-directory: ./app/WhereIsThePower
+        run: npm install --frozen-lock
+      - name: Update env
+        uses: cschleiden/replace-tokens@v1.2
+        with:
+          tokenPrefix: '{'
+          tokenSuffix: '}'
+          files: ./app/WhereIsThePower/src/environments/environment.prod.ts
+        env:
+          MapboxApiKey: ${{ secrets.TEST_SECRET }}
+      - name: Build app
+        run: npm run build   
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
