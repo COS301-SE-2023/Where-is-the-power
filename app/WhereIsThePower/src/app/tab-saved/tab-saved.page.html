@@ -10,8 +10,20 @@
   <ion-searchbar
     [(ngModel)]="input"
     (ionInput)="updateResults()"
-    
+
   >
   </ion-searchbar>
-  <ion-label>{{ latitude }}</ion-label>
+  <ion-list *ngFor="let place of places">
+    <ion-item>
+      <ion-icon slot="start" name="{{ place.type }}"></ion-icon>
+      <ion-label>
+        <h2>{{ place.name }}, {{ place.feature }}</h2>
+        <p *ngIf="place.address != null">
+          {{ place.address }}
+        </p>
+      </ion-label>
+      
+    </ion-item>
+
+  </ion-list>
 </ion-content>
