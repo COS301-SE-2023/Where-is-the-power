@@ -32,11 +32,11 @@ jobs:
         working-directory: ./app/WhereIsThePower
         run: npm run test:coverage
 
-      # - name: Upload coverage report
-      #   uses: codecov/codecov-action@v3
-      #   with:
-      #     name: frontend coverage-report
-      #     fail_ci_if_error: true
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v3
+        with:
+          name: frontend coverage-report
+          fail_ci_if_error: true
 
 
 
