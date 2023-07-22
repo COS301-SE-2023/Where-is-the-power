@@ -24,6 +24,7 @@ jobs:
         env:
           MapboxApiKey: ${{ secrets.TEST_SECRET }}
       - name: Build app
+        working-directory: ./app/WhereIsThePower
         run: npm run build
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
