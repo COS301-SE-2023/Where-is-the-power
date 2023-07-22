@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { UserLocationService } from '../user-location.service';
 import { HttpClient } from '@angular/common/http';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-tab-saved',
@@ -23,7 +24,7 @@ export class TabSavedPage {
   input: string | undefined;
 
   updateResults() {
-    this.http.get('https://api.mapbox.com/search/searchbox/v1/suggest?q='+this.input+'&access_token=pk.eyJ1IjoidTE4MDA0ODc0IiwiYSI6ImNsajMzdWh5ZzAwcHAzZXMxc3lveXJmNDgifQ.7P_tuuiC4M_Q1_H5ZF1rTA&session_token&country=za&origin=25,-25').subscribe((data: any) => {
+    this.http.get('https://api.mapbox.com/search/searchbox/v1/suggest?q='+this.input+'&access_token='+environment.MapboxApiKey+'&session_token&country=za&origin=25,-25').subscribe((data: any) => {
       console.log(data);
     })
   }
