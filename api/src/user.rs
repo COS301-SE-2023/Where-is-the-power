@@ -1,12 +1,57 @@
-use crate::db::Entity;
+use crate::{api::ApiError, db::Entity, DB_NAME};
 use argon2::{
     password_hash::{rand_core::OsRng, SaltString},
     Argon2, PasswordHasher,
 };
+use bson::Document;
 use macros::Entity;
+use mongodb::Client;
+use rocket::{post, serde::json::Json, State};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[utoipa::path(post, path = "/api/user", request_body = NewUser, responses(
+    (status = 200, description = "User creation result")
+))]
+#[post("/user", format = "application/json", data = "<new_user>")]
+pub async fn create_user(
+    state: &State<Option<Client>>,
+    new_user: Json<NewUser>,
+) -> Result<&'static str, Json<ApiError<'static>>> {
+    if state.is_none() {
+        return Err(Json(ApiError::ServerError(
+            "Database is unavailable. Please try again later!",
+        )));
+    }
+
+    let state = state.inner().as_ref().unwrap();
+
+    let mut query = Document::new();
+    query.insert("email", new_user.email.clone());
+    let mut result = User::query(query, &state.database(DB_NAME))
+        .await
+        .expect("Couldn't query users");
+
+    while result.advance().await.expect("Couldn't advance cursor") {
+        let user = result
+            .deserialize_current()
+            .expect("Couldn't deserialize database user");
+        if user.email == new_user.email {
+            return Err(Json(ApiError::UserCreationError(
+                "A user with that email already exists",
+            )));
+        }
+    }
+
+    User::from(new_user.into_inner())
+        .insert(&state.database(DB_NAME))
+        .await
+        .expect("Couldn't insert new user!");
+
+    Ok("User created")
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UserLocation {
     pub suburb: String,
@@ -31,7 +76,7 @@ pub struct User {
     pub password_hash: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct NewUser {
     pub first_name: String,
