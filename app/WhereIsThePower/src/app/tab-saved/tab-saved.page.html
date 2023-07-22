@@ -7,5 +7,11 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
+  <ion-searchbar
+    [(ngModel)]="input"
+    (ionInput)="updateResults()"
+    
+  >
+  </ion-searchbar>
   <ion-label>{{ latitude }}</ion-label>
 </ion-content>

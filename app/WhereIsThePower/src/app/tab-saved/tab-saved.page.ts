@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { Geolocation } from '@capacitor/geolocation'
 import { UserLocationService } from '../user-location.service';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-tab-saved',
@@ -10,7 +10,7 @@ import { UserLocationService } from '../user-location.service';
 export class TabSavedPage {
   latitude: any;
 
-  constructor(private userLocationService: UserLocationService) {}
+  constructor(private userLocationService: UserLocationService, private http: HttpClient) {}
 
   ngOnInit() {
     this.userLocationService.getUserLocation();
@@ -20,6 +20,12 @@ export class TabSavedPage {
     this.latitude = this.userLocationService.getLatitude();
   }
 
-  
+  input: string | undefined;
+
+  updateResults() {
+    this.http.get('https://api.mapbox.com/search/searchbox/v1/suggest?q='+this.input+'&access_token=pk.eyJ1IjoidTE4MDA0ODc0IiwiYSI6ImNsajMzdWh5ZzAwcHAzZXMxc3lveXJmNDgifQ.7P_tuuiC4M_Q1_H5ZF1rTA&session_token&country=za&origin=25,-25').subscribe((data: any) => {
+      console.log(data);
+    })
+  }
   
 }
