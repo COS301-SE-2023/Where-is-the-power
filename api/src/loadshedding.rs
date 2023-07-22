@@ -6,17 +6,91 @@ use bson::{doc, oid::ObjectId};
 use chrono::{DateTime, Datelike, FixedOffset, Local, NaiveDateTime, Timelike};
 use log::warn;
 use macros::Entity;
-use mongodb::{Cursor, Database};
+use mongodb::{options::FindOptions, Client, Cursor, Database};
 use rocket::{
     fairing::{self, Fairing, Info, Kind},
-    futures::{StreamExt, TryStreamExt},
-    Rocket,
+    futures::{future::try_join_all, StreamExt, TryStreamExt},
+    post,
+    serde::json::Json,
+    Rocket, State,
 };
 use serde::{Deserialize, Serialize};
 use tokio::{runtime::Runtime, sync::RwLock};
+use utoipa::ToSchema;
 
 // Rocket Persistent Data Structs
 pub struct StageUpdater;
+
+#[utoipa::path(post, path = "/api/fetchMapData", request_body = MapDataRequest)]
+// Rocket endpoints
+#[post("/fetchMapData", format = "application/json", data = "<request>")]
+pub async fn fetch_map_data(
+    db: &State<Option<Client>>,
+    loadshedding_stage: &State<Option<Arc<RwLock<LoadSheddingStage>>>>,
+    request: Json<MapDataRequest>,
+) -> Result<Json<MapDataDefaultResponse>, Json<ApiError<'static>>> {
+    let connection = &db.inner().as_ref().unwrap().database("staging");
+    let south_west: Vec<f64> = request.bottom_left.iter().cloned().map(|x| x).collect();
+    let north_east: Vec<f64> = request.top_right.iter().cloned().map(|x| x).collect();
+    let query = doc! {
+        "geometry.bounds" : {
+            "$geoWithin" : {
+                "$box" : [south_west, north_east]
+            }
+        }
+    };
+
+    let options = FindOptions::default();
+    let cursor: Cursor<MunicipalityEntity> = match connection
+        .collection("municipality")
+        .find(query, options)
+        .await
+    {
+        Ok(cursor) => cursor,
+        Err(err) => {
+            log::error!("Database error occured when handling geo query: {err}");
+            return Err(Json(ApiError::ServerError(
+                "Database error occured when handling request. Check logs.",
+            )));
+        }
+    };
+    let stage = &loadshedding_stage
+        .inner()
+        .as_ref()
+        .clone()
+        .unwrap()
+        .read()
+        .await
+        .stage;
+    let municipalities: Vec<MunicipalityEntity> = match cursor.try_collect().await {
+        Ok(item) => item,
+        Err(err) => {
+            log::error!("Unable to Collect suburbs from cursor {err}");
+            return Err(Json(ApiError::ServerError(
+                "Error occured on the server, sorry :<",
+            )));
+        }
+    };
+    let future_data = municipalities.iter().map(|municipality| {
+        municipality.get_regions_at_time(stage.to_owned(), request.time, connection)
+    });
+    let response = try_join_all(future_data).await;
+    if let Ok(data) = response {
+        return Ok(Json(data.into_iter().fold(
+            MapDataDefaultResponse {
+                map_polygons: vec![],
+                on: vec![],
+                off: vec![],
+            },
+            |acc, obj| acc + obj,
+        )));
+    } else {
+        log::error!("Unable to fold MapDataResponse");
+        return Err(Json(ApiError::ServerError(
+            "Error occured on the server, sorry :<",
+        )));
+    }
+}
 
 #[derive(Debug)]
 pub struct LoadSheddingStage {
@@ -191,7 +265,7 @@ pub struct StageTimes {
 }
 
 // Requests
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct MapDataRequest {
     pub bottom_left: [f64; 2],

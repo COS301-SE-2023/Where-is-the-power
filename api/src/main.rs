@@ -14,14 +14,12 @@ use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use auth::{AuthRequest, AuthResponder, AuthType, JWTAuthToken};
 use bson::{doc, Document};
 use db::Entity;
-use loadshedding::{
-    LoadSheddingStage, MapDataDefaultResponse, MapDataRequest, MunicipalityEntity, StageUpdater,
-};
+use loadshedding::StageUpdater;
 use log::{error, info, warn, LevelFilter};
-use mongodb::options::{ClientOptions, FindOptions};
-use mongodb::{Client, Cursor};
+use mongodb::options::ClientOptions;
+use mongodb::Client;
 use rocket::data::{Limits, ToByteUnit};
-use rocket::futures::future::try_join_all;
+use rocket::fs::FileServer;
 use rocket::futures::TryStreamExt;
 use rocket::http::Method;
 use rocket::serde::json::Json;
@@ -29,86 +27,19 @@ use rocket::{get, post, routes, Build, Rocket, State};
 use rocket_cors::{AllowedHeaders, CorsOptions};
 use std::env;
 use std::net::IpAddr;
-use std::sync::Arc;
 use std::time::SystemTime;
-use tokio::sync::RwLock;
-use user::{NewUser, User};
+use user::User;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 const DB_NAME: &'static str = "wip";
 
 #[derive(OpenApi)]
-#[openapi()]
-struct ApiDoc {}
-
-#[post("/fetchMapData", format = "application/json", data = "<request>")]
-async fn fetch_map_data(
-    db: &State<Option<Client>>,
-    loadshedding_stage: &State<Option<Arc<RwLock<LoadSheddingStage>>>>,
-    request: Json<MapDataRequest>,
-) -> Result<Json<MapDataDefaultResponse>, Json<ApiError<'static>>> {
-    let connection = &db.inner().as_ref().unwrap().database("staging");
-    let south_west: Vec<f64> = request.bottom_left.iter().cloned().map(|x| x).collect();
-    let north_east: Vec<f64> = request.top_right.iter().cloned().map(|x| x).collect();
-    let query = doc! {
-        "geometry.bounds" : {
-            "$geoWithin" : {
-                "$box" : [south_west, north_east]
-            }
-        }
-    };
-    let options = FindOptions::default();
-    let cursor: Cursor<MunicipalityEntity> = match connection
-        .collection("municipality")
-        .find(query, options)
-        .await
-    {
-        Ok(cursor) => cursor,
-        Err(err) => {
-            log::error!("Database error occured when handling geo query: {err}");
-            return Err(Json(ApiError::ServerError(
-                "Database error occured when handling request. Check logs.",
-            )));
-        }
-    };
-    let stage = &loadshedding_stage
-        .inner()
-        .as_ref()
-        .clone()
-        .unwrap()
-        .read()
-        .await
-        .stage;
-    let municipalities: Vec<MunicipalityEntity> = match cursor.try_collect().await {
-        Ok(item) => item,
-        Err(err) => {
-            log::error!("Unable to Collect suburbs from cursor {err}");
-            return Err(Json(ApiError::ServerError(
-                "Error occured on the server, sorry :<",
-            )));
-        }
-    };
-    let future_data = municipalities.iter().map(|municipality| {
-        municipality.get_regions_at_time(stage.to_owned(), request.time, connection)
-    });
-    let response = try_join_all(future_data).await;
-    if let Ok(data) = response {
-        return Ok(Json(data.into_iter().fold(
-            MapDataDefaultResponse {
-                map_polygons: vec![],
-                on: vec![],
-                off: vec![],
-            },
-            |acc, obj| acc + obj,
-        )));
-    } else {
-        log::error!("Unable to fold MapDataResponse");
-        return Err(Json(ApiError::ServerError(
-            "Error occured on the server, sorry :<",
-        )));
-    }
-}
+#[openapi(
+    paths(user::create_user, loadshedding::fetch_map_data),
+    components(schemas(user::NewUser, user::UserLocation, loadshedding::MapDataRequest))
+)]
+pub struct ApiDoc;
 
 #[post("/uploadData", format = "application/json", data = "<upload_data>")]
 async fn upload_data(
@@ -201,44 +132,6 @@ async fn authenticate(
     }
 }
 
-#[post("/user", format = "application/json", data = "<new_user>")]
-async fn create_user(
-    state: &State<Option<Client>>,
-    new_user: Json<NewUser>,
-) -> Result<&'static str, Json<ApiError<'static>>> {
-    if state.is_none() {
-        return Err(Json(ApiError::ServerError(
-            "Database is unavailable. Please try again later!",
-        )));
-    }
-
-    let state = state.inner().as_ref().unwrap();
-
-    let mut query = Document::new();
-    query.insert("email", new_user.email.clone());
-    let mut result = User::query(query, &state.database(DB_NAME))
-        .await
-        .expect("Couldn't query users");
-
-    while result.advance().await.expect("Couldn't advance cursor") {
-        let user = result
-            .deserialize_current()
-            .expect("Couldn't deserialize database user");
-        if user.email == new_user.email {
-            return Err(Json(ApiError::UserCreationError(
-                "A user with that email already exists",
-            )));
-        }
-    }
-
-    User::from(new_user.into_inner())
-        .insert(&state.database(DB_NAME))
-        .await
-        .expect("Couldn't insert new user!");
-
-    Ok("User created")
-}
-
 #[get("/mock")]
 #[allow(dead_code)]
 async fn mock_data() -> Result<(), Json<ApiError<'static>>> {
@@ -294,12 +187,24 @@ async fn build_rocket() -> Rocket<Build> {
     let rocket_no_state = || {
         rocket::custom(figment.clone())
             .mount(
-                "/swagger",
-                SwaggerUi::new("ui/{_:.*}").url("api-docs/openapi.json", ApiDoc::openapi()),
+                "/",
+                SwaggerUi::new("/swagger-ui/<_..>")
+                    .url("/api-docs/openapi.json", ApiDoc::openapi()),
             )
             .mount("/hello", routes![hi])
-            .mount("/api", routes!(authenticate, create_user, fetch_map_data))
+            .mount(
+                "/api",
+                routes!(
+                    authenticate,
+                    user::create_user,
+                    loadshedding::fetch_map_data
+                ),
+            )
             .mount("/upload", routes![upload_data])
+            .mount(
+                "/api-docs",
+                FileServer::new("api-docs", rocket::fs::Options::IndexFile),
+            )
             .attach(StageUpdater)
             .attach(cors.clone())
             .manage::<Option<Client>>(None)
@@ -309,11 +214,19 @@ async fn build_rocket() -> Rocket<Build> {
         Ok(client_options) => match Client::with_options(client_options) {
             Ok(client) => rocket::custom(figment.clone())
                 .mount(
-                    "/swagger",
-                    SwaggerUi::new("/ui/<_..>").url("/api-docs/openapi.json", ApiDoc::openapi()),
+                    "/",
+                    SwaggerUi::new("/swagger-ui/<_..>")
+                        .url("/api-docs/openapi.json", ApiDoc::openapi()),
                 )
                 .mount("/hello", routes![hi])
-                .mount("/api", routes!(authenticate, create_user, fetch_map_data))
+                .mount(
+                    "/api",
+                    routes!(
+                        authenticate,
+                        user::create_user,
+                        loadshedding::fetch_map_data
+                    ),
+                )
                 .mount("/upload", routes![upload_data])
                 .attach(StageUpdater)
                 .attach(cors)
