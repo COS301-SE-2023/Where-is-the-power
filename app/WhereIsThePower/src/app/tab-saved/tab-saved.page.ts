@@ -14,6 +14,7 @@ export class TabSavedPage {
   latitude: any;
   places: any[] = [];
   featureTypesEnum = FeatureTypes;
+  savedPlaces: any[] = [];
 
   constructor(private userLocationService: UserLocationService, private http: HttpClient) {}
 
@@ -38,7 +39,8 @@ export class TabSavedPage {
             type: this.getFeatureType(searchResult.feature_type), 
             name: searchResult.name, 
             feature: searchResult.feature_type,
-            address: searchResult.address
+            address: searchResult.full_address,
+            id: searchResult.mapbox_id
           };
           this.places.push(obj);
         });
@@ -46,6 +48,22 @@ export class TabSavedPage {
     } else {
       this.places = [];
     }
+  }
+
+  addSavedPlace(place: any) {
+    this.savedPlaces.push(place);
+    console.log(this.savedPlaces);
+  }
+
+  removeSavedPlace(place: any) {
+    this.savedPlaces = this.savedPlaces.filter((sPlace: any) => {
+      if(sPlace.id !== place.id) return sPlace; 
+    });
+    console.log(this.savedPlaces);
+  }
+
+  isPlaceSaved(place: any) {
+    return !this.savedPlaces.includes(place);
   }
 
   getFeatureType(featureType: string) {

@@ -7,23 +7,70 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-searchbar
-    [(ngModel)]="input"
-    (ionInput)="updateResults()"
+  <ion-grid>
+    <ion-row>
+      <ion-col size="12" size-md="4">
+        <ion-toolbar>
+          <ion-searchbar
+            [(ngModel)]="input"
+            (ionInput)="updateResults()"
+            animated="true"
+            placeholder="Search for place"
+            clear-icon="trash-bin"
+          ></ion-searchbar>
+        </ion-toolbar>
+        <ion-list *ngFor="let place of places">
+          <ion-item>
+            <ion-icon slot="start" name="{{ place.type }}"></ion-icon>
+            <ion-label class="ion-text-wrap">
+              <h2>{{ place.name }}, {{ place.feature }}</h2>
+              <p *ngIf="place.address != null">
+                {{ place.address }}
+              </p>
 
-  >
-  </ion-searchbar>
-  <ion-list *ngFor="let place of places">
-    <ion-item>
-      <ion-icon slot="start" name="{{ place.type }}"></ion-icon>
-      <ion-label>
-        <h2>{{ place.name }}, {{ place.feature }}</h2>
-        <p *ngIf="place.address != null">
-          {{ place.address }}
-        </p>
-      </ion-label>
-      
-    </ion-item>
+            </ion-label>
+            <!-- ADD -->
+            <div *ngIf="isPlaceSaved(place); else elseBlock">
+              <ion-button 
+                color="success" 
+                fill="clear" 
+                (click)="addSavedPlace(place)">
+                <ion-icon slot="icon-only" name="add-outline"></ion-icon>
+              </ion-button>
+            </div>   
+            <ng-template #elseBlock>
+              <!-- DELETE -->
+              <ion-button 
+                color="danger"
+                fill="clear" 
+                (click)="removeSavedPlace(place)">
+                <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+              </ion-button>
+            </ng-template>
+          </ion-item>
+        </ion-list>
+      </ion-col>
 
-  </ion-list>
+      <ion-col size="12" size-md="8">
+        <ion-toolbar>
+          <ion-title *ngIf="savedPlaces.length === 0">
+            You have no saved places
+          </ion-title>
+          <ion-list #elseBlock *ngFor="let savedPlace of savedPlaces">
+            <ion-item>
+              <ion-icon slot="start" name="{{ savedPlace.type }}"></ion-icon>
+              <ion-label class="ion-text-wrap">
+                <h2>{{ savedPlace.name }}, {{ savedPlace.feature }}</h2>
+                <p *ngIf="savedPlace.address != null">
+                  {{ savedPlace.address }}
+                </p>
+
+              </ion-label>
+            </ion-item>
+          </ion-list>
+        </ion-toolbar>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+  
 </ion-content>
