@@ -2,6 +2,7 @@
 !global-bundle.pem
 !test_pk.pem
 !test_sk.pem
+!publicKey.pem
 .env
 macros/target
 Cargo.lock
