@@ -5,10 +5,14 @@ name: Deploy to Firebase Hosting on merge
 'on':
   push:
     branches:
+      - dev
       - main
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v3 
       - uses: actions/setup-node@v3
@@ -30,6 +34,7 @@ jobs:
         run: npm run build   
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
+          working-directory: ./app/WhereIsThePower
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_WHEREISTHEPOWER_33A66 }}'
           channelId: live
