@@ -5,16 +5,19 @@ use crate::DB_NAME;
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use bson::Document;
 use jsonwebtoken::{Algorithm, EncodingKey, Header};
+use log::warn;
 use log::{error, info};
 use mongodb::Client;
 use rocket::futures::TryStreamExt;
+use rocket::serde::json::Json;
 use rocket::Responder;
-use rocket::{post, serde::json::Json, State};
+use rocket::{post, State};
 use serde::{Deserialize, Serialize};
 use std::{
     io::Read,
     time::{SystemTime, UNIX_EPOCH},
 };
+use tokio::io::AsyncReadExt;
 use utoipa::ToSchema;
 
 #[utoipa::path(post, tag = "Authenticate", path = "/api/auth", request_body = AuthRequest)]
@@ -25,7 +28,7 @@ pub async fn authenticate(
 ) -> Result<AuthResponder, Json<ApiError<'static>>> {
     match auth_request.auth_type {
         AuthType::Anonymous => Ok(AuthResponder {
-            inner: Json(JWTAuthToken::new(auth_request.auth_type).unwrap()),
+            inner: Json(JWTAuthToken::new(auth_request.auth_type).await.unwrap()),
             header: rocket::http::Header::new(
                 "Set-Cookie",
                 "cookie=some_cookie;expires=0;path=/;SameSite=Strict".to_string(),
@@ -56,7 +59,9 @@ pub async fn authenticate(
                         let hash = PasswordHash::new(&user.password_hash).unwrap();
                         match argon.verify_password(password.as_bytes(), &hash) {
                             Ok(_) => Ok(AuthResponder {
-                                inner: Json(JWTAuthToken::new(auth_request.auth_type).unwrap()),
+                                inner: Json(
+                                    JWTAuthToken::new(auth_request.auth_type).await.unwrap(),
+                                ),
                                 header: rocket::http::Header::new(
                                     "Set-Cookie",
                                     "cookie=some_cookie;expires=0;path=/;SameSite=Strict"
@@ -122,16 +127,24 @@ pub struct AuthResponder {
     pub header: rocket::http::Header<'static>,
 }
 
+async fn read_private_key(path: &str) -> Result<String, tokio::io::Error> {
+    let mut file = tokio::fs::File::open(path).await?;
+    let mut buff = String::new();
+    file.read_to_string(&mut buff).await?;
+    Ok(buff)
+}
+
 impl JWTAuthToken {
-    pub fn new(auth_type: AuthType) -> Result<Self, jsonwebtoken::errors::Error> {
+    pub async fn new(auth_type: AuthType) -> Result<Self, jsonwebtoken::errors::Error> {
         let header = Header::new(Algorithm::RS256);
 
-        let mut private_key_file =
-            std::fs::File::open("privateKey.pem").expect("Expected private key file to exist");
-        let mut private_key = String::new();
-        private_key_file
-            .read_to_string(&mut private_key)
-            .expect("Expected to be able to read private key file");
+        let private_key = match read_private_key("privateKey.pem").await {
+            Ok(key) => key,
+            Err(err) => {
+                warn!("Couldn't read private key file: {err:?}");
+                std::env::var("JWT_PRIVATE_KEY").expect("Couldn't find a private key anywhere")
+            }
+        };
 
         let claims = AuthClaims {
             auth_type,
