@@ -67,7 +67,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     this.populatePolygons();
 
   }
-
+  ionViewDidEnter() {
+  }
   navigate(exclusionArea: string) {
     this.map.addControl(
       new MapboxDirections({

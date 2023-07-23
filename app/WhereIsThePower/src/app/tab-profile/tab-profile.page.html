@@ -15,14 +15,14 @@
   >
   </ion-img>
 
-<ion-list>
-  <ion-item detail="true">
-    <ion-icon name="log-in-outline" class="ion-padding-end"></ion-icon>
-    <ion-label>Login to my account</ion-label>
-  </ion-item>
-  <ion-item detail="true">
-    <ion-icon name="person-add-outline" class="ion-padding-end"></ion-icon>
-    <ion-label>Sign up for an account</ion-label>
-  </ion-item>
-</ion-list>
+  <ion-list>
+    <ion-item detail="true" (click)="showLoginComponent()">
+      <ion-icon name="log-in-outline" class="ion-padding-end"></ion-icon>
+      <ion-label>Login to my account</ion-label>
+    </ion-item>
+    <ion-item detail="true">
+      <ion-icon name="person-add-outline" class="ion-padding-end"></ion-icon>
+      <ion-label>Sign up for an account</ion-label>
+    </ion-item>
+  </ion-list>
 </ion-content>

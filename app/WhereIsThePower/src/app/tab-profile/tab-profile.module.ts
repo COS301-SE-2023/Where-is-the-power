@@ -7,14 +7,15 @@ import { IonicModule } from '@ionic/angular';
 import { TabProfilePageRoutingModule } from './tab-profile-routing.module';
 
 import { TabProfilePage } from './tab-profile.page';
-
+import { LoginModule } from '../shared/components/login/login.module';
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    TabProfilePageRoutingModule
+    TabProfilePageRoutingModule,
+    LoginModule
   ],
   declarations: [TabProfilePage]
 })
-export class TabProfilePageModule {}
+export class TabProfilePageModule { }
