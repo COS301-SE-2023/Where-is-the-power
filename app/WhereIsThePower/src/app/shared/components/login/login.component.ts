@@ -4,9 +4,7 @@ import { Router } from '@angular/router';
 import { ToastController } from '@ionic/angular';
 import { User } from '../../models/user';
 import { AuthService } from '../../../authentication/auth.service';
-import { Output, EventEmitter } from '@angular/core';
 import { ModalController } from '@ionic/angular';
-import { Preferences } from '@capacitor/preferences';
 
 @Component({
   selector: 'app-login',
@@ -36,10 +34,7 @@ export class LoginComponent implements OnInit {
   ) { }
 
 
-  ngOnInit() {
-    console.log("NULL" + this.authService.getUserData());
-
-  }
+  ngOnInit() { }
 
   dismissModal() {
     this.modalController.dismiss();
@@ -58,8 +53,8 @@ export class LoginComponent implements OnInit {
         this.User.token = response.token;
         await this.authService.saveUserData('Token', JSON.stringify(this.User.token));
 
-        const userData = await this.authService.getUserData();
-        console.log("TOKEN " + userData);
+        //const userData = await this.authService.getUserData();
+        //console.log("TOKEN " + userData);
       });
     } else {
       this.presentToast('Please enter a valid email and password.');
