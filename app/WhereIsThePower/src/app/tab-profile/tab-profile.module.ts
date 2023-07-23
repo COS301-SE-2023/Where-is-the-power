@@ -8,13 +8,15 @@ import { TabProfilePageRoutingModule } from './tab-profile-routing.module';
 
 import { TabProfilePage } from './tab-profile.page';
 import { LoginModule } from '../shared/components/login/login.module';
+import { SignupModule } from '../shared/components/signup/signup.module';
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
     TabProfilePageRoutingModule,
-    LoginModule
+    LoginModule,
+    SignupModule
   ],
   declarations: [TabProfilePage]
 })
