@@ -8,7 +8,7 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <div *ngIf = "isLoggedIn"; else #guestUser>
+  <div *ngIf="!isLoggedIn; else UserLoggedIn">
     <ion-img
     src="assets/TrafficJam.svg"
     alt="Traffic Jam Illustration"
@@ -21,13 +21,13 @@
         <ion-icon name="log-in-outline" class="ion-padding-end"></ion-icon>
         <ion-label>Login to my account</ion-label>
       </ion-item>
-      <ion-item detail="true" (click)="showSignupComponent()">
+      <ion-item detail="true">
         <ion-icon name="person-add-outline" class="ion-padding-end"></ion-icon>
         <ion-label>Sign up for an account</ion-label>
       </ion-item>
     </ion-list>
   </div>
-  <ng-template #guestUser>
-
+  <ng-template #UserLoggedIn>
+    Logged In
   </ng-template>
 </ion-content>

@@ -12,6 +12,8 @@ export class AuthService {
   }
   apiUrl = 'http://witpa.codelog.co.za/api/'
 
+  isLoggedin: boolean = false;
+
   constructor(private httpClient: HttpClient) { }
 
   signupUser(registerUser: RegisterUser) {
@@ -19,6 +21,7 @@ export class AuthService {
   }
 
   loginUser(user: User) {
+    this.isLoggedin = true;
     return this.httpClient.post(`${this.apiUrl}auth`, user)
   }
 
@@ -32,5 +35,10 @@ export class AuthService {
       return JSON.parse(ret.value);
     }
     return null;
+  }
+
+  async isUserLoggedIn() {
+    if (await this.getUserData() === null) return false;
+    return true;
   }
 }

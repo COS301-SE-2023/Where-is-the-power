@@ -21,9 +21,9 @@ export class TabProfilePage implements OnInit {
   isLoggedIn: boolean = false;
   constructor(private authService: AuthService, private modalController: ModalController) { }
 
-
   ngOnInit() {
-
+    //this.isLoggedIn = this.authService.isLoggedin;
+    console.log(this.isLoggedIn);
   }
 
   async showSignupComponent() {
