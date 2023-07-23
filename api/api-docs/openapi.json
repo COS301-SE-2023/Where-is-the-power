@@ -1,0 +1,163 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "1",
+    "title": "Where Is The Power API Specification",
+    "description": ""
+  },
+  "paths": {
+    "/api/user": {
+      "post": {
+        "operationId": "1",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewUser"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User created or ApiError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/fetchMapData": {
+      "post": {
+        "operationId": "2",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MapDataRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "NewUser": {
+        "properties": {
+          "firstName": {
+            "nullable": false,
+            "type": "string"
+          },
+          "lastName": {
+            "nullable": false,
+            "type": "string"
+          },
+          "email": {
+            "nullable": false,
+            "type": "string"
+          },
+          "location": {
+            "nullable": true,
+            "$ref": "#/components/schemas/UserLocation"
+          },
+          "phoneNumber": {
+            "nullable": true,
+            "type": "string"
+          },
+          "password": {
+            "nullable": false,
+            "type": "string"
+          }
+        }
+      },
+      "ApiError": {
+        "properties": {
+          "AuthError": {
+            "nullable": true,
+            "type": "string"
+          },
+          "UserCreationError": {
+            "nullable": true,
+            "type": "string"
+          },
+          "ServerError": {
+            "nullable": true,
+            "type": "string"
+          },
+          "ScraperUploadError": {
+            "nullable": true,
+            "type": "string"
+          }
+        }
+      },
+      "UserLocation": {
+        "properties": {
+          "suburb": {
+            "nullable": false,
+            "type": "string"
+          },
+          "postal_code": {
+            "nullable": false,
+            "type": "string"
+          },
+          "city": {
+            "nullable": false,
+            "type": "string"
+          }
+        }
+      },
+      "MapDataRequest": {
+        "properties": {
+          "bottomLeft": {
+            "nullable": false,
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "topRight": {
+            "nullable": false,
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "time": {
+            "nullable": true,
+            "type": "number"
+          }
+        }
+      }
+    }
+  }
+}

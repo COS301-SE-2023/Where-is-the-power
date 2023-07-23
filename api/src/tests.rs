@@ -37,7 +37,7 @@ async fn test_anonymous_auth() {
     .unwrap();
 
     let mut response = client
-        .post(format!("/api{}", uri!(super::authenticate)))
+        .post(format!("/api{}", uri!(super::auth::authenticate)))
         .header(ContentType::JSON)
         .body(body)
         .dispatch()
@@ -65,6 +65,9 @@ async fn test_anonymous_auth() {
 
     assert_eq!(claims.auth_type, AuthType::Anonymous);
 }
+
+#[rocket::async_test]
+async fn test_find_user() {}
 
 #[test]
 fn time_range_validation_test_fails() {

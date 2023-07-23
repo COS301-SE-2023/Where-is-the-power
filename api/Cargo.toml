@@ -6,12 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+argon2 = "0.5"
 chrono = "0.4"
 fern = "0.6.2"
 humantime = "2.1.0"
 jsonwebtoken = "8.3.0"
 log = "0.4.17"
-reqwest = {version = "0.11.18", features = ["blocking"]}
+reqwest = { version = "0.11.18", features = ["blocking", "json"] }
 scraper = "0.16.0"
 lazy_static = "1.4.0"
 calamine = "0.21.1"
@@ -24,6 +25,9 @@ async-trait = "0.1.68"
 bson = "2.6.1"
 dotenvy = "0.15.7"
 tokio = "1.28.0"
-
+serde_json = "1.0.103"
+rocket_cors = "0.6.0-alpha2"
+utoipa-swagger-ui = { version = "3", features = ["rocket"] }
+utoipa = "3.3.0"
 [build-dependencies]
 copy_dir = "0.1.2"

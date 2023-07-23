@@ -1,6 +1,5 @@
 name: APP Unit tests
 on: 
-  push:
   pull_request:
     branches:
       - main
@@ -8,9 +7,11 @@ on:
       
 jobs:
   test:
-    name: Run Unit Tests
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     runs-on: ubuntu-latest
-    steps: 
+    name: frontend coverage
+    steps:
       - uses: actions/checkout@v3 
       - uses: actions/setup-node@v3
         with:
@@ -29,4 +30,13 @@ jobs:
         
       - name: Run Tests
         working-directory: ./app/WhereIsThePower
-        run: npm run test
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v3
+        with:
+          name: frontend coverage-report
+          fail_ci_if_error: true
+
+
+

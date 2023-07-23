@@ -1,7 +1,9 @@
 use async_trait::async_trait;
+use bson::Document;
 use mongodb::{
-    results::{DeleteResult, InsertOneResult},
-    Database,
+    options::UpdateModifications,
+    results::{DeleteResult, InsertOneResult, UpdateResult},
+    Cursor, Database,
 };
 
 #[async_trait]
@@ -10,6 +12,15 @@ pub trait Entity {
 
     async fn insert(&self, db: &Database) -> Result<InsertOneResult, mongodb::error::Error>;
     async fn delete(self, db: &Database) -> Result<DeleteResult, mongodb::error::Error>;
+    async fn query(
+        filter: Document,
+        db: &Database,
+    ) -> Result<Cursor<Self::Output>, mongodb::error::Error>;
+    async fn update(
+        &mut self,
+        update: UpdateModifications,
+        db: &Database,
+    ) -> Result<UpdateResult, mongodb::error::Error>;
 
     // TODO: update method
 
