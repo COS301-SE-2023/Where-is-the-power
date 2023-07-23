@@ -6,13 +6,12 @@
   </ion-toolbar>
 </ion-header>
 
-
-<ion-content [fullscreen]="true" *ngIf="!isLoggedIn; else elseIsloggedIn">
-  <h3>Saved places is only available to registered users</h3>
-  <ion-button (click)="gotoProfileRoute()">Go to Profile</ion-button>
-</ion-content>
-<ng-template #elseIsloggedIn>
-  <ion-content [fullscreen]="true">
+<ion-content [fullscreen]="true">
+  <ion-card *ngIf="!isLoggedIn; else elseIsloggedIn">
+    <h3>Saved places is only available to registered users</h3>
+    <ion-button (click)="gotoProfileRoute()">Go to Profile</ion-button>
+  </ion-card>
+  <ng-template #elseIsloggedIn>  
     <ion-grid>
       <ion-row>
         <ion-col size="12" size-md="4">
@@ -114,6 +113,5 @@
         </ion-col>
       </ion-row>
     </ion-grid>
-    
-  </ion-content>
-</ng-template>
+  </ng-template>  
+</ion-content>
