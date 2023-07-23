@@ -52,7 +52,11 @@ export class SignupComponent implements OnInit {
       console.log(this.newUser)
       this.authService.signupUser(this.newUser).subscribe(async (response: any) => {
         console.log(response);
-        this.dismissModal();
+
+        this.authService.loginUser({ authType: "User", email: this.newUser.email, password: this.newUser.password }).subscribe(async (response: any) => {
+          console.log(response);
+          this.dismissModal();
+        });
       });
     } else {
       this.presentToast('Please enter a valid email and password.');
