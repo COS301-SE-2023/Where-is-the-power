@@ -4,6 +4,7 @@ import { RegisterUser } from '../shared/models/register-user';
 import { AuthService } from '../authentication/auth.service';
 import { User } from '../shared/models/user';
 import { LoginComponent } from '../shared/components/login/login.component';
+import { SignupComponent } from '../shared/components/signup/signup.component';
 @Component({
   selector: 'app-tab-profile',
   templateUrl: './tab-profile.page.html',
@@ -24,11 +25,13 @@ export class TabProfilePage implements OnInit {
 
   }
 
-  RegisterUser() {
-    console.log(this.newUser)
-    this.authService.signupUser(this.newUser).subscribe((response: any) => {
-      console.log(response);
+  async showSignupComponent() {
+    const modal = await this.modalController.create({
+      component: SignupComponent,
+      // You can pass data to the login component using componentProps if needed
+      // componentProps: { data: yourData },
     });
+    return await modal.present();
   }
 
   async showLoginComponent() {
@@ -39,9 +42,4 @@ export class TabProfilePage implements OnInit {
     });
     return await modal.present();
   }
-
-  closeModal() {
-    this.modalController.dismiss();
-  }
-
 }
