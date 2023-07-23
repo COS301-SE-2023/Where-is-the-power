@@ -43,6 +43,8 @@ export class TabSavedPage {
             id: searchResult.mapbox_id
           };
           this.places.push(obj);
+
+          console.log(this.places);
         });
       })
     } else {
@@ -66,7 +68,12 @@ export class TabSavedPage {
   }
 
   isPlaceSaved(place: any) {
-    return !this.savedPlaces.includes(place);
+    let isSaved = false;
+    this.savedPlaces.forEach((sPlace: any) => {
+      if(sPlace.id === place.id) isSaved = true;
+    });
+    console.log(isSaved)
+    return isSaved;
   }
 
   getFeatureType(featureType: string) {
