@@ -20,7 +20,8 @@
           ></ion-searchbar>
         </ion-toolbar>
         <ion-list *ngFor="let place of places">
-          <ion-item>
+
+          <ion-item *ngIf="!isAddress(place.feature); else elseAddress">
             <ion-icon slot="start" name="{{ place.type }}"></ion-icon>
             <ion-label class="ion-text-wrap">
               <h2>{{ place.name }}, {{ place.feature }}</h2>
@@ -29,27 +30,46 @@
               </p>
 
             </ion-label>
-            <div *ngIf="isPlaceSaved(place) === false; else elseBlock">
               <!-- ADD -->
               <ion-button 
-                color="success" 
+                color="primary" 
                 fill="clear" 
                 (click)="addSavedPlace(place)">
-                  <ion-icon slot="icon-only" name="bookmark-outline"></ion-icon>
+                  <ion-icon slot="icon-only" name="chevron-forward-outline"></ion-icon>
               </ion-button>
-            </div>
-            <ng-template #elseBlock>
-              <div>
-                <!-- DELETE -->
+          </ion-item>
+          <ng-template #elseAddress>
+            <ion-item>
+              <ion-icon slot="start" name="{{ place.type }}"></ion-icon>
+              <ion-label class="ion-text-wrap">
+                <h2>{{ place.name }}, {{ place.feature }}</h2>
+                <p *ngIf="place.address != null">
+                  {{ place.address }}
+                </p>
+
+              </ion-label>
+              <div *ngIf="isPlaceSaved(place) === false; else elseBlock">
+                <!-- ADD -->
                 <ion-button 
-                color="success"
-                fill="clear" 
-                (click)="removeSavedPlace(place)">
-                  <ion-icon slot="icon-only" name="bookmark"></ion-icon>
+                  color="success" 
+                  fill="clear" 
+                  (click)="addSavedPlace(place)">
+                    <ion-icon slot="icon-only" name="bookmark-outline"></ion-icon>
                 </ion-button>
               </div>
-            </ng-template>
-          </ion-item>
+              <ng-template #elseBlock>
+                <div>
+                  <!-- DELETE -->
+                  <ion-button 
+                  color="success"
+                  fill="clear" 
+                  (click)="removeSavedPlace(place)">
+                    <ion-icon slot="icon-only" name="bookmark"></ion-icon>
+                  </ion-button>
+                </div>
+              </ng-template>
+            </ion-item>
+          </ng-template>
         </ion-list>
       </ion-col>
 

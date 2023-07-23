@@ -9,5 +9,5 @@ export enum FeatureTypes {
     Address = "home-outline",
     City = "business-outline",
     Street = "car-outline",
-    Default = "compass-outline"
+    Default = "ellipse-outline"
 }

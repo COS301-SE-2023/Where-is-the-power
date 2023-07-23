@@ -76,6 +76,18 @@ export class TabSavedPage {
     return isSaved;
   }
 
+  isAddress(feature: string) {
+    if(feature === 'country' ||
+      feature === 'region' ||
+      feature === 'postcode' ||
+      feature === 'district' ||
+      feature === 'place' ||
+      feature === 'locality' ||
+      feature === 'neighbourhood' ||
+      feature === 'address') return true;
+      return false;
+  }
+
   getFeatureType(featureType: string) {
     switch(featureType) {
       case 'country': 
