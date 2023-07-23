@@ -33,4 +33,9 @@ export class AuthService {
     }
     return null;
   }
+
+  async isUserLoggedIn() {
+    if(await this.getUserData() === null) return false;
+    return true; 
+  }
 }

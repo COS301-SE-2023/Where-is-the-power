@@ -4,6 +4,8 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
 import { FeatureTypes } from './feature-types';
 import { empty } from 'rxjs';
+import { AuthService } from '../authentication/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-tab-saved',
@@ -15,15 +17,29 @@ export class TabSavedPage {
   places: any[] = [];
   featureTypesEnum = FeatureTypes;
   savedPlaces: any[] = [];
+  isLoggedIn: boolean = false;
 
-  constructor(private userLocationService: UserLocationService, private http: HttpClient) {}
+  constructor(private router: Router,
+              private userLocationService: UserLocationService, 
+              private http: HttpClient,
+              private authService: AuthService) {}
 
   ngOnInit() {
     this.userLocationService.getUserLocation();
   }
 
-  ionViewDidEnter() {
+  gotoProfileRoute() {
+    this.router.navigate(['tabs/tab-profile']);
+  }
+
+  async ionViewDidEnter() {
     this.latitude = this.userLocationService.getLatitude();
+    this.isLoggedIn = await this.authService.isUserLoggedIn();
+    console.log(this.isLoggedIn)
+  }
+
+  ionViewDidLeave() {
+    this.isLoggedIn = false;
   }
 
   input: string | undefined;
@@ -87,6 +103,8 @@ export class TabSavedPage {
       feature === 'address') return true;
       return false;
   }
+
+
 
   getFeatureType(featureType: string) {
     switch(featureType) {
