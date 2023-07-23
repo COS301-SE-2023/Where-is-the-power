@@ -18,6 +18,7 @@ export class TabProfilePage implements OnInit {
     password: "Password!123"
   };
 
+  isLoggedIn: boolean = false;
   constructor(private authService: AuthService, private modalController: ModalController) { }
 
 
