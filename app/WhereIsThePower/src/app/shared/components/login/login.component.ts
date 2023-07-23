@@ -15,12 +15,12 @@ import { Preferences } from '@capacitor/preferences';
 })
 export class LoginComponent implements OnInit {
 
-  @Output() closeEvent = new EventEmitter<boolean>();
   User: User = {
-    authType: "User",
-    email: "jill@gmail.com",
-    password: "Password!123"
+    authType: "",
+    email: "",
+    password: "",
   };
+
 
   loginForm: FormGroup = this.formBuilder.group({
     email: ['', [Validators.required, Validators.email]],
