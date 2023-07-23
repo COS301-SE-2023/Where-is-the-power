@@ -104,7 +104,9 @@ export class TabSavedPage {
       return false;
   }
 
-
+  c() {
+    console.log("sss");
+  }
 
   getFeatureType(featureType: string) {
     switch(featureType) {

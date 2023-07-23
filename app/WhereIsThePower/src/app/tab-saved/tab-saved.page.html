@@ -26,7 +26,7 @@
           </ion-toolbar>
           <ion-list *ngFor="let place of places">
 
-            <ion-item *ngIf="!isAddress(place.feature); else elseAddress">
+            <ion-item *ngIf="!isAddress(place.feature); else elseAddress" button (click)="c()">
               <ion-icon slot="start" name="{{ place.type }}"></ion-icon>
               <ion-label class="ion-text-wrap">
                 <h2>{{ place.name }}, {{ place.feature }}</h2>
@@ -38,8 +38,7 @@
                 <!-- ADD -->
                 <ion-button 
                   color="primary" 
-                  fill="clear" 
-                  (click)="addSavedPlace(place)">
+                  fill="clear">
                     <ion-icon slot="icon-only" name="chevron-forward-outline"></ion-icon>
                 </ion-button>
             </ion-item>
