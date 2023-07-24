@@ -13,9 +13,9 @@ export class AuthService {
     throw new Error('Method not implemented.');
   }
   apiUrl = 'https://witpa.codelog.co.za/api/'
-
   isLoggedin: boolean = false;
   public user = new BehaviorSubject<User | null>(null);
+
 
   constructor(private httpClient: HttpClient) { }
 

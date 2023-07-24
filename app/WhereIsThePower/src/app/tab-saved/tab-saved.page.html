@@ -1,17 +1,116 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>
-      Tab 2
+      Saved Places
     </ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Tab 2</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <ion-card *ngIf="!isLoggedIn; else elseIsloggedIn">
+    <h3>Saved places is only available to registered users</h3>
+    <ion-button (click)="gotoProfileRoute()">Go to Profile</ion-button>
+  </ion-card>
+  <ng-template #elseIsloggedIn>  
+    <ion-grid>
+      <ion-row>
+        <ion-col size="12" size-md="4">
+          <ion-toolbar>
+            <ion-searchbar
+              [(ngModel)]="input"
+              (ionInput)="updateResults()"
+              animated="true"
+              placeholder="Search for place"
+              clear-icon="trash-bin"
+            ></ion-searchbar>
+          </ion-toolbar>
+          <ion-list *ngFor="let place of places">
 
-  <app-explore-container name="Tab 2 page"></app-explore-container>
+            <ion-item *ngIf="!isAddress(place.feature); else elseAddress" button (click)="c()">
+              <ion-icon slot="start" name="{{ place.type }}"></ion-icon>
+              <ion-label class="ion-text-wrap">
+                <h2>{{ place.name }}, {{ place.feature }}</h2>
+                <p *ngIf="place.address != null">
+                  {{ place.address }}
+                </p>
+
+              </ion-label>
+                <!-- ADD -->
+                <ion-button 
+                  color="primary" 
+                  fill="clear">
+                    <ion-icon slot="icon-only" name="chevron-forward-outline"></ion-icon>
+                </ion-button>
+            </ion-item>
+            <ng-template #elseAddress>
+              <ion-item>
+                <ion-icon slot="start" name="{{ place.type }}"></ion-icon>
+                <ion-label class="ion-text-wrap">
+                  <h2>{{ place.name }}, {{ place.feature }}</h2>
+                  <p *ngIf="place.address != null">
+                    {{ place.address }}
+                  </p>
+
+                </ion-label>
+                <div *ngIf="isPlaceSaved(place) === false; else elseBlock">
+                  <!-- ADD -->
+                  <ion-button 
+                    color="success" 
+                    fill="clear" 
+                    (click)="addSavedPlace(place)">
+                      <ion-icon slot="icon-only" name="bookmark-outline"></ion-icon>
+                  </ion-button>
+                </div>
+                <ng-template #elseBlock>
+                  <div>
+                    <!-- DELETE -->
+                    <ion-button 
+                    color="success"
+                    fill="clear" 
+                    (click)="removeSavedPlace(place)">
+                      <ion-icon slot="icon-only" name="bookmark"></ion-icon>
+                    </ion-button>
+                  </div>
+                </ng-template>
+              </ion-item>
+            </ng-template>
+          </ion-list>
+        </ion-col>
+
+        <ion-col size="12" size-md="8" >
+          <ion-row>
+            <ion-toolbar class="ion-text-wrap">
+              <ion-title *ngIf="savedPlaces.length === 0">
+                You have no saved places
+              </ion-title>
+              <ion-list #elseBlock *ngFor="let savedPlace of savedPlaces">
+                <ion-item>
+                  <ion-icon slot="start" name="{{ savedPlace.type }}"></ion-icon>
+                  <ion-label class="ion-text-wrap">
+                    <h2>{{ savedPlace.name }}, {{ savedPlace.feature }}</h2>
+                    <p *ngIf="savedPlace.address != null">
+                      {{ savedPlace.address }}
+                    </p>
+
+                  </ion-label>
+                  <div>
+                    <!-- DELETE -->
+                    <ion-button 
+                      color="success"
+                      fill="clear" 
+                      (click)="removeSavedPlace(savedPlace)">
+                      <ion-icon slot="icon-only" name="bookmark"></ion-icon>
+                    </ion-button>
+                  </div>
+                </ion-item>
+              </ion-list>
+            </ion-toolbar>
+          </ion-row>
+          <!-- <ion-row class="ion-hide-lg-down">
+            <app-map-modal></app-map-modal>
+          </ion-row> -->
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </ng-template>  
 </ion-content>

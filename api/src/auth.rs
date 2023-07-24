@@ -13,10 +13,7 @@ use rocket::serde::json::Json;
 use rocket::Responder;
 use rocket::{post, State};
 use serde::{Deserialize, Serialize};
-use std::{
-    io::Read,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::io::AsyncReadExt;
 use utoipa::ToSchema;
 
@@ -28,7 +25,11 @@ pub async fn authenticate(
 ) -> Result<AuthResponder, Json<ApiError<'static>>> {
     match auth_request.auth_type {
         AuthType::Anonymous => Ok(AuthResponder {
-            inner: Json(JWTAuthToken::new(auth_request.auth_type).await.unwrap()),
+            inner: Json(
+                JWTAuthToken::new(auth_request.auth_type, None, None)
+                    .await
+                    .unwrap(),
+            ),
             header: rocket::http::Header::new(
                 "Set-Cookie",
                 "cookie=some_cookie;expires=0;path=/;SameSite=Strict".to_string(),
@@ -60,7 +61,13 @@ pub async fn authenticate(
                         match argon.verify_password(password.as_bytes(), &hash) {
                             Ok(_) => Ok(AuthResponder {
                                 inner: Json(
-                                    JWTAuthToken::new(auth_request.auth_type).await.unwrap(),
+                                    JWTAuthToken::new(
+                                        auth_request.auth_type,
+                                        Some(user.first_name),
+                                        Some(user.last_name),
+                                    )
+                                    .await
+                                    .unwrap(),
                                 ),
                                 header: rocket::http::Header::new(
                                     "Set-Cookie",
@@ -117,8 +124,11 @@ pub struct AuthRequest {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct JWTAuthToken {
     pub token: String,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
 }
 
 #[derive(Responder)]
@@ -135,7 +145,11 @@ async fn read_private_key(path: &str) -> Result<String, tokio::io::Error> {
 }
 
 impl JWTAuthToken {
-    pub async fn new(auth_type: AuthType) -> Result<Self, jsonwebtoken::errors::Error> {
+    pub async fn new(
+        auth_type: AuthType,
+        first_name: Option<String>,
+        last_name: Option<String>,
+    ) -> Result<Self, jsonwebtoken::errors::Error> {
         let header = Header::new(Algorithm::RS256);
 
         let private_key = match read_private_key("privateKey.pem").await {
@@ -161,6 +175,10 @@ impl JWTAuthToken {
                 .expect("Expected valid encoding key"),
         )?;
 
-        Ok(Self { token })
+        Ok(Self {
+            token,
+            first_name,
+            last_name,
+        })
     }
 }
