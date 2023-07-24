@@ -15,6 +15,7 @@ export class AuthService {
   apiUrl = 'https://witpa.codelog.co.za/api/'
 
   isLoggedin: boolean = false;
+  public user = new BehaviorSubject<User | null>(null);
 
   constructor(private httpClient: HttpClient) { }
 
@@ -24,6 +25,7 @@ export class AuthService {
 
   loginUser(user: User) {
     this.isLoggedin = true;
+    this.user.next(user);
     return this.httpClient.post(`${this.apiUrl}auth`, user)
   }
 

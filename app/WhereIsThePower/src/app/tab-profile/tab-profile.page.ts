@@ -5,6 +5,8 @@ import { AuthService } from '../authentication/auth.service';
 import { User } from '../shared/models/user';
 import { LoginComponent } from '../shared/components/login/login.component';
 import { SignupComponent } from '../shared/components/signup/signup.component';
+import { Subscription } from 'rxjs';
+
 @Component({
   selector: 'app-tab-profile',
   templateUrl: './tab-profile.page.html',
@@ -17,6 +19,8 @@ export class TabProfilePage implements OnInit {
     email: "jill@gmail.com",
     password: "Password!123"
   };
+  user: User | null = null;
+  private userSubscription: Subscription = new Subscription();
 
   isLoggedIn: boolean = false;
   constructor(private authService: AuthService, private modalController: ModalController) { }
@@ -24,6 +28,15 @@ export class TabProfilePage implements OnInit {
   ngOnInit() {
     //this.isLoggedIn = this.authService.isLoggedin;
     console.log(this.isLoggedIn);
+    this.userSubscription = this.authService.user.subscribe(
+      (user) => {
+        // Update the user variable in your component whenever the BehaviorSubject's value changes.
+        if (user) {
+          this.user = user;
+          this.isLoggedIn = true;
+        }
+      }
+    );
   }
 
   async showSignupComponent() {
@@ -43,4 +56,9 @@ export class TabProfilePage implements OnInit {
     });
     return await modal.present();
   }
+
+  ngOnDestroy() {
+    this.userSubscription.unsubscribe();
+  }
+
 }
