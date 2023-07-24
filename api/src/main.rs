@@ -90,7 +90,7 @@ async fn hi() -> &'static str {
 #[cfg(debug_assertions)]
 const LOG_LEVEL: LevelFilter = LevelFilter::Debug;
 #[cfg(not(debug_assertions))]
-const LOG_LEVEL: LevelFilter = LevelFilter::Warn;
+const LOG_LEVEL: LevelFilter = LevelFilter::Info;
 
 fn setup_logger() -> Result<(), fern::InitError> {
     fern::Dispatch::new()
