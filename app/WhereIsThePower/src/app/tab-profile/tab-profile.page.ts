@@ -57,6 +57,10 @@ export class TabProfilePage implements OnInit {
     return await modal.present();
   }
 
+  logout() {
+    this.isLoggedIn = false;
+  }
+
   ngOnDestroy() {
     this.userSubscription.unsubscribe();
   }
