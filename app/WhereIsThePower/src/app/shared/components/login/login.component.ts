@@ -17,6 +17,8 @@ export class LoginComponent implements OnInit {
     authType: "",
     email: "",
     password: "",
+    firstName: "",
+    lastName: "",
   };
 
 
@@ -51,6 +53,9 @@ export class LoginComponent implements OnInit {
         console.log(response);
         this.dismissModal();
         this.User.token = response.token;
+        this.User.firstName = response.firstName;
+        this.User.lastName = response.lastName;
+
         await this.authService.saveUserData('Token', JSON.stringify(this.User.token));
 
         //const userData = await this.authService.getUserData();

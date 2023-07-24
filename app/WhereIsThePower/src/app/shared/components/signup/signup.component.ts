@@ -5,6 +5,7 @@ import { ToastController } from '@ionic/angular';
 import { RegisterUser } from '../../models/register-user';
 import { AuthService } from '../../../authentication/auth.service';
 import { ModalController } from '@ionic/angular';
+import { User } from '../../models/user';
 
 @Component({
   selector: 'app-signup',
@@ -52,8 +53,9 @@ export class SignupComponent implements OnInit {
       console.log(this.newUser)
       this.authService.signupUser(this.newUser).subscribe(async (response: any) => {
         console.log(response);
-
-        this.authService.loginUser({ authType: "User", email: this.newUser.email, password: this.newUser.password }).subscribe(async (response: any) => {
+        let createNewUser = new User("User", this.newUser.email, this.newUser.password, this.newUser.firstName, this.newUser.lastName);
+        console.log(createNewUser);
+        this.authService.loginUser(createNewUser).subscribe(async (response: any) => {
           console.log(response);
           this.dismissModal();
         });

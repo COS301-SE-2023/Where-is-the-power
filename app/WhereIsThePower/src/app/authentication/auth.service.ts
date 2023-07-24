@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { RegisterUser } from '../shared/models/register-user';
 import { User } from '../shared/models/user';
 import { Preferences } from '@capacitor/preferences';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
