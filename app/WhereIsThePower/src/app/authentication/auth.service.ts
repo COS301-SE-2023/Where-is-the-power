@@ -10,7 +10,7 @@ export class AuthService {
   static saveData(arg0: string, token: string | undefined) {
     throw new Error('Method not implemented.');
   }
-  apiUrl = 'http://witpa.codelog.co.za/api/'
+  apiUrl = 'https://witpa.codelog.co.za/api/'
 
   constructor(private httpClient: HttpClient) { }
 
@@ -32,5 +32,10 @@ export class AuthService {
       return JSON.parse(ret.value);
     }
     return null;
+  }
+
+  async isUserLoggedIn() {
+    if(await this.getUserData() === null) return false;
+    return true; 
   }
 }
