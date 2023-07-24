@@ -61,14 +61,26 @@ export class SignupComponent implements OnInit {
           this.dismissModal();
         });
       });
+      this.sucessToast('Welcome to WITP, we hope you enjoy your stay');
     } else {
-      this.presentToast('Please enter a valid email and password.');
+      this.failToast('Please ensure all details are correct');
     }
   }
 
-  async presentToast(message: string) {
+  async failToast(message: string) {
     const toast = await this.toastController.create({
       message: message,
+      color: 'danger',
+      duration: 3000,
+      position: 'bottom',
+    });
+    toast.present();
+  }
+
+  async sucessToast(message: string) {
+    const toast = await this.toastController.create({
+      message: message,
+      color: 'success',
       duration: 3000,
       position: 'bottom',
     });
