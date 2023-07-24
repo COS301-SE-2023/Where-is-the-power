@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { RegisterUser } from '../shared/models/register-user';
 import { User } from '../shared/models/user';
 import { Preferences } from '@capacitor/preferences';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -10,7 +11,7 @@ export class AuthService {
   static saveData(arg0: string, token: string | undefined) {
     throw new Error('Method not implemented.');
   }
-  apiUrl = 'http://witpa.codelog.co.za/api/'
+  apiUrl = 'https://witpa.codelog.co.za/api/'
 
   isLoggedin: boolean = false;
 
