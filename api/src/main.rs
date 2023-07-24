@@ -119,7 +119,11 @@ async fn get_config() -> Figment {
     {
         info!("Didn't find TLS certificate, checking environment vars");
         if let Ok(ssl_cert) = env::var("TLS_CERT") {
-            Some(ssl_cert)
+            if let Ok(_) = tokio::fs::write("ssl/ssl_cert.pem", ssl_cert.as_bytes()).await {
+                Some(ssl_cert)
+            } else {
+                None
+            }
         } else {
             None
         }
@@ -132,8 +136,12 @@ async fn get_config() -> Figment {
         .unwrap_or(false)
     {
         info!("Didn't find TLS private key, checking environment vars");
-        if let Ok(ssl_cert) = env::var("TLS_KEY") {
-            Some(ssl_cert)
+        if let Ok(ssl_key) = env::var("TLS_KEY") {
+            if let Ok(_) = tokio::fs::write("ssl/ssl_private_key.pem", ssl_key.as_bytes()).await {
+                Some(ssl_key)
+            } else {
+                None
+            }
         } else {
             warn!("Couldn't find TLS private key");
             None
