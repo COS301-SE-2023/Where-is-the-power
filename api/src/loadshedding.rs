@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc, thread};
+use std::{collections::HashMap, sync::Arc, thread,};
 
 use crate::{
     api::{ApiError, ApiResponse},
@@ -6,7 +6,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId};
-use chrono::{DateTime, Datelike, FixedOffset, Local, NaiveDateTime, Timelike, Duration};
+use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, NaiveDateTime, Timelike};
 use log::warn;
 use macros::Entity;
 use mongodb::{options::FindOneOptions, options::FindOptions, Client, Cursor, Database};
@@ -15,7 +15,7 @@ use rocket::{
     futures::{future::try_join_all, StreamExt, TryStreamExt},
     post,
     serde::json::Json,
-    State, Orbit, Rocket,
+    State, Orbit, Rocket
 };
 use serde::{Deserialize, Serialize};
 use tokio::{runtime::Runtime, sync::RwLock};
@@ -30,7 +30,7 @@ pub async fn fetch_map_data<'a>(
     loadshedding_stage: &State<Option<Arc<RwLock<LoadSheddingStage>>>>,
     request: Json<MapDataRequest>,
 ) -> ApiResponse<'a, MapDataDefaultResponse> {
-    let connection = &db.inner().as_ref().unwrap().database("staging");
+    let connection = &db.inner().as_ref().unwrap().database("production");
     let south_west: Vec<f64> = request.bottom_left.iter().cloned().map(|x| x).collect();
     let north_east: Vec<f64> = request.top_right.iter().cloned().map(|x| x).collect();
     let query = doc! {
@@ -88,6 +88,36 @@ pub async fn fetch_map_data<'a>(
         log::error!("Unable to fold MapDataResponse");
         return ApiError::ServerError("Error occured on the server, sorry :<").into();
     }
+}
+
+
+#[utoipa::path(post, tag = "Suburb Statistics", path = "/api/fetchSuburbStats", request_body = Stats)]
+#[post("/fetchSuburbStats", format = "application/json", data = "<request>")]
+pub async fn fetch_suburb_stats<'a>(
+    db: &State<Option<Client>>,
+    request: Json<SuburbStatsRequest>,
+) -> ApiResponse<'a, SuburbStatsResponse> {
+    if let Some(data) = request.suburb_id.as_ref() {
+        let oid = ObjectId::parse_str(data);
+        if let Err(_err) = oid {
+            return ApiError::ServerError("Invalid Object ID").into()
+        }
+        let connection = db.as_ref().unwrap().database("production");
+        let query = doc! {"_id" : oid.unwrap()};
+        let suburb: SuburbEntity = match connection.collection("suburbs").find_one(query, None).await.unwrap() {
+            Some(result) => result,
+            None => {
+                return ApiError::ServerError("Document not found").into()
+            }
+        };
+        match suburb.get_stats(&connection).await {
+            Ok(data) => return ApiResponse::Ok(data),
+            Err(_) => {
+                return ApiError::ServerError("server side error :<").into()
+            }
+        }
+    }
+    todo!()
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Entity)]
@@ -223,6 +253,7 @@ pub struct GroupEntity {
     pub id: Option<ObjectId>,
     pub number: i32,
     pub suburbs: Vec<ObjectId>,
+    // consider a small refactor to add groups associated municipalities for better efficiency
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Entity)]
@@ -294,11 +325,30 @@ pub struct MapDataDefaultResponse {
     pub off: Vec<SuburbEntity>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct WeeklyStatsGeneralResponse {
+#[schema(example = json! {
+    SuburbStatsRequest {
+        suburb_id : Some("64b522a848b2645f6f627c1e".to_string()),
+        suburb_object : None
+    }
+})]
+pub struct SuburbStatsRequest {
+    pub suburb_id: Option<String>,
+    pub suburb_object: Option<SuburbEntity>
+}
+
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SuburbStatsResponse {
+    pub total_time: TotalTimeForWeek,
+    pub per_day_times: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TotalTimeForWeek {
     pub on: i32,
-    pub off: i32
+    pub off: i32,
 }
 
 impl std::ops::Add for MapDataDefaultResponse {
@@ -472,14 +522,16 @@ impl MunicipalityEntity {
 }
 
 impl SuburbEntity {
-    pub async fn get_data(&mut self, connection: &Database) -> Result<WeeklyStatsGeneralResponse, ApiError> {
+    pub async fn get_stats(
+        self,
+        connection: &Database,
+    ) -> Result<SuburbStatsResponse, ApiError> {
         // queries
         // get the relevant group
         let query = doc! {
             "suburbs" : {
-                "$in" : [self.id]
-            },
-            "municipality": self.municipality
+                "$in" : [self.id.unwrap()]
+            }
         };
         let group: GroupEntity = match connection
             .collection("groups")
@@ -500,13 +552,11 @@ impl SuburbEntity {
         let time_now = Local::now();
         let one_week_ago = (Local::now() - chrono::Duration::weeks(1)).timestamp();
         let query = doc! {
-            "timestamp": {
+            "time": {
                 "$gte": one_week_ago
             }
         };
-        let find_options = FindOptions::builder()
-            .sort(doc! { "timestamp": 1 })
-            .build();
+        let find_options = FindOptions::builder().sort(doc! { "timestamp": 1 }).build();
         let stage_change_cursor: Cursor<LoadSheddingStage> = match connection
             .collection("stage_log")
             .find(query, find_options)
@@ -533,7 +583,7 @@ impl SuburbEntity {
 
         // find first timestamp after one week ago
         let query = doc! {
-            "timestamp": {
+            "time": {
                 "$lte": one_week_ago
             }
         };
@@ -555,7 +605,7 @@ impl SuburbEntity {
         };
         match first_stage_change {
             Some(item) => all_stages.push(item),
-            None => ()
+            None => (),
         };
 
         // get the timeschedules
@@ -619,13 +669,16 @@ impl SuburbEntity {
 
             let mut add_time = false;
             for time_slot in time_slots {
-                let count:usize = 0;
-                let stage = all_stages.first().unwrap();
+                let mut count: usize = 0;
+                let stage = &all_stages[0];
                 while (count as i32) < stage.stage {
-                    if time_slot.stages.get(count).unwrap().groups[(day-1) as usize] == group.id.unwrap() {
+                    if time_slot.stages.get(count).unwrap().groups[(day - 1) as usize]
+                        == group.id.unwrap()
+                    {
                         add_time = true;
                         break;
                     }
+                    count = count + 1;
                 }
                 if add_time {
                     break;
@@ -635,13 +688,18 @@ impl SuburbEntity {
                 down_time += 30;
             }
             // update times
-            time_to_search = time_to_search.checked_add_signed(Duration::minutes(30)).unwrap();
+            time_to_search = time_to_search
+                .checked_add_signed(Duration::minutes(30))
+                .unwrap();
         }
         let total_time = 10080;
-        let uptime =  total_time - down_time;
-        Ok(WeeklyStatsGeneralResponse {
-            on : uptime,
-            off : down_time
+        let uptime = total_time - down_time;
+        Ok(SuburbStatsResponse {
+            total_time: TotalTimeForWeek {
+                on: uptime,
+                off: down_time,
+            },
+            per_day_times : 0
         })
     }
 }
