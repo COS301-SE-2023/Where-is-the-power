@@ -13,7 +13,7 @@ use api::ApiError;
 
 use bson::doc;
 use loadshedding::StageUpdater;
-use log::{info, warn, LevelFilter};
+use log::{error, info, warn, LevelFilter};
 use mongodb::options::ClientOptions;
 use mongodb::Client;
 use rocket::config::TlsConfig;
@@ -117,17 +117,19 @@ async fn get_config() -> Figment {
         .await
         .unwrap_or(false)
     {
-        info!("Didn't find TLS certificate, checking environment vars");
+        warn!("Didn't find TLS certificate, checking environment vars");
         if let Ok(ssl_cert) = env::var("TLS_CERT") {
             if let Ok(_) = tokio::fs::write("ssl/ssl_cert.pem", ssl_cert.as_bytes()).await {
                 Some(ssl_cert)
             } else {
+                error!("Couldn't find TLS certificate in environment vars");
                 None
             }
         } else {
             None
         }
     } else {
+        info!("Found TLS cert, reading...");
         tokio::fs::read_to_string("ssl/ssl_cert.pem").await.ok()
     };
 
@@ -135,11 +137,12 @@ async fn get_config() -> Figment {
         .await
         .unwrap_or(false)
     {
-        info!("Didn't find TLS private key, checking environment vars");
+        warn!("Didn't find TLS private key, checking environment vars");
         if let Ok(ssl_key) = env::var("TLS_KEY") {
             if let Ok(_) = tokio::fs::write("ssl/ssl_private_key.pem", ssl_key.as_bytes()).await {
                 Some(ssl_key)
             } else {
+                error!("Couldn't find TLS private key in environment vars");
                 None
             }
         } else {
@@ -147,6 +150,7 @@ async fn get_config() -> Figment {
             None
         }
     } else {
+        info!("Found TLS private key, reading...");
         tokio::fs::read_to_string("ssl/ssl_private_key.pem")
             .await
             .ok()
