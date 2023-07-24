@@ -50,7 +50,7 @@ pub async fn update_dns() -> Result<(), reqwest::Error> {
             content: ip,
             name: record_name,
             ty: "A".to_string(),
-            proxied: Some(false),
+            proxied: Some(true),
         };
 
         let res = client
