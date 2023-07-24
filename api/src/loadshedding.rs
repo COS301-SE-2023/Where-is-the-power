@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc, thread,};
+use std::{collections::HashMap, sync::Arc, thread};
 
 use crate::{
     api::{ApiError, ApiResponse},
@@ -6,7 +6,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId};
-use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, NaiveDateTime, Timelike};
+use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, NaiveDateTime, Timelike, Weekday};
 use log::warn;
 use macros::Entity;
 use mongodb::{options::FindOneOptions, options::FindOptions, Client, Cursor, Database};
@@ -15,7 +15,7 @@ use rocket::{
     futures::{future::try_join_all, StreamExt, TryStreamExt},
     post,
     serde::json::Json,
-    State, Orbit, Rocket
+    Orbit, Rocket, State,
 };
 use serde::{Deserialize, Serialize};
 use tokio::{runtime::Runtime, sync::RwLock};
@@ -90,7 +90,6 @@ pub async fn fetch_map_data<'a>(
     }
 }
 
-
 #[utoipa::path(post, tag = "Suburb Statistics", path = "/api/fetchSuburbStats", request_body = Stats)]
 #[post("/fetchSuburbStats", format = "application/json", data = "<request>")]
 pub async fn fetch_suburb_stats<'a>(
@@ -100,21 +99,22 @@ pub async fn fetch_suburb_stats<'a>(
     if let Some(data) = request.suburb_id.as_ref() {
         let oid = ObjectId::parse_str(data);
         if let Err(_err) = oid {
-            return ApiError::ServerError("Invalid Object ID").into()
+            return ApiError::ServerError("Invalid Object ID").into();
         }
         let connection = db.as_ref().unwrap().database("production");
         let query = doc! {"_id" : oid.unwrap()};
-        let suburb: SuburbEntity = match connection.collection("suburbs").find_one(query, None).await.unwrap() {
+        let suburb: SuburbEntity = match connection
+            .collection("suburbs")
+            .find_one(query, None)
+            .await
+            .unwrap()
+        {
             Some(result) => result,
-            None => {
-                return ApiError::ServerError("Document not found").into()
-            }
+            None => return ApiError::ServerError("Document not found").into(),
         };
         match suburb.get_stats(&connection).await {
             Ok(data) => return ApiResponse::Ok(data),
-            Err(_) => {
-                return ApiError::ServerError("server side error :<").into()
-            }
+            Err(_) => return ApiError::ServerError("server side error :<").into(),
         }
     }
     todo!()
@@ -335,18 +335,18 @@ pub struct MapDataDefaultResponse {
 })]
 pub struct SuburbStatsRequest {
     pub suburb_id: Option<String>,
-    pub suburb_object: Option<SuburbEntity>
+    pub suburb_object: Option<SuburbEntity>,
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SuburbStatsResponse {
-    pub total_time: TotalTimeForWeek,
-    pub per_day_times: i32,
+    pub total_time: TotalTime,
+    pub per_day_times: HashMap<String, TotalTime>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct TotalTimeForWeek {
+pub struct TotalTime {
     pub on: i32,
     pub off: i32,
 }
@@ -360,6 +360,18 @@ impl std::ops::Add for MapDataDefaultResponse {
         merged.on.extend(other.on);
         merged.off.extend(other.off);
         merged
+    }
+}
+
+impl TotalTime {
+    fn new() -> TotalTime {
+        // total minutes
+        TotalTime { on: 1440, off: 0 }
+    }
+
+    fn add_off_time(&mut self, minutes: i32) {
+        self.off += minutes;
+        self.on -= minutes;
     }
 }
 
@@ -522,10 +534,7 @@ impl MunicipalityEntity {
 }
 
 impl SuburbEntity {
-    pub async fn get_stats(
-        self,
-        connection: &Database,
-    ) -> Result<SuburbStatsResponse, ApiError> {
+    pub async fn get_stats(self, connection: &Database) -> Result<SuburbStatsResponse, ApiError> {
         // queries
         // get the relevant group
         let query = doc! {
@@ -639,6 +648,7 @@ impl SuburbEntity {
         let mut time_to_search: DateTime<FixedOffset> = get_date_time(Some(one_week_ago));
         time_to_search = time_to_search.with_minute(0).unwrap();
         let mut down_time = 0;
+        let mut daily_stats: HashMap<String, TotalTime> = HashMap::new();
         while time_to_search <= time_now {
             let hour = time_to_search.hour() as i32;
             let minute = time_to_search.minute() as i32;
@@ -686,6 +696,10 @@ impl SuburbEntity {
             }
             if add_time {
                 down_time += 30;
+                let day = daily_stats
+                    .entry(time_to_search.weekday().to_string())
+                    .or_insert(TotalTime::new());
+                day.add_off_time(30);
             }
             // update times
             time_to_search = time_to_search
@@ -695,11 +709,11 @@ impl SuburbEntity {
         let total_time = 10080;
         let uptime = total_time - down_time;
         Ok(SuburbStatsResponse {
-            total_time: TotalTimeForWeek {
+            total_time: TotalTime {
                 on: uptime,
                 off: down_time,
             },
-            per_day_times : 0
+            per_day_times: daily_stats,
         })
     }
 }
