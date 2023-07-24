@@ -13,10 +13,12 @@ use api::ApiError;
 
 use bson::doc;
 use loadshedding::StageUpdater;
-use log::{warn, LevelFilter};
+use log::{info, warn, LevelFilter};
 use mongodb::options::ClientOptions;
 use mongodb::Client;
+use rocket::config::TlsConfig;
 use rocket::data::{Limits, ToByteUnit};
+use rocket::figment::Figment;
 use rocket::fs::FileServer;
 
 use rocket::http::Method;
@@ -107,10 +109,55 @@ fn setup_logger() -> Result<(), fern::InitError> {
     Ok(())
 }
 
-async fn build_rocket() -> Rocket<Build> {
-    let figment =
+async fn get_config() -> Figment {
+    let mut figment =
         rocket::Config::figment().merge(("limits", Limits::new().limit("json", 7.megabytes())));
 
+    let ssl_cert = if !tokio::fs::try_exists("ssl/ssl_cert.pem")
+        .await
+        .unwrap_or(false)
+    {
+        info!("Didn't find TLS certificate, checking environment vars");
+        if let Ok(ssl_cert) = env::var("TLS_CERT") {
+            Some(ssl_cert)
+        } else {
+            None
+        }
+    } else {
+        tokio::fs::read_to_string("ssl/ssl_cert.pem").await.ok()
+    };
+
+    let ssl_key = if !tokio::fs::try_exists("ssl/ssl_private_key.pem")
+        .await
+        .unwrap_or(false)
+    {
+        info!("Didn't find TLS private key, checking environment vars");
+        if let Ok(ssl_cert) = env::var("TLS_KEY") {
+            Some(ssl_cert)
+        } else {
+            warn!("Couldn't find TLS private key");
+            None
+        }
+    } else {
+        tokio::fs::read_to_string("ssl/ssl_private_key.pem")
+            .await
+            .ok()
+    };
+
+    if ssl_cert.is_some() && ssl_key.is_some() {
+        figment = figment.merge((
+            "tls",
+            TlsConfig::from_paths("ssl/ssl_cert.pem", "ssl/ssl_private_key.pem"),
+        ));
+    } else {
+        warn!("Couldn't find TLS keys, not setting up TLS");
+    }
+
+    figment
+}
+
+async fn build_rocket() -> Rocket<Build> {
+    let figment = get_config().await;
     let db_uri = env::var("DATABASE_URI").unwrap_or(String::from(""));
     // Cors Options, we should modify to our needs but leave as default for now.
     let cors = CorsOptions {
