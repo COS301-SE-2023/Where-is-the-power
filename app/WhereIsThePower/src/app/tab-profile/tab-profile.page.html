@@ -17,11 +17,11 @@
     </ion-img>
 
     <ion-list>
-      <ion-item detail="true" (click)="showLoginComponent()">
+      <ion-item button detail="true" (click)="showLoginComponent()">
         <ion-icon name="log-in-outline" class="ion-padding-end"></ion-icon>
         <ion-label>Login to my account</ion-label>
       </ion-item>
-      <ion-item detail="true" (click)="showSignupComponent()">
+      <ion-item button detail="true" (click)="showSignupComponent()">
         <ion-icon name="person-add-outline" class="ion-padding-end"></ion-icon>
         <ion-label>Sign up for an account</ion-label>
       </ion-item>
@@ -37,9 +37,19 @@
       <h1> Welcome {{user?.firstName}} !</h1>
     </ion-text>
     <ion-list>
-      <ion-item>
+      <ion-item button>
         <ion-icon name="moon-outline" class="ion-padding-end"></ion-icon>
-        <ion-label>Theme</ion-label>
+        <ion-select #systemTheme
+                    label="Theme" 
+                    interface="popover"
+                    toggleIcon="add"
+                    expandedIcon="remove"
+                    aria-label="Theme"
+                    placeholder="Select Theme"
+                    (ionChange)="toggleTheme(systemTheme.value)">
+          <ion-select-option value="light">Light</ion-select-option>
+          <ion-select-option value="dark" >Dark</ion-select-option>
+        </ion-select>
       </ion-item>
       <ion-item button (click)="logout()">
         <ion-icon name="log-out-outline" class="ion-padding-end"></ion-icon>
@@ -47,4 +57,6 @@
       </ion-item>
     </ion-list>
   </ng-template>
+
+  <ion-toast trigger="open-toast" message="This toast will disappear after 5 seconds" [duration]="5000"></ion-toast>
 </ion-content>

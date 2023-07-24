@@ -97,4 +97,7 @@ export class TabProfilePage implements OnInit {
     return canvas.toDataURL();
   }
 
+  toggleTheme(systemTheme: string) {
+    document.body.setAttribute('witp-color-theme', systemTheme);
+  }
 }
