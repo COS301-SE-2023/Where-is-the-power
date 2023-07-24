@@ -1,2 +1,2 @@
 [release]
-log_level = "debug"
+log_level = "normal"
