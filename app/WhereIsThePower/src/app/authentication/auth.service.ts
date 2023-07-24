@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { RegisterUser } from '../shared/models/register-user';
 import { User } from '../shared/models/user';
 import { Preferences } from '@capacitor/preferences';
+import { BehaviorSubject } from 'rxjs';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -11,6 +13,9 @@ export class AuthService {
     throw new Error('Method not implemented.');
   }
   apiUrl = 'https://witpa.codelog.co.za/api/'
+  isLoggedin: boolean = false;
+  public user = new BehaviorSubject<User | null>(null);
+
 
   constructor(private httpClient: HttpClient) { }
 
@@ -19,6 +24,7 @@ export class AuthService {
   }
 
   loginUser(user: User) {
+    this.isLoggedin = true;
     return this.httpClient.post(`${this.apiUrl}auth`, user)
   }
 
@@ -35,7 +41,7 @@ export class AuthService {
   }
 
   async isUserLoggedIn() {
-    if(await this.getUserData() === null) return false;
-    return true; 
+    if (await this.getUserData() === null) return false;
+    return true;
   }
 }

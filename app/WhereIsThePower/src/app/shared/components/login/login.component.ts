@@ -4,9 +4,7 @@ import { Router } from '@angular/router';
 import { ToastController } from '@ionic/angular';
 import { User } from '../../models/user';
 import { AuthService } from '../../../authentication/auth.service';
-import { Output, EventEmitter } from '@angular/core';
 import { ModalController } from '@ionic/angular';
-import { Preferences } from '@capacitor/preferences';
 
 @Component({
   selector: 'app-login',
@@ -15,12 +13,14 @@ import { Preferences } from '@capacitor/preferences';
 })
 export class LoginComponent implements OnInit {
 
-  @Output() closeEvent = new EventEmitter<boolean>();
   User: User = {
-    authType: "User",
-    email: "jill@gmail.com",
-    password: "Password!123"
+    authType: "",
+    email: "",
+    password: "",
+    firstName: "",
+    lastName: "",
   };
+
 
   loginForm: FormGroup = this.formBuilder.group({
     email: ['', [Validators.required, Validators.email]],
@@ -36,10 +36,7 @@ export class LoginComponent implements OnInit {
   ) { }
 
 
-  ngOnInit() {
-    console.log("NULL" + this.authService.getUserData());
-
-  }
+  ngOnInit() { }
 
   dismissModal() {
     this.modalController.dismiss();
@@ -56,10 +53,13 @@ export class LoginComponent implements OnInit {
         console.log(response);
         this.dismissModal();
         this.User.token = response.token;
+        this.User.firstName = response.firstName;
+        this.User.lastName = response.lastName;
+        this.authService.user.next(this.User);
         await this.authService.saveUserData('Token', JSON.stringify(this.User.token));
 
-        const userData = await this.authService.getUserData();
-        console.log("TOKEN " + userData);
+        //const userData = await this.authService.getUserData();
+        //console.log("TOKEN " + userData);
       });
     } else {
       this.presentToast('Please enter a valid email and password.');

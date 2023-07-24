@@ -4,6 +4,10 @@ import { RegisterUser } from '../shared/models/register-user';
 import { AuthService } from '../authentication/auth.service';
 import { User } from '../shared/models/user';
 import { LoginComponent } from '../shared/components/login/login.component';
+import { SignupComponent } from '../shared/components/signup/signup.component';
+import { Subscription } from 'rxjs';
+
+
 @Component({
   selector: 'app-tab-profile',
   templateUrl: './tab-profile.page.html',
@@ -16,19 +20,43 @@ export class TabProfilePage implements OnInit {
     email: "jill@gmail.com",
     password: "Password!123"
   };
+  user: User | null = null;
+  private userSubscription: Subscription = new Subscription();
+  userInitialDataURL: string | null = null;
 
+  isLoggedIn: boolean = false;
   constructor(private authService: AuthService, private modalController: ModalController) { }
 
-
   ngOnInit() {
+    //this.isLoggedIn = this.authService.isLoggedin;
+    this.userSubscription = this.authService.user.subscribe(
+      (user) => {
+        this.isLoggedIn = this.authService.isLoggedin;
 
+        console.log(this.isLoggedIn);
+        console.log("UGH");
+        console.log("USER" + JSON.stringify(this.user));
+        if (this.isLoggedIn) {
+          // Update the user variable in your component whenever the BehaviorSubject's value changes.
+          if (user) {
+            this.user = user;
+            if (user.firstName) {
+              this.userInitialDataURL = this.getInitialDataURL(user.firstName.charAt(0));
+              console.log(this.userInitialDataURL);
+            }
+          }
+        }
+      }
+    );
   }
 
-  RegisterUser() {
-    console.log(this.newUser)
-    this.authService.signupUser(this.newUser).subscribe((response: any) => {
-      console.log(response);
+  async showSignupComponent() {
+    const modal = await this.modalController.create({
+      component: SignupComponent,
+      // You can pass data to the login component using componentProps if needed
+      // componentProps: { data: yourData },
     });
+    return await modal.present();
   }
 
   async showLoginComponent() {
@@ -40,8 +68,33 @@ export class TabProfilePage implements OnInit {
     return await modal.present();
   }
 
-  closeModal() {
-    this.modalController.dismiss();
+  logout() {
+    this.isLoggedIn = false;
+  }
+
+  ngOnDestroy() {
+    this.userSubscription.unsubscribe();
+  }
+
+  getInitialDataURL(initial: string): string | null {
+    const canvas = document.createElement('canvas');
+    canvas.width = 48;
+    canvas.height = 48;
+    const context = canvas.getContext('2d');
+
+    if (!context) {
+      console.error('Could not get 2D context.');
+      return null;
+    }
+
+    context.fillStyle = '#ff9800'; // Customize the background color
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.font = '24px Arial'; // Customize the font size and family
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillStyle = '#ffffff'; // Customize the text color
+    context.fillText(initial, canvas.width / 2, canvas.height / 2);
+    return canvas.toDataURL();
   }
 
 }
