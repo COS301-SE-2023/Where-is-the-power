@@ -25,7 +25,6 @@ export class AuthService {
 
   loginUser(user: User) {
     this.isLoggedin = true;
-    this.user.next(user);
     return this.httpClient.post(`${this.apiUrl}auth`, user)
   }
 
