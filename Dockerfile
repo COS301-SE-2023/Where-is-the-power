@@ -1,8 +1,5 @@
-FROM rust:1.70
+FROM rust:1.71
 
-RUN apt-get update
-RUN apt-get install -y nodejs
-RUN apt-get install -y npm
 WORKDIR /app
 COPY . .
 WORKDIR /app/api
