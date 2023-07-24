@@ -8,7 +8,7 @@ COPY . .
 WORKDIR /app/api
 RUN cargo build --release
 
-ENV ROCKET_PORT=80
+ENV ROCKET_PORT=443
 ENV ROCKET_ADDRESS=0.0.0.0
 CMD ["cargo", "run", "--release"]
-EXPOSE 80
+EXPOSE 443
