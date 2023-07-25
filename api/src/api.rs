@@ -12,6 +12,7 @@ pub enum ApiError<'a> {
     UserCreationError(&'a str),
     ServerError(&'a str),
     ScraperUploadError(&'a str),
+    RequestError(&'a str),
 }
 
 pub enum ApiResponse<'a, O: Serialize> {

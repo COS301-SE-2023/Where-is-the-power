@@ -194,7 +194,8 @@ async fn build_rocket() -> Rocket<Build> {
                 routes!(
                     auth::authenticate,
                     user::create_user,
-                    loadshedding::fetch_map_data
+                    loadshedding::fetch_map_data,
+                    loadshedding::fetch_suburb_stats
                 ),
             )
             .mount("/upload", routes![upload_data])
@@ -221,7 +222,8 @@ async fn build_rocket() -> Rocket<Build> {
                     routes!(
                         auth::authenticate,
                         user::create_user,
-                        loadshedding::fetch_map_data
+                        loadshedding::fetch_map_data,
+                        loadshedding::fetch_suburb_stats
                     ),
                 )
                 .mount("/upload", routes![upload_data])
