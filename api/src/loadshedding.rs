@@ -6,7 +6,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId};
-use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, NaiveDateTime, Timelike, Weekday};
+use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, NaiveDateTime, Timelike};
 use log::warn;
 use macros::Entity;
 use mongodb::{options::FindOneOptions, options::FindOptions, Client, Cursor, Database};
