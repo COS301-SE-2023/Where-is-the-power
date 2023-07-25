@@ -17,7 +17,7 @@
     </ion-img>
 
     <ion-list>
-      <ion-item detail="true" (click)="showLoginComponent()">
+      <ion-item detail="true" (click)="showLoginComponent()" data-cy="login-button">
         <ion-icon name="log-in-outline" class="ion-padding-end"></ion-icon>
         <ion-label>Login to my account</ion-label>
       </ion-item>
@@ -41,7 +41,7 @@
         <ion-icon name="moon-outline" class="ion-padding-end"></ion-icon>
         <ion-label>Theme</ion-label>
       </ion-item>
-      <ion-item button (click)="logout()">
+      <ion-item button (click)="logout()" data-cy="logout-button">
         <ion-icon name="log-out-outline" class="ion-padding-end"></ion-icon>
         <ion-label>Logout</ion-label>
       </ion-item>

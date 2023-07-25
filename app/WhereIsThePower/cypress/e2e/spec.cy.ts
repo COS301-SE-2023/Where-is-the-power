@@ -54,4 +54,17 @@ describe('Canvas Map Test', () => {
 
     cy.get('[data-cy="Welcome-text"]').should("to.have.text"," Welcome Bob !")
   })
+  
+  it('should sign in as Bob Marley', () => {
+    cy.visit('/tabs/tab-profile')
+    cy.get('[data-cy="login-button"]').click()
+    cy.get('[data-cy="login-email-input"]').type("bobmarley@gmail.com")
+    cy.get('[data-cy="login-password-input"]').type("@bobmarley1")
+
+    cy.get('[data-cy="btn-login-confirm"]').click()
+    cy.get('[data-cy="Welcome-text"]').should("to.have.text"," Welcome Bob !")
+  })
+
+  
+  
  })
