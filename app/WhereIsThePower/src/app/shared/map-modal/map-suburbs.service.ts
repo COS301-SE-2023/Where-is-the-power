@@ -5,7 +5,7 @@ import { HttpClient } from '@angular/common/http';
   providedIn: 'root'
 })
 export class MapSuburbsService {
-  apiUrl = 'http://witpa.codelog.co.za/api/fetchMapData'
+  apiUrl = 'https://witpa.codelog.co.za/api/fetchMapData'
 
   body = {
     "bottomLeft": [-90, -180],

@@ -9,7 +9,8 @@ const routes: Routes = [
   {
     path: 'tab-statistics',
     loadChildren: () => import('./tab-statistics/tab-statistics.module').then(m => m.TabStatisticsPageModule)
-  },  {
+  },
+  {
     path: 'tab-profile',
     loadChildren: () => import('./tab-profile/tab-profile.module').then( m => m.TabProfilePageModule)
   }
