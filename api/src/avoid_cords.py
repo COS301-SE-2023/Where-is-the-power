@@ -2,11 +2,14 @@ import requests
 import math
 import json
 import sys
+import os
 
-access_token = "replace"
+access_token = os.environ['MAPBOX_API_KEY']
+
 
 def find_polygon_center(polygon):
-    num_points = len(polygon) - 1  # Subtract 1 to account for the repeated first point
+    # Subtract 1 to account for the repeated first point
+    num_points = len(polygon) - 1
     sum_x = 0
     sum_y = 0
 
@@ -29,6 +32,7 @@ polygon = parsed_data["polygon"]
 
 lon, lat = find_polygon_center(polygon)
 
+
 def haversine(lat1, lon1, lat2, lon2):
     # Convert latitude and longitude from degrees to radians
     lat1_rad = math.radians(lat1)
@@ -39,7 +43,8 @@ def haversine(lat1, lon1, lat2, lon2):
     # Haversine formula
     dlat = lat2_rad - lat1_rad
     dlon = lon2_rad - lon1_rad
-    a = math.sin(dlat / 2) ** 2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2) ** 2
+    a = math.sin(dlat / 2) ** 2 + math.cos(lat1_rad) * \
+        math.cos(lat2_rad) * math.sin(dlon / 2) ** 2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     # Radius of the Earth (in meters)
@@ -49,21 +54,26 @@ def haversine(lat1, lon1, lat2, lon2):
     distance = radius_earth * c
     return distance
 
+
 def distance_between_points(point1, point2):
     # Euclidean distance between two points in 2D
     return haversine(point1[1], point1[0], point2[1], point2[0])
 
+
 def find_radius(polygon):
     # finding the longest_diagonal_length
-    num_points = len(polygon) - 1  # Subtract 1 to account for the repeated first point
+    # Subtract 1 to account for the repeated first point
+    num_points = len(polygon) - 1
     longest_diagonal_length = 0
 
     for i in range(num_points):
         for j in range(i + 2, num_points):
             diagonal_length = distance_between_points(polygon[i], polygon[j])
-            longest_diagonal_length = max(longest_diagonal_length, diagonal_length)
+            longest_diagonal_length = max(
+                longest_diagonal_length, diagonal_length)
 
     return longest_diagonal_length
+
 
 radius = find_radius(polygon)
 
@@ -76,7 +86,7 @@ params = {
     "access_token": access_token,
     "layers": "road",
     "radius": radius,
-    "limit" : 50,
+    "limit": 50,
 }
 
 # Send the API request
@@ -86,6 +96,8 @@ response = requests.get(endpoint, params=params)
 data = response.json()
 
 # Function to extract coordinates with type "traffic_signals"
+
+
 def extract_traffic_signals_coordinates(data):
     coordinates_list = []
     for feature in data['features']:
@@ -94,11 +106,8 @@ def extract_traffic_signals_coordinates(data):
             coordinates_list.append(coordinates)
     return coordinates_list
 
+
 # Call the function to get the coordinates
 traffic_signals_coordinates = extract_traffic_signals_coordinates(data)
 
 print(json.dumps({"coordsToAvoid": traffic_signals_coordinates}))
-
-
-
-
