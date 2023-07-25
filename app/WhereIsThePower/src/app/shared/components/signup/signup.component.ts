@@ -54,9 +54,13 @@ export class SignupComponent implements OnInit {
       this.authService.signupUser(this.newUser).subscribe(async (response: any) => {
         console.log(response);
         let createNewUser = new User("User", this.newUser.email, this.newUser.password, this.newUser.firstName, this.newUser.lastName);
+
         console.log(createNewUser);
         this.authService.loginUser(createNewUser).subscribe(async (response: any) => {
-          // console.log("RES" + response);
+          createNewUser.token = response.token;
+          await this.authService.saveUserData('Token', JSON.stringify(createNewUser.token));
+
+           //console.log("RES" + response);
           this.authService.user.next(createNewUser);
           this.dismissModal();
         });
