@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc, thread, time::Duration};
+use std::{collections::HashMap, sync::Arc, thread};
 
 use crate::{
     api::{ApiError, ApiResponse},
@@ -6,22 +6,20 @@ use crate::{
 };
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId};
-use chrono::{DateTime, Datelike, FixedOffset, Local, NaiveDateTime, Timelike};
+use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, NaiveDateTime, Timelike, Weekday};
 use log::warn;
 use macros::Entity;
-use mongodb::{options::FindOptions, Client, Cursor, Database};
+use mongodb::{options::FindOneOptions, options::FindOptions, Client, Cursor, Database};
 use rocket::{
     fairing::{self, Fairing, Info, Kind},
     futures::{future::try_join_all, StreamExt, TryStreamExt},
     post,
     serde::json::Json,
-    Rocket, State,
+    Orbit, Rocket, State,
 };
 use serde::{Deserialize, Serialize};
 use tokio::{runtime::Runtime, sync::RwLock};
 use utoipa::ToSchema;
-
-// Rocket Persistent Data Structs
 pub struct StageUpdater;
 
 // Rocket endpoints
@@ -32,7 +30,7 @@ pub async fn fetch_map_data<'a>(
     loadshedding_stage: &State<Option<Arc<RwLock<LoadSheddingStage>>>>,
     request: Json<MapDataRequest>,
 ) -> ApiResponse<'a, MapDataDefaultResponse> {
-    let connection = &db.inner().as_ref().unwrap().database("staging");
+    let connection = &db.inner().as_ref().unwrap().database("production");
     let south_west: Vec<f64> = request.bottom_left.iter().cloned().map(|x| x).collect();
     let north_east: Vec<f64> = request.top_right.iter().cloned().map(|x| x).collect();
     let query = doc! {
@@ -92,9 +90,47 @@ pub async fn fetch_map_data<'a>(
     }
 }
 
-#[derive(Debug)]
+#[utoipa::path(post, tag = "Suburb Statistics", path = "/api/fetchSuburbStats", request_body = Stats)]
+#[post("/fetchSuburbStats", format = "application/json", data = "<request>")]
+pub async fn fetch_suburb_stats<'a>(
+    db: &State<Option<Client>>,
+    request: Json<SuburbStatsRequest>,
+) -> ApiResponse<'a, SuburbStatsResponse> {
+    if let Some(data) = request.suburb_id.as_ref() {
+        let oid = ObjectId::parse_str(data);
+        if let Err(_err) = oid {
+            return ApiError::ServerError("Invalid Object ID").into();
+        }
+        let connection = db.as_ref().unwrap().database("production");
+        let query = doc! {"_id" : oid.unwrap()};
+        let suburb: SuburbEntity = match connection
+            .collection("suburbs")
+            .find_one(query, None)
+            .await
+            .unwrap()
+        {
+            Some(result) => result,
+            None => return ApiError::ServerError("Document not found").into(),
+        };
+        match suburb.get_stats(&connection).await {
+            Ok(data) => return ApiResponse::Ok(data),
+            Err(_) => return ApiError::ServerError("server side error :<").into(),
+        }
+    }
+    todo!()
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Entity)]
+#[serde(rename_all = "camelCase")]
+#[collection_name = "stage_log"]
 pub struct LoadSheddingStage {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "_id")]
+    pub id: Option<ObjectId>,
     pub stage: i32,
+    pub time: i64,
+    #[serde(skip_serializing, skip_deserializing)]
+    db: Option<Client>,
 }
 
 // GeoJson Struct
@@ -217,6 +253,7 @@ pub struct GroupEntity {
     pub id: Option<ObjectId>,
     pub number: i32,
     pub suburbs: Vec<ObjectId>,
+    // consider a small refactor to add groups associated municipalities for better efficiency
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Entity)]
@@ -288,6 +325,32 @@ pub struct MapDataDefaultResponse {
     pub off: Vec<SuburbEntity>,
 }
 
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[serde(rename_all = "camelCase")]
+#[schema(example = json! {
+    SuburbStatsRequest {
+        suburb_id : Some("64b522a848b2645f6f627c1e".to_string()),
+        suburb_object : None
+    }
+})]
+pub struct SuburbStatsRequest {
+    pub suburb_id: Option<String>,
+    pub suburb_object: Option<SuburbEntity>,
+}
+
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SuburbStatsResponse {
+    pub total_time: TotalTime,
+    pub per_day_times: HashMap<String, TotalTime>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TotalTime {
+    pub on: i32,
+    pub off: i32,
+}
+
 impl std::ops::Add for MapDataDefaultResponse {
     type Output = Self;
 
@@ -300,6 +363,29 @@ impl std::ops::Add for MapDataDefaultResponse {
     }
 }
 
+impl TotalTime {
+    fn new() -> TotalTime {
+        // total minutes
+        TotalTime { on: 1440, off: 0 }
+    }
+
+    fn add_off_time(&mut self, minutes: i32) {
+        self.off += minutes;
+        self.on -= minutes;
+    }
+}
+
+// entity implimentations:
+fn get_date_time(time: Option<i64>) -> DateTime<FixedOffset> {
+    // South African Standard Time Offset
+    let sast = FixedOffset::east_opt(2 * 3600).unwrap();
+    // get search time
+    match time {
+        Some(time) => DateTime::from_utc(NaiveDateTime::from_timestamp_opt(time, 0).unwrap(), sast),
+        None => Local::now().with_timezone(&sast),
+    }
+}
+
 impl MunicipalityEntity {
     pub async fn get_regions_at_time(
         &self,
@@ -309,16 +395,7 @@ impl MunicipalityEntity {
     ) -> Result<MapDataDefaultResponse, ApiError> {
         let mut suburbs_off = Vec::<SuburbEntity>::new();
         let suburbs_on: Vec<SuburbEntity>;
-
-        // get search time
-        let sast = FixedOffset::east_opt(2 * 3600).unwrap(); // SAST
-        let time_to_search: DateTime<FixedOffset>;
-        if let Some(time) = time {
-            time_to_search =
-                DateTime::from_utc(NaiveDateTime::from_timestamp_opt(time, 0).unwrap(), sast);
-        } else {
-            time_to_search = Local::now().with_timezone(&sast);
-        }
+        let time_to_search: DateTime<FixedOffset> = get_date_time(time);
 
         // schedule query: all that fit the search time
         let query = doc! {
@@ -456,6 +533,191 @@ impl MunicipalityEntity {
     }
 }
 
+impl SuburbEntity {
+    pub async fn get_stats(self, connection: &Database) -> Result<SuburbStatsResponse, ApiError> {
+        // queries
+        // get the relevant group
+        let query = doc! {
+            "suburbs" : {
+                "$in" : [self.id.unwrap()]
+            }
+        };
+        let group: GroupEntity = match connection
+            .collection("groups")
+            .find_one(query, None)
+            .await
+            .unwrap()
+        {
+            Some(group) => group,
+            None => {
+                warn!("Error, a suburb is not associated with a group: {:?}", self);
+                return Err(ApiError::ServerError(
+                    "Group cannot be identified for specified suburb",
+                ));
+            }
+        };
+
+        // get all the stage changes from the past week
+        let time_now = Local::now();
+        let one_week_ago = (Local::now() - chrono::Duration::weeks(1)).timestamp();
+        let query = doc! {
+            "time": {
+                "$gte": one_week_ago
+            }
+        };
+        let find_options = FindOptions::builder().sort(doc! { "timestamp": 1 }).build();
+        let stage_change_cursor: Cursor<LoadSheddingStage> = match connection
+            .collection("stage_log")
+            .find(query, find_options)
+            .await
+        {
+            Ok(cursor) => cursor,
+            Err(err) => {
+                log::error!("Database error occured when querying suburbs: {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
+            }
+        };
+        let mut all_stages: Vec<LoadSheddingStage> = match stage_change_cursor.try_collect().await {
+            Ok(item) => item,
+            Err(err) => {
+                log::error!("Unable to Collect suburbs from cursor {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
+            }
+        };
+        all_stages.reverse();
+
+        // find first timestamp after one week ago
+        let query = doc! {
+            "time": {
+                "$lte": one_week_ago
+            }
+        };
+        let find_options = FindOneOptions::builder()
+            .sort(doc! { "timestamp": -1 })
+            .build();
+        let first_stage_change: Option<LoadSheddingStage> = match connection
+            .collection("stage_log")
+            .find_one(query, find_options)
+            .await
+        {
+            Ok(cursor) => cursor,
+            Err(err) => {
+                log::error!("Database error occured when querying suburbs: {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
+            }
+        };
+        match first_stage_change {
+            Some(item) => all_stages.push(item),
+            None => (),
+        };
+
+        // get the timeschedules
+        let query = doc! {
+            "municipality" : self.municipality,
+        };
+        let timeschedule_cursor: Cursor<TimeScheduleEntity> = match connection
+            .collection("timeschedule")
+            .find(query, None)
+            .await
+        {
+            Ok(cursor) => cursor,
+            Err(err) => {
+                log::error!("Database error occured when querying suburbs: {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
+            }
+        };
+        let schedule: Vec<TimeScheduleEntity> = match timeschedule_cursor.try_collect().await {
+            Ok(item) => item,
+            Err(err) => {
+                log::error!("Unable to Collect suburbs from cursor {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
+            }
+        };
+
+        // Time
+        let mut time_to_search: DateTime<FixedOffset> = get_date_time(Some(one_week_ago));
+        time_to_search = time_to_search.with_minute(0).unwrap();
+        let mut down_time = 0;
+        let mut daily_stats: HashMap<String, TotalTime> = HashMap::new();
+        while time_to_search <= time_now {
+            let hour = time_to_search.hour() as i32;
+            let minute = time_to_search.minute() as i32;
+            let day = time_to_search.day() as i32;
+            // get the timeslots for the current time interval
+            let time_slots: Vec<TimeScheduleEntity> = schedule
+                .clone()
+                .into_iter()
+                .filter(|time| {
+                    // check what time it falls under
+                    if time.stop_hour >= hour
+                        && time.stop_minute >= minute
+                        && time.start_hour <= hour
+                        && time.start_minute <= minute
+                    {
+                        true
+                    } else {
+                        false
+                    }
+                })
+                .collect();
+            // check next to see if its less than the current TTS
+            if all_stages.len() >= 2 {
+                if all_stages[1].time <= time_to_search.timestamp() {
+                    all_stages.remove(0);
+                }
+            }
+
+            let mut add_time = false;
+            for time_slot in time_slots {
+                let mut count: usize = 0;
+                let stage = &all_stages[0];
+                while (count as i32) < stage.stage {
+                    if time_slot.stages.get(count).unwrap().groups[(day - 1) as usize]
+                        == group.id.unwrap()
+                    {
+                        add_time = true;
+                        break;
+                    }
+                    count = count + 1;
+                }
+                if add_time {
+                    break;
+                }
+            }
+            if add_time {
+                down_time += 30;
+                let day = daily_stats
+                    .entry(time_to_search.weekday().to_string())
+                    .or_insert(TotalTime::new());
+                day.add_off_time(30);
+            }
+            // update times
+            time_to_search = time_to_search
+                .checked_add_signed(Duration::minutes(30))
+                .unwrap();
+        }
+        let total_time = 10080;
+        let uptime = total_time - down_time;
+        Ok(SuburbStatsResponse {
+            total_time: TotalTime {
+                on: uptime,
+                off: down_time,
+            },
+            per_day_times: daily_stats,
+        })
+    }
+}
+
 // Rocket State Loop Objects
 impl LoadSheddingStage {
     pub async fn fetch_stage(&mut self) -> Result<i32, reqwest::Error> {
@@ -465,6 +727,8 @@ impl LoadSheddingStage {
                 Ok(num) => {
                     if num >= 1 {
                         self.stage = num - 1;
+                        self.time = Local::now().timestamp();
+                        self.log_stage_data().await;
                     }
                 }
                 Err(_) => warn!("Eskom API did not return a integer when we queried it."),
@@ -474,6 +738,40 @@ impl LoadSheddingStage {
         }
         Ok(self.stage)
     }
+
+    pub async fn log_stage_data(&self) {
+        if let Some(client) = &self.db {
+            let db_con = &client.database("production");
+            let query = doc! {
+                "time" : 1
+            };
+            let find_options = FindOneOptions::builder().sort(query).build();
+
+            // Execute the query to find the latest item
+            let result: LoadSheddingStage = match db_con
+                .collection("stage_log")
+                .find_one(None, find_options)
+                .await
+                .unwrap()
+            {
+                Some(data) => data,
+                None => LoadSheddingStage {
+                    id: None,
+                    stage: -1,
+                    time: 0,
+                    db: None,
+                },
+            };
+            if result.stage != self.stage {
+                let _ = self.insert(db_con).await;
+            }
+        } else {
+            return ();
+        }
+    }
+    pub fn set_db(&mut self, db: &Client) {
+        self.db = Some(db.to_owned());
+    }
 }
 
 #[async_trait]
@@ -481,12 +779,17 @@ impl Fairing for StageUpdater {
     fn info(&self) -> Info {
         Info {
             name: "Stage Updater",
-            kind: Kind::Ignite,
+            kind: Kind::Ignite | Kind::Liftoff,
         }
     }
 
     async fn on_ignite(&self, rocket: Rocket<rocket::Build>) -> fairing::Result {
-        let stage_info = Arc::new(RwLock::new(LoadSheddingStage { stage: 0 }));
+        let stage_info = Arc::new(RwLock::new(LoadSheddingStage {
+            id: None,
+            stage: 0,
+            time: Local::now().timestamp(),
+            db: None,
+        }));
         let stage_info_ref = stage_info.clone();
         thread::spawn(move || {
             loop {
@@ -498,10 +801,22 @@ impl Fairing for StageUpdater {
                     let _ = runtime.block_on(stage);
                 }
                 // Perform any other necessary processing on stage info
-                thread::sleep(Duration::from_secs(600)); // Sleep for 10 minutes
+                thread::sleep(std::time::Duration::from_secs(600)); // Sleep for 10 minutes
             }
         });
         let rocket = rocket.manage(Some(stage_info));
         Ok(rocket)
+    }
+    async fn on_liftoff(&self, rocket: &Rocket<Orbit>) {
+        let db = rocket.state::<Option<Client>>().unwrap();
+        let stage_updater = rocket
+            .state::<Option<Arc<RwLock<LoadSheddingStage>>>>()
+            .unwrap();
+        if let Some(stage) = stage_updater {
+            let mut stage_ref = stage.as_ref().clone().write().await;
+            if let Some(db) = db {
+                stage_ref.set_db(&db.clone());
+            }
+        }
     }
 }
