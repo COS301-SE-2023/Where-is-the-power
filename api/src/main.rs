@@ -1,3 +1,4 @@
+mod ai;
 mod api;
 mod auth;
 mod db;
@@ -35,7 +36,12 @@ const DB_NAME: &'static str = "wip";
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(user::create_user, loadshedding::fetch_map_data, auth::authenticate),
+    paths(
+        user::create_user,
+        loadshedding::fetch_map_data,
+        auth::authenticate,
+        ai::get_ai_info
+    ),
     components(schemas(
         auth::AuthRequest,
         auth::AuthType,
@@ -44,7 +50,8 @@ const DB_NAME: &'static str = "wip";
         loadshedding::MapDataRequest,
         loadshedding::MapDataDefaultResponse,
         api::ResponseString,
-        api::ApiError
+        api::ApiError,
+        ai::AiInfoRequest
     )),
     info(title = "Where Is The Power API Specification")
 )]
