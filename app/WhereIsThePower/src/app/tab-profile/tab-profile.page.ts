@@ -14,18 +14,14 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./tab-profile.page.scss'],
 })
 export class TabProfilePage implements OnInit {
-  newUser: RegisterUser = {
-    firstName: "Jill",
-    lastName: "Moore",
-    email: "jill@gmail.com",
-    password: "Password!123"
-  };
+
   user: User | null = null;
   private userSubscription: Subscription = new Subscription();
   userInitialDataURL: string | null = null;
 
   isLoggedIn: boolean = false;
-  constructor(private authService: AuthService, private modalController: ModalController) { }
+  constructor(private authService: AuthService, 
+              private modalController: ModalController) { }
 
   ngOnInit() {
     //this.isLoggedIn = this.authService.isLoggedin;
@@ -34,8 +30,6 @@ export class TabProfilePage implements OnInit {
         this.isLoggedIn = this.authService.isLoggedin;
 
         console.log(this.isLoggedIn);
-        console.log("UGH");
-        console.log("USER" + JSON.stringify(this.user));
         if (this.isLoggedIn) {
           // Update the user variable in your component whenever the BehaviorSubject's value changes.
           if (user) {
@@ -68,8 +62,9 @@ export class TabProfilePage implements OnInit {
     return await modal.present();
   }
 
-  logout() {
+  async logout() {
     this.isLoggedIn = false;
+    await this.authService.signOutUser();
   }
 
   ngOnDestroy() {
