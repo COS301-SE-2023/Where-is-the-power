@@ -16,27 +16,27 @@
 <ion-content [fullscreen]="true">
   <div class="ion-padding">
     <form class="form" [formGroup]="signupForm" (ngSubmit)="signup()">
-      <ion-item>
+      <ion-item  data-cy="input-fn">
         <ion-label position="floating">First Name</ion-label>
         <ion-input type="firstName" formControlName="firstName" aria-label="Input for First Name"></ion-input>
       </ion-item>
 
-      <ion-item>
+      <ion-item data-cy="input-ln">
         <ion-label position="floating">Last Name</ion-label>
-        <ion-input type="lastName" formControlName="lastName" aria-label="Input for Last Name"></ion-input>
+        <ion-input type="lastName" formControlName="lastName" aria-label="Input for Last Name" ></ion-input>
       </ion-item>
 
-      <ion-item>
+      <ion-item data-cy="input-email">
         <ion-label position="floating">Email</ion-label>
-        <ion-input type="email" formControlName="email" aria-label="Input for email"></ion-input>
+        <ion-input type="email" formControlName="email" aria-label="Input for email" ></ion-input>
       </ion-item>
 
-      <ion-item>
+      <ion-item data-cy="input-password">
         <ion-label position="floating">Password</ion-label>
-        <ion-input type="password" formControlName="password" aria-label="Input for password"></ion-input>
+        <ion-input type="password" formControlName="password" aria-label="Input for password" ></ion-input>
       </ion-item>
 
-      <ion-button expand="full" type="submit">Signup</ion-button>
+      <ion-button expand="full" type="submit" data-cy="btn-confirm-signup">Signup</ion-button>
     </form>
   </div>
 </ion-content>

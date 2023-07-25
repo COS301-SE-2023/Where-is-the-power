@@ -39,3 +39,19 @@ describe('Canvas Map Test', () => {
     cy.get('.mapboxgl-canvas').should('exist')
   })
  })
+
+
+ describe('Authentication Test', () => {
+  it('should create a new user', () => {
+    cy.visit('/tabs/tab-profile')
+    cy.get('[data-cy="sign-up-button"]').click()
+    cy.get('[data-cy="input-fn"]').type("Bob")
+    cy.get('[data-cy="input-ln"]').type("Marley")
+    cy.get('[data-cy="input-email"]').type("bobmarley@gmail.com")
+    cy.get('[data-cy="input-password"]').type("@bobmarley1")
+
+    cy.get('[data-cy="btn-confirm-signup"]').click()
+
+    cy.get('[data-cy="Welcome-text"]').should("to.have.text"," Welcome Bob !")
+  })
+ })

@@ -21,7 +21,7 @@
         <ion-icon name="log-in-outline" class="ion-padding-end"></ion-icon>
         <ion-label>Login to my account</ion-label>
       </ion-item>
-      <ion-item detail="true" (click)="showSignupComponent()">
+      <ion-item detail="true" (click)="showSignupComponent()" data-cy="sign-up-button">
         <ion-icon name="person-add-outline" class="ion-padding-end"></ion-icon>
         <ion-label>Sign up for an account</ion-label>
       </ion-item>
@@ -34,7 +34,7 @@
       </ion-avatar>
     </ion-row>
     <ion-text class="ion-text-center">
-      <h1> Welcome {{user?.firstName}} !</h1>
+      <h1 data-cy="Welcome-text"> Welcome {{user?.firstName}} !</h1>
     </ion-text>
     <ion-list>
       <ion-item>
