@@ -19,7 +19,7 @@ pub async fn get_ai_info<'a>(request: Json<AiInfoRequest>) -> ApiResponse<'a, Ai
         .into();
     };
 
-    match Command::new("python")
+    match Command::new("python3")
         .args([
             "src/avoid_cords.py",
             serde_json::to_string(&request.into_inner())
@@ -38,7 +38,7 @@ pub async fn get_ai_info<'a>(request: Json<AiInfoRequest>) -> ApiResponse<'a, Ai
                 Ok(result) => ApiResponse::Ok(result),
                 Err(err) => {
                     log::error!("Unable to parse python script output: {err:?}");
-                    log::debug!(
+                    log::info!(
                         "Python script output: {}",
                         String::from_utf8_lossy(&val.stdout)
                     );
