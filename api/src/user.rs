@@ -13,7 +13,7 @@ use argon2::{
 use bson::Document;
 use macros::Entity;
 use mongodb::Client;
-use rocket::{post, serde::json::Json, State};
+use rocket::{post, put, serde::json::Json, State};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
