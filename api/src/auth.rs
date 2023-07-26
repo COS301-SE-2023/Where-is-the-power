@@ -193,14 +193,15 @@ impl<'r> FromRequest<'r> for JWTAuthToken {
                             ));
                         }
 
-                        if let Some(client) = request.rocket().state::<mongodb::Client>() {
+                        if let Some(client) = request.rocket().state::<Option<mongodb::Client>>() {
                             let mut doc = Document::new();
                             doc.insert("email", email.unwrap());
-                            let user = User::query(doc, &client.database(DB_NAME))
-                                .await
-                                .unwrap()
-                                .deserialize_current()
-                                .unwrap();
+                            let user =
+                                User::query(doc, &client.to_owned().unwrap().database(DB_NAME))
+                                    .await
+                                    .unwrap()
+                                    .deserialize_current()
+                                    .unwrap();
 
                             Outcome::Success(JWTAuthToken {
                                 token: auth_header[1].to_string(),
