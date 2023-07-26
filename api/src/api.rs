@@ -5,7 +5,7 @@ use rocket::{http::ContentType, response::Responder};
 use serde::Serialize;
 use utoipa::ToSchema;
 
-#[derive(Serialize, ToSchema)]
+#[derive(Debug, Serialize, ToSchema)]
 #[non_exhaustive]
 pub enum ApiError<'a> {
     AuthError(&'a str),
