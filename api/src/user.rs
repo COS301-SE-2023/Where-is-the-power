@@ -1,5 +1,8 @@
+use std::collections::HashMap;
+
 use crate::{
     api::{ApiError, ApiResponse},
+    auth::JWTAuthToken,
     db::Entity,
     DB_NAME,
 };
@@ -51,12 +54,69 @@ pub async fn create_user(
     ApiResponse::Ok("User created")
 }
 
+#[put(
+    "/user/savedPlaces",
+    format = "application/json",
+    data = "<saved_place>"
+)]
+pub async fn add_saved_place(
+    token: JWTAuthToken,
+    saved_place: Json<SavedPlace>,
+    state: &State<mongodb::Client>,
+) -> ApiResponse<&'static str> {
+    if token.email.is_none() {
+        return ApiError::AuthError("Authenticated user required").into();
+    }
+
+    let email = token.email.unwrap();
+    let db = state.inner().database(DB_NAME);
+    let mut doc = Document::new();
+    doc.insert("email", email);
+
+    let mut user = if let Ok(mut user) = User::query(doc, &db).await {
+        user.advance().await.expect("Couldn't fetch user!");
+        user.deserialize_current().unwrap()
+    } else {
+        return ApiError::ServerError("The requested user could not be found").into();
+    };
+
+    if user.saved_places.contains_key(&saved_place.mapbox_id) {
+        return ApiError::SavedPlacesError("Duplicate saved place").into();
+    }
+
+    user.saved_places
+        .insert(saved_place.mapbox_id.clone(), saved_place.into_inner());
+    let mut doc = Document::new();
+    doc.insert("savedPlaces", bson::to_bson(&user.saved_places).unwrap());
+
+    match user
+        .update(mongodb::options::UpdateModifications::Document(doc), &db)
+        .await
+    {
+        Ok(_) => ApiResponse::Ok("New Saved Place recorded"),
+        Err(err) => {
+            log::error!("Couldn't update user: {err:?}");
+            ApiError::ServerError("Unable to record new saved place").into()
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UserLocation {
     pub suburb: String,
     pub postal_code: String,
     pub city: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedPlace {
+    pub mapbox_id: String,
+    pub name: String,
+    pub address: String,
+    pub latitude: f64,
+    pub longitude: f64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Entity)]
@@ -71,6 +131,7 @@ pub struct User {
     pub is_verified: bool,
     pub phone_number: Option<String>,
     pub email: String,
+    pub saved_places: HashMap<String, SavedPlace>,
 
     #[serde(skip_serializing_if = "String::is_empty")]
     pub password_hash: String,
@@ -112,6 +173,7 @@ impl From<NewUser> for User {
             is_verified: false,
             phone_number: value.phone_number,
             email: value.email,
+            saved_places: HashMap::new(),
             password_hash,
         }
     }

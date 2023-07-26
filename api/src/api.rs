@@ -10,6 +10,7 @@ use utoipa::ToSchema;
 pub enum ApiError<'a> {
     AuthError(&'a str),
     UserCreationError(&'a str),
+    SavedPlacesError(&'a str),
     ServerError(&'a str),
     ScraperUploadError(&'a str),
     RequestError(&'a str),
