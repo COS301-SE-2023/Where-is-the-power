@@ -4,7 +4,10 @@ import json
 import sys
 import os
 
-access_token = os.environ['MAPBOX_API_KEY']
+access_token = os.environ.get("MAPBOX_API_KEY")
+if access_token is None:
+    print("No access token")
+    exit(-1)
 
 
 def find_polygon_center(polygon):
