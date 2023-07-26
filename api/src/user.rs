@@ -217,6 +217,7 @@ pub struct SavedPlace {
 #[collection_name = "users"]
 pub struct User {
     #[serde(rename = "_id")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<ObjectId>,
     pub first_name: String,
     pub last_name: String,
