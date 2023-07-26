@@ -54,21 +54,37 @@ export class SignupComponent implements OnInit {
       this.authService.signupUser(this.newUser).subscribe(async (response: any) => {
         console.log(response);
         let createNewUser = new User("User", this.newUser.email, this.newUser.password, this.newUser.firstName, this.newUser.lastName);
+
         console.log(createNewUser);
         this.authService.loginUser(createNewUser).subscribe(async (response: any) => {
-          // console.log("RES" + response);
+          createNewUser.token = response.token;
+          await this.authService.saveUserData('Token', JSON.stringify(createNewUser.token));
+
+           //console.log("RES" + response);
           this.authService.user.next(createNewUser);
           this.dismissModal();
         });
       });
+      this.sucessToast('Welcome to WITP, we hope you enjoy your stay');
     } else {
-      this.presentToast('Please enter a valid email and password.');
+      this.failToast('Please ensure all details are correct');
     }
   }
 
-  async presentToast(message: string) {
+  async failToast(message: string) {
     const toast = await this.toastController.create({
       message: message,
+      color: 'danger',
+      duration: 3000,
+      position: 'bottom',
+    });
+    toast.present();
+  }
+
+  async sucessToast(message: string) {
+    const toast = await this.toastController.create({
+      message: message,
+      color: 'success',
       duration: 3000,
       position: 'bottom',
     });

@@ -32,6 +32,11 @@ export class AuthService {
     Preferences.set({ key: key, value: value });
   }
 
+  async signOutUser() {
+    this.isLoggedin = false;
+    Preferences.remove({key: 'Token'});
+  }
+
   async getUserData() {
     const ret = await Preferences.get({ key: 'Token' });
     if (ret.value) {
@@ -41,7 +46,6 @@ export class AuthService {
   }
 
   async isUserLoggedIn() {
-    if (await this.getUserData() === null) return false;
-    return true;
+   return this.isLoggedin;
   }
 }
