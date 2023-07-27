@@ -174,11 +174,9 @@ impl<'r> FromRequest<'r> for JWTAuthToken {
                 }
             };
 
-            match jsonwebtoken::decode::<AuthClaims>(
-                auth_header[1],
-                &public_key,
-                &Validation::new(Algorithm::RS256),
-            ) {
+            let mut validation = Validation::new(Algorithm::RS256);
+            validation.leeway = 10;
+            match jsonwebtoken::decode::<AuthClaims>(auth_header[1], &public_key, &validation) {
                 Ok(claims) => match claims.claims {
                     AuthClaims {
                         auth_type: AuthType::User,
@@ -268,8 +266,19 @@ impl JWTAuthToken {
             exp: SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .expect("Couldn't get system time")
-                .as_secs(),
+                .as_secs()
+                + 3600 * 6,
         };
+
+        log::info!(
+            "Creating JWT for {}. Valid until {}",
+            if let AuthType::User = claims.auth_type {
+                format!("User({})", claims.email.clone().unwrap())
+            } else {
+                "Anonymous".to_string()
+            },
+            claims.exp.clone()
+        );
 
         let token = jsonwebtoken::encode(
             &header,
