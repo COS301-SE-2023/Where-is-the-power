@@ -8,3 +8,9 @@
   height: 100vh;
   width: auto;
 }
+
+.searchbar-container {
+  position: absolute;
+  top: 8px;
+  z-index: 999; // Ensure the search bar is above the map
+}
