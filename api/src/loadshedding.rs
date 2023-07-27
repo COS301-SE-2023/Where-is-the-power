@@ -79,8 +79,6 @@ pub async fn fetch_map_data<'a>(
         return ApiResponse::Ok(data.into_iter().fold(
             MapDataDefaultResponse {
                 map_polygons: vec![],
-                on: vec![],
-                off: vec![],
             },
             |acc, obj| acc + obj,
         ));
@@ -165,25 +163,29 @@ pub struct GeoJson {
 #[serde(rename_all = "camelCase")]
 pub struct Feature {
     pub r#type: String,
-    pub id: u32,
+    pub id: i32,
     pub properties: Properties,
     pub geometry: Geometry,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Properties {
+    #[serde(skip)]
     #[serde(rename = "SP_CODE")]
     pub sp_code: f64,
 
+    #[serde(skip)]
     #[serde(rename = "SP_CODE_st")]
     pub sp_code_st: String,
 
     #[serde(rename = "SP_NAME")]
     pub sp_name: String,
 
+    #[serde(skip)]
     #[serde(rename = "MP_CODE")]
     pub mp_code: f64,
 
+    #[serde(skip)]
     #[serde(rename = "MP_CODE_st")]
     pub mp_code_st: String,
 
@@ -193,9 +195,11 @@ pub struct Properties {
     #[serde(rename = "MN_MDB_C")]
     pub mn_mdb_c: String,
 
+    #[serde(skip)]
     #[serde(rename = "MN_CODE")]
     pub mn_code: f64,
 
+    #[serde(skip)]
     #[serde(rename = "MN_CODE_st")]
     pub mn_code_st: String,
 
@@ -205,9 +209,11 @@ pub struct Properties {
     #[serde(rename = "DC_MDB_C")]
     pub dc_mdb_c: String,
 
+    #[serde(skip)]
     #[serde(rename = "DC_MN_C")]
     pub dc_mn_c: f64,
 
+    #[serde(skip)]
     #[serde(rename = "DC_MN_C_st")]
     pub dc_mn_c_st: String,
 
@@ -217,6 +223,7 @@ pub struct Properties {
     #[serde(rename = "PR_MDB_C")]
     pub pr_mdb_c: String,
 
+    #[serde(skip)]
     #[serde(rename = "PR_CODE")]
     pub pr_code: f64,
 
@@ -226,14 +233,20 @@ pub struct Properties {
     #[serde(rename = "PR_NAME")]
     pub pr_name: String,
 
+    #[serde(skip)]
     #[serde(rename = "ALBERS_ARE")]
     pub albers_are: f64,
 
+    #[serde(skip)]
     #[serde(rename = "Shape_Leng")]
     pub shape_leng: f64,
 
+    #[serde(skip)]
     #[serde(rename = "Shape_Area")]
-    pub shape_area: f64,
+    pub shape_arek: f64,
+
+    #[serde(rename = "PowerStatus")]
+    pub power_status: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -321,8 +334,6 @@ pub struct MapDataRequest {
 #[serde(rename_all = "camelCase")]
 pub struct MapDataDefaultResponse {
     pub map_polygons: Vec<GeoJson>,
-    pub on: Vec<SuburbEntity>,
-    pub off: Vec<SuburbEntity>,
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
@@ -357,8 +368,6 @@ impl std::ops::Add for MapDataDefaultResponse {
     fn add(self, other: Self) -> Self {
         let mut merged = self;
         merged.map_polygons.extend(other.map_polygons);
-        merged.on.extend(other.on);
-        merged.off.extend(other.off);
         merged
     }
 }
@@ -394,34 +403,14 @@ impl MunicipalityEntity {
         connection: &Database,
     ) -> Result<MapDataDefaultResponse, ApiError> {
         let mut suburbs_off = Vec::<SuburbEntity>::new();
-        let suburbs_on: Vec<SuburbEntity>;
         let time_to_search: DateTime<FixedOffset> = get_date_time(time);
+        let mut geography = self.geometry.clone();
 
         // schedule query: all that fit the search time
         let query = doc! {
-            "$and": [
-                {
-                    "start_hour": {
-                        "$lte": time_to_search.hour()
-                    },
-                    "start_minute": {
-                        "$lte": time_to_search.minute()
-                    }
-                },
-                {
-                    "end_hour": {
-                        "$gte": time_to_search.hour()
-                    },
-                    "end_minute": {
-                        "$gte": time_to_search.minute()
-                    }
-                },
-                {
-                    "municipality": self.id.unwrap()
-                }
-            ]
+            "municipality": self.id.unwrap()
         };
-        let mut schedule_cursor: Cursor<TimeScheduleEntity> = match connection
+        let schedule_cursor: Cursor<TimeScheduleEntity> = match connection
             .collection("timeschedule")
             .find(query, mongodb::options::FindOptions::default())
             .await
@@ -434,6 +423,37 @@ impl MunicipalityEntity {
                 ));
             }
         };
+
+        let unfiltered_schedules: Vec<TimeScheduleEntity> = match schedule_cursor.try_collect().await {
+            Ok(item) => item,
+            Err(err) => {
+                log::error!("Unable to Collect suburbs from cursor {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
+            }
+        };
+        let mut schedules: Vec<TimeScheduleEntity> = Vec::new();
+        // filter schedules to relevant ones
+        for schedule in unfiltered_schedules {
+            let mut keep = false;
+            if schedule.start_hour <= time_to_search.hour() as i32 {
+                if schedule.stop_hour >= time_to_search.hour() as i32 {
+                    keep = true;
+                    if schedule.stop_minute >= time_to_search.minute() as i32 && schedule.stop_hour == time_to_search.hour() as i32{
+                        keep = false;
+                    }
+                    if schedule.start_minute > time_to_search.minute() as i32 && schedule.start_hour == time_to_search.hour() as i32{
+                        keep = false;
+                    }
+                } 
+            }
+            if keep {
+                schedules.push(schedule);
+            }
+        }
+
+
         // schedule query end
 
         // suburbs query: all suburbs
@@ -471,7 +491,7 @@ impl MunicipalityEntity {
             .collect();
 
         // go through schedules
-        while let Some(Ok(doc)) = schedule_cursor.next().await {
+        for doc in schedules {
             // All the groups that could be affected by the current stage
             let times: Vec<StageTimes> = doc
                 .stages
@@ -522,13 +542,21 @@ impl MunicipalityEntity {
                 suburbs_off.extend(removed);
             }
         }
-        // place all the remaining suburbs after checking into the on array
-        suburbs_on = suburbs.drain().map(|(_, value)| value).collect();
+        // now we must mark all of our map stuff
+        for feature in &mut geography.features {
+            for suburb in &suburbs_off {
+                if suburb.geometry.contains(&feature.id) {
+                    feature.properties.power_status = Some("off".to_string());
+                    break
+                }
+            }
+            if let None = feature.properties.power_status {
+                feature.properties.power_status = Some("on".to_string());
+            }
+        }
 
         Ok(MapDataDefaultResponse {
-            map_polygons: vec![self.geometry.clone()],
-            on: suburbs_on,
-            off: suburbs_off,
+            map_polygons: vec![geography],
         })
     }
 }
@@ -721,20 +749,24 @@ impl SuburbEntity {
 // Rocket State Loop Objects
 impl LoadSheddingStage {
     pub async fn fetch_stage(&mut self) -> Result<i32, reqwest::Error> {
-        let stage = reqwest::get("https://loadshedding.eskom.co.za/LoadShedding/GetStatus").await?;
-        if stage.status().is_success() {
-            match stage.text().await?.parse::<i32>() {
-                Ok(num) => {
-                    if num >= 1 {
-                        self.stage = num - 1;
-                        self.time = Local::now().timestamp();
-                        self.log_stage_data().await;
+        loop {
+            let stage = reqwest::get("https://loadshedding.eskom.co.za/LoadShedding/GetStatus").await?;
+            if stage.status().is_success() {
+                match stage.text().await?.parse::<i32>() {
+                    Ok(num) => {
+                        if num >= 1 {
+                            self.stage = num - 1;
+                            self.time = Local::now().timestamp();
+                            self.log_stage_data().await;
+                            break;
+                        }
                     }
+                    Err(_) => warn!("Eskom API did not return a integer when we queried it."),
                 }
-                Err(_) => warn!("Eskom API did not return a integer when we queried it."),
+            } else {
+                warn!("Connection to Eskom Dropped before any operations could take place");
             }
-        } else {
-            warn!("Connection to Eskom Dropped before any operations could take place");
+            thread::sleep(std::time::Duration::from_secs(5)); // Sleep for 10 minutes
         }
         Ok(self.stage)
     }
