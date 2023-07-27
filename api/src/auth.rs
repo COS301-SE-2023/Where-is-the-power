@@ -3,12 +3,16 @@ use crate::db::Entity;
 use crate::user::User;
 use crate::DB_NAME;
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
+use bson::oid::ObjectId;
 use bson::Document;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use log::warn;
 use log::{error, info};
+use macros::Entity;
 use mongodb::Client;
+use rand::{RngCore, SeedableRng};
 use rocket::futures::TryStreamExt;
+use rocket::http::{Cookie, CookieJar};
 use rocket::request::{FromRequest, Outcome};
 use rocket::serde::json::Json;
 use rocket::Responder;
@@ -23,6 +27,7 @@ use utoipa::ToSchema;
 pub async fn authenticate(
     auth_request: Json<AuthRequest>,
     state: &State<Option<Client>>,
+    cookies: &CookieJar<'_>,
 ) -> Result<AuthResponder, Json<ApiError<'static>>> {
     match auth_request.auth_type {
         AuthType::Anonymous => Ok(AuthResponder {
@@ -31,10 +36,7 @@ pub async fn authenticate(
                     .await
                     .unwrap(),
             ),
-            header: rocket::http::Header::new(
-                "Set-Cookie",
-                "cookie=some_cookie;expires=0;path=/;SameSite=Strict".to_string(),
-            ),
+            header: rocket::http::Header::new("X-Anon-Auth", "yes"),
         }),
         AuthType::User => {
             let db = state.inner().as_ref().unwrap();
@@ -60,18 +62,34 @@ pub async fn authenticate(
                         let argon = Argon2::default();
                         let hash = PasswordHash::new(&user.password_hash).unwrap();
                         match argon.verify_password(password.as_bytes(), &hash) {
-                            Ok(_) => Ok(AuthResponder {
-                                inner: Json(
-                                    JWTAuthToken::new(auth_request.auth_type, Some(&user))
-                                        .await
-                                        .unwrap(),
-                                ),
-                                header: rocket::http::Header::new(
-                                    "Set-Cookie",
-                                    "cookie=some_cookie;expires=0;path=/;SameSite=Strict"
-                                        .to_string(),
-                                ),
-                            }),
+                            Ok(_) => {
+                                let mut rng = rand::rngs::StdRng::from_entropy();
+                                let mut cookie = vec![0u8; 32];
+                                rng.fill_bytes(cookie.as_mut());
+                                let cookie = AuthCookie::new(
+                                    &cookie,
+                                    user.id.expect("Couldn't fetch user id from database"),
+                                );
+
+                                if let Err(err) = cookie.insert(&db.database(DB_NAME)).await {
+                                    log::error!("Couldn't write cookie to database: {err:?}");
+                                    return Err(Json(ApiError::ServerError(
+                                        "Couldn't communicate with the database",
+                                    )));
+                                }
+
+                                Ok(AuthResponder {
+                                    inner: Json(
+                                        JWTAuthToken::new(auth_request.auth_type, Some(&user))
+                                            .await
+                                            .unwrap(),
+                                    ),
+                                    header: rocket::http::Header::new(
+                                        "Set-Cookie",
+                                        format!("cookie={cookie};expires=0;path=/;SameSite=Strict"),
+                                    ),
+                                })
+                            }
                             Err(err) => {
                                 info!("Password hash incorrect, rejecting user login: {err:?}");
                                 Err(Json(ApiError::AuthError("Incorrect password")))
@@ -89,6 +107,74 @@ pub async fn authenticate(
                 }
             }
         }
+        AuthType::Cookie => {
+            let db = state.inner().as_ref().unwrap();
+            if let Some(cookie) = cookies.get("cookie").map(Cookie::value) {
+                log::info!("User trying to authenticate with cookie ({cookie})");
+                match AuthCookie::query(
+                    bson::doc! {
+                        "cookie": cookie
+                    },
+                    &db.database(DB_NAME),
+                )
+                .await
+                {
+                    Ok(mut cursor) => {
+                        if let Ok(true) = cursor.advance().await {
+                            let db_cookie = cursor.deserialize_current().unwrap();
+                            if SystemTime::now()
+                                .duration_since(UNIX_EPOCH)
+                                .unwrap()
+                                .as_secs()
+                                > db_cookie.exp
+                            {
+                                return Err(Json(ApiError::AuthError("Expired cookie")));
+                            }
+
+                            let mut cursor = User::query(
+                                bson::doc! {
+                                    "_id": db_cookie.user
+                                },
+                                &db.database(DB_NAME),
+                            )
+                            .await
+                            .expect("Couldn't query db to find user associated with cookie");
+
+                            let user = if let Ok(true) = cursor.advance().await {
+                                cursor.deserialize_current().unwrap()
+                            } else {
+                                return Err(Json(ApiError::AuthError(
+                                    "Couldn't find user associated with cookie",
+                                )));
+                            };
+
+                            return Ok(AuthResponder {
+                                inner: Json(
+                                    JWTAuthToken::new(AuthType::User, Some(&user))
+                                        .await
+                                        .expect("Couldn't generate JWT"),
+                                ),
+                                header: rocket::http::Header::new("X-User-Auth", "yes"),
+                            });
+                        } else {
+                            return Err(Json(ApiError::AuthError(
+                                "Couldn't find the cookie in the database",
+                            )));
+                        }
+                    }
+                    Err(err) => {
+                        log::error!("Couldn't fetch cookie from database: {err:?}");
+                        return Err(Json(ApiError::AuthError(
+                            "Couldn't communicate with database",
+                        )));
+                    }
+                }
+            } else {
+                Err(Json(ApiError::AuthError(
+                    "Cookie auth type selected, but not cookie is present",
+                )))
+            }
+        }
     }
 }
 
@@ -104,6 +190,7 @@ pub struct AuthClaims {
 pub enum AuthType {
     User,
     Anonymous,
+    Cookie,
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
@@ -223,6 +310,10 @@ impl<'r> FromRequest<'r> for JWTAuthToken {
                         first_name: None,
                         last_name: None,
                     }),
+                    _ => Outcome::Failure((
+                        Status::Unauthorized,
+                        ApiError::AuthError("Invalid token"),
+                    )),
                 },
                 Err(_) => {
                     Outcome::Failure((Status::Unauthorized, ApiError::AuthError("Invalid token")))
@@ -293,5 +384,37 @@ impl JWTAuthToken {
             first_name: user.map(|x| x.first_name.clone()),
             last_name: user.map(|x| x.last_name.clone()),
         })
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Entity)]
+#[collection_name = "cookies"]
+pub struct AuthCookie {
+    #[serde(rename = "_id")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    id: Option<ObjectId>,
+    cookie: String,
+    pub user: ObjectId,
+    pub exp: u64,
+}
+
+impl AuthCookie {
+    pub fn new(cookie: &impl AsRef<[u8]>, user: ObjectId) -> Self {
+        Self {
+            id: None,
+            cookie: hex::encode(cookie.as_ref()),
+            user,
+            exp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs()
+                + 3600 * 24 * 7,
+        }
+    }
+}
+
+impl std::fmt::Display for AuthCookie {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.cookie.as_ref())
     }
 }

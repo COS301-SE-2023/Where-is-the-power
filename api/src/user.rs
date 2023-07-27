@@ -10,7 +10,7 @@ use argon2::{
     password_hash::{rand_core::OsRng, SaltString},
     Argon2, PasswordHasher,
 };
-use bson::{bson, oid::ObjectId, Document};
+use bson::{oid::ObjectId, Document};
 use macros::Entity;
 use mongodb::Client;
 use rocket::{delete, get, post, put, serde::json::Json, State};
