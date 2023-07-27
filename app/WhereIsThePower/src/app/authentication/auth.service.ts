@@ -37,18 +37,22 @@ export class AuthService {
     this.isLoggedin = true;
     return this.httpClient.post(`${this.apiUrl}auth`, user).pipe(
       tap((response: any) => {
-        this.token = response.token;
-        this.headers = this.headers.append('Authorization', `Bearer ${this.token}`);
-        console.log("HTTP" + this.headers.get('Authorization'));
-        // this.saveUserData('Token', token);
+        if (response.token) {
+          this.token = response.token;
+          console.log("RES" + response.token);
+          this.headers = this.headers.set('Authorization', `Bearer ${this.token}`);
+
+          // console.log("HTTP" + this.headers.get('Authorization'));
+          // this.saveUserData('Token', token);
+        }
       }
       ));
   }
 
   addSavedPlace() {
     console.log("add saved place");
-    console.log(this.headers);
     console.log(this.place);
+    console.log(this.headers);
 
     return this.httpClient.put(`${this.apiUrl}user/savedPlaces`, this.place, { headers: this.headers })
   }
@@ -59,6 +63,8 @@ export class AuthService {
 
   async signOutUser() {
     this.isLoggedin = false;
+    // this.token = null;
+    this.headers = this.headers.set('Authorization', '');
     Preferences.remove({ key: 'Token' });
   }
 
