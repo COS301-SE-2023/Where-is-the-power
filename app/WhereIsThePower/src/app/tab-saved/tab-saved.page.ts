@@ -20,9 +20,9 @@ export class TabSavedPage {
   isLoggedIn: boolean = false;
 
   constructor(private router: Router,
-              private userLocationService: UserLocationService, 
-              private http: HttpClient,
-              private authService: AuthService) {}
+    private userLocationService: UserLocationService,
+    private http: HttpClient,
+    private authService: AuthService) { }
 
   ngOnInit() {
     this.userLocationService.getUserLocation();
@@ -45,15 +45,15 @@ export class TabSavedPage {
   input: string | undefined;
 
   updateResults() {
-    if(this.input !== '') {
-      this.http.get('https://api.mapbox.com/search/searchbox/v1/suggest?q='+this.input+'&access_token='+environment.MapboxApiKey+'&session_token&country=za&origin=25,-25').subscribe((data: any) => {
+    if (this.input !== '') {
+      this.http.get('https://api.mapbox.com/search/searchbox/v1/suggest?q=' + this.input + '&access_token=' + environment.MapboxApiKey + '&session_token&country=za&origin=25,-25').subscribe((data: any) => {
         console.log(data);
         this.places = [];
-        
-        data.suggestions.forEach((searchResult: any)  => {
+
+        data.suggestions.forEach((searchResult: any) => {
           let obj = {
-            type: this.getFeatureType(searchResult.feature_type), 
-            name: searchResult.name, 
+            type: this.getFeatureType(searchResult.feature_type),
+            name: searchResult.name,
             feature: searchResult.feature_type,
             address: searchResult.full_address,
             id: searchResult.mapbox_id
@@ -71,14 +71,17 @@ export class TabSavedPage {
   addSavedPlace(place: any) {
     this.savedPlaces.push(place);
     this.places = this.places.filter((sPlace: any) => {
-      if(sPlace.id !== place.id) return sPlace; 
+      if (sPlace.id !== place.id) return sPlace;
     });
     console.log(this.savedPlaces);
+    this.authService.addSavedPlace().subscribe((data: any) => {
+      console.log(data);
+    });
   }
 
   removeSavedPlace(place: any) {
     this.savedPlaces = this.savedPlaces.filter((sPlace: any) => {
-      if(sPlace.id !== place.id) return sPlace; 
+      if (sPlace.id !== place.id) return sPlace;
     });
     console.log(this.savedPlaces);
   }
@@ -86,14 +89,14 @@ export class TabSavedPage {
   isPlaceSaved(place: any) {
     let isSaved = false;
     this.savedPlaces.forEach((sPlace: any) => {
-      if(sPlace.id === place.id) isSaved = true;
+      if (sPlace.id === place.id) isSaved = true;
     });
     console.log(isSaved)
     return isSaved;
   }
 
   isAddress(feature: string) {
-    if(feature === 'country' ||
+    if (feature === 'country' ||
       feature === 'region' ||
       feature === 'postcode' ||
       feature === 'district' ||
@@ -101,7 +104,7 @@ export class TabSavedPage {
       feature === 'locality' ||
       feature === 'neighbourhood' ||
       feature === 'address') return true;
-      return false;
+    return false;
   }
 
   c() {
@@ -109,30 +112,30 @@ export class TabSavedPage {
   }
 
   getFeatureType(featureType: string) {
-    switch(featureType) {
-      case 'country': 
+    switch (featureType) {
+      case 'country':
         return this.featureTypesEnum.Country;
-      case 'region': 
+      case 'region':
         return this.featureTypesEnum.Region;
-      case 'postcode': 
+      case 'postcode':
         return this.featureTypesEnum.Postcode;
-      case 'district': 
+      case 'district':
         return this.featureTypesEnum.District;
-      case 'place': 
+      case 'place':
         return this.featureTypesEnum.Place;
-      case 'city': 
+      case 'city':
         return this.featureTypesEnum.City;
-      case 'locality': 
+      case 'locality':
         return this.featureTypesEnum.Locality;
-      case 'neighbourhood': 
+      case 'neighbourhood':
         return this.featureTypesEnum.Neighbourhood;
-      case 'street': 
+      case 'street':
         return this.featureTypesEnum.Street;
-      case 'address': 
-        return this.featureTypesEnum.Address;    
+      case 'address':
+        return this.featureTypesEnum.Address;
       default:
         return this.featureTypesEnum.Default;
     }
   }
-  
+
 }
