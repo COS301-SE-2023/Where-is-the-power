@@ -234,7 +234,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         },
         paint: {
           'line-color': '#3887be',
-          'line-width': 5,
+          'line-width': 10,
           'line-opacity': 0.75
         }
       });
