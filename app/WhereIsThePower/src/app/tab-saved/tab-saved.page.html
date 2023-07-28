@@ -7,10 +7,26 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-card *ngIf="!isLoggedIn; else elseIsloggedIn">
-    <h3>Saved places is only available to registered users</h3>
-    <ion-button (click)="gotoProfileRoute()">Go to Profile</ion-button>
-  </ion-card>
+  <div *ngIf="!isLoggedIn; else elseIsloggedIn">
+    <ion-row>
+      <ion-col size="8" offset="2" size-md="6" offset-md="3" size-xl="4" offset-xl="4">
+        <ion-img
+            src="assets/phone.svg"
+            alt="Address on phone Illustration"
+            class="ion-padding"
+          >
+          </ion-img>  
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col size="12" size-md="6" offset-md="3" size-xl="4" offset-xl="4" class="ion-text-center">
+        <h3>Saved places is only available to registered users. </h3>
+      </ion-col>
+      <ion-col size="12" size-md="6" offset-md="3" size-xl="4" offset-xl="4">
+        <ion-button (click)="gotoProfileRoute()" expand="block">Go to Profile</ion-button>
+      </ion-col>
+    </ion-row>
+  </div>
   <ng-template #elseIsloggedIn>  
     <ion-grid>
       <ion-row>
