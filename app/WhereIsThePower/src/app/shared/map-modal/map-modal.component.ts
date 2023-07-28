@@ -152,30 +152,48 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     }
     console.log(coords);
     // Add a marker for the start point
-    this.map.addLayer({
-      id: 'start',
-      type: 'circle',
-      source: {
-        type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: [
-            {
-              type: 'Feature',
-              properties: {},
-              geometry: {
-                type: 'Point',
-                coordinates: [this.longitude, this.latitude]
-              }
-            }
-          ]
+
+    const start = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'Point',
+            coordinates: [this.longitude, this.latitude]
+          }
         }
-      },
-      paint: {
-        'circle-radius': 10,
-        'circle-color': '#1a9107' // Green color for the start point
-      }
-    });
+      ]
+    };
+    if (this.map.getLayer('start')) {
+      this.map.getSource('start').setData(start);
+    } else {
+      this.map.addLayer({
+        id: 'start',
+        type: 'circle',
+        source: {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: [
+              {
+                type: 'Feature',
+                properties: {},
+                geometry: {
+                  type: 'Point',
+                  coordinates: [this.longitude, this.latitude]
+                }
+              }
+            ]
+          }
+        },
+        paint: {
+          'circle-radius': 10,
+          'circle-color': '#1a9107' // Green color for the start point
+        }
+      });
+    }
 
     const end = {
       type: 'FeatureCollection',
