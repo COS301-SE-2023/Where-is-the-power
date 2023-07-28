@@ -20,6 +20,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   constructor(private mapSuburbsService: MapSuburbsService) { }
   map: any;
   dat: any;
+  searchresults: any[] = [];
+
   ngOnInit() {
     this.mapSuburbsService.getSuburbData().subscribe((data: any) => {
       console.log(data);
@@ -138,6 +140,24 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       });
     });
     this.mapSuburbsService.getSuburbData();
+  }
+
+  onSearchInput(event: any) {
+    const query = event.target.value;
+
+    // Make a request to Mapbox Geocoding API
+    fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?access_token=${environment.MapboxApiKey}`)
+      .then(response => response.json())
+      .then(data => {
+        // Process the API response
+        this.searchresults = data.features;
+      })
+      .catch(error => console.error(error));
+  }
+
+  selectresult(selectedResult: any) {
+    // Here, you can handle what happens when the user selects a specific result
+    console.log(selectedResult);
   }
 }
 
