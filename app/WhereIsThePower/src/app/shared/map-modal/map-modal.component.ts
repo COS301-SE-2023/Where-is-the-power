@@ -41,11 +41,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   }
 
   async ngAfterViewInit() {
-    // get user location
-    await this.userLocationService.getUserLocation();
-    this.latitude = this.userLocationService.getLatitude();
-    this.longitude = this.userLocationService.getLongitude();
-
     // Render the Map
     (mapboxgl as any).accessToken = environment.MapboxApiKey;
     this.map = new mapboxgl.Map({
@@ -55,64 +50,17 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       zoom: 12 // starting zoom
     });
 
+    // get user location
+    await this.userLocationService.getUserLocation();
+    this.latitude = this.userLocationService.getLatitude();
+    this.longitude = this.userLocationService.getLongitude();
+
     this.map.on('load', () => {
       this.map.resize(); // Trigger map resize after the initial rendering
     });
 
     // Populate Map(suburbs) with Polygons
     this.populatePolygons();
-
-    // Set up a click event listener on the map
-    //  let the user select a destination
-    this.map.on('click', (event: any) => {
-      const coords = Object.keys(event.lngLat).map((key) => event.lngLat[key]);
-      const end = {
-        type: 'FeatureCollection',
-        features: [
-          {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'Point',
-              coordinates: coords
-            }
-          }
-        ]
-      };
-
-      if (this.map.getLayer('end')) {
-        this.map.getSource('end').setData(end);
-      } else {
-        this.map.addLayer({
-          id: 'end',
-          type: 'circle',
-          source: {
-            type: 'geojson',
-            data: {
-              type: 'FeatureCollection',
-              features: [
-                {
-                  type: 'Feature',
-                  properties: {},
-                  geometry: {
-                    type: 'Point',
-                    coordinates: coords
-                  }
-                }
-              ]
-            }
-          },
-          paint: {
-            'circle-radius': 10,
-            'circle-color': '#f30'
-          }
-        });
-      }
-
-      // Call the 'getRoute()' function here passing the 'coords' parameter
-      this.getRoute(coords);
-    });
-
   }
 
   populatePolygons() {
@@ -188,6 +136,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
 
   async getRoute(selectedResult: any) {
+    let coords: any;
+
     // console.log(selectedResult);
     console.log(selectedResult);
     console.log(this.longitude);
@@ -198,7 +148,35 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     }
     else {
       query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.center[0]},${selectedResult.center[1]}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
+      coords = [selectedResult.center[0], selectedResult.center[1]];
     }
+    console.log(coords);
+
+    this.map.addLayer({
+      id: 'end',
+      type: 'circle',
+      source: {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'Point',
+                coordinates: coords
+              }
+            }
+          ]
+        }
+      },
+      paint: {
+        'circle-radius': 10,
+        'circle-color': '#f30'
+      }
+    });
+
     console.log("ROUTE" + JSON.stringify(query));
 
     const json = await query.json();
