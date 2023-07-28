@@ -98,14 +98,36 @@ pub fn insertable(input: TokenStream) -> TokenStream {
         }
     };
 
-    let find = quote! {
-        async fn query(filter: bson::document::Document, db: &mongodb::Database) -> std::result::Result<mongodb::Cursor<Self::Output>, mongodb::error::Error> {
+    let query = quote! {
+        async fn query(
+            filter: bson::document::Document,
+            db: &mongodb::Database
+        ) -> std::result::Result<mongodb::Cursor<Self>, mongodb::error::Error> {
             db.collection::<#ident>(#collection_name).find(filter, None).await
         }
     };
 
+    let find = quote! {
+        async fn find(
+            filter: bson::document::Document,
+            db: &mongodb::Database,
+            options: std::option::Option<mongodb::options::FindOptions>
+        ) -> std::result::Result<std::vec::Vec<Box<Self>>, mongodb::error::Error> {
+            let mut cursor = db.collection::<#ident>(#collection_name).find(filter, options).await?;
+            let mut result = Vec::new();
+            while cursor.advance().await? {
+                result.push(std::boxed::Box::new(cursor.deserialize_current()?));
+            }
+            Ok(result)
+        }
+    };
+
     let update = quote! {
-        async fn update(&mut self, update: mongodb::options::UpdateModifications, db: &mongodb::Database) -> std::result::Result<mongodb::results::UpdateResult, mongodb::error::Error> {
+        async fn update(
+            &mut self,
+            update: mongodb::options::UpdateModifications,
+            db: &mongodb::Database
+        ) -> std::result::Result<mongodb::results::UpdateResult, mongodb::error::Error> {
             let doc = mongodb::bson::doc! {
                 "_id": self.#id_field_ident.unwrap()
             };
@@ -116,12 +138,11 @@ pub fn insertable(input: TokenStream) -> TokenStream {
     quote! {
         #[async_trait::async_trait]
        impl Entity for #ident {
-            type Output = Self;
-
             #insert
             #delete
-            #find
+            #query
             #update
+            #find
         }
     }
     .into()

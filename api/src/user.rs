@@ -231,7 +231,7 @@ pub struct User {
     pub password_hash: String,
 }
 
-#[derive(Debug, Clone, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[schema(example = r#"
     {

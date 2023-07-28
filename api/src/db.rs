@@ -1,21 +1,27 @@
 use async_trait::async_trait;
 use bson::Document;
 use mongodb::{
-    options::UpdateModifications,
+    options::{FindOptions, UpdateModifications},
     results::{DeleteResult, InsertOneResult, UpdateResult},
     Cursor, Database,
 };
 
 #[async_trait]
 pub trait Entity {
-    type Output;
-
     async fn insert(&self, db: &Database) -> Result<InsertOneResult, mongodb::error::Error>;
     async fn delete(self, db: &Database) -> Result<DeleteResult, mongodb::error::Error>;
-    async fn query(
+
+    async fn find(
         filter: Document,
         db: &Database,
-    ) -> Result<Cursor<Self::Output>, mongodb::error::Error>;
+        options: Option<FindOptions>,
+    ) -> Result<Vec<Box<Self>>, mongodb::error::Error>;
+
+    #[deprecated]
+    async fn query(filter: Document, db: &Database) -> Result<Cursor<Self>, mongodb::error::Error>
+    where
+        Self: Sized;
+
     async fn update(
         &mut self,
         update: UpdateModifications,
