@@ -4,6 +4,8 @@ import {
   AfterViewInit,
 } from '@angular/core';
 import { environment } from 'src/environments/environment';
+import { UserLocationService } from '../../user-location.service';
+
 //import * as mapboxgl from 'mapbox-gl';
 //import * as MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 import { MapSuburbsService } from './map-suburbs.service';
@@ -17,10 +19,13 @@ declare let MapboxGeocoder: any;
   styleUrls: ['./map-modal.component.scss'],
 })
 export class MapModalComponent implements OnInit, AfterViewInit {
-  constructor(private mapSuburbsService: MapSuburbsService) { }
+  constructor(private mapSuburbsService: MapSuburbsService, private userLocationService: UserLocationService) { }
   map: any;
   dat: any;
   searchResults: any[] = [];
+  start = [];
+  latitude: any;
+  longitude: any;
 
   ngOnInit() {
     this.mapSuburbsService.getSuburbData().subscribe((data: any) => {
@@ -35,7 +40,12 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     );
   }
 
-  ngAfterViewInit() {
+  async ngAfterViewInit() {
+    // get user location
+    await this.userLocationService.getUserLocation();
+    this.latitude = this.userLocationService.getLatitude();
+    this.longitude = this.userLocationService.getLongitude();
+
     // Render the Map
     (mapboxgl as any).accessToken = environment.MapboxApiKey;
     this.map = new mapboxgl.Map({
@@ -48,26 +58,10 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     this.map.on('load', () => {
       this.map.resize(); // Trigger map resize after the initial rendering
     });
-    /*
-        // Add the Navigation Control
-        let exclusionArea: string = 'point(28.278153 -25.781812),point(28.277781 -25.78166),point(28.276252 -25.781039),point(28.274805 -25.780169),point(28.271878 -25.778368),point(28.271868 -25.778362),point(28.271357 -25.780567),point(28.272005 -25.780674),point(28.272028 -25.780909),point(28.272131 -25.781988),point(28.27693 -25.78533),point(28.28062 -25.78286),point(28.27941 -25.78539),point(28.28524 -25.78414)';
-        this.navigate(exclusionArea);
-    */
+
     // Populate Map(suburbs) with Polygons
     this.populatePolygons();
 
-  }
-  ionViewDidEnter() {
-  }
-  navigate(exclusionArea: string) {
-    this.map.addControl(
-      new MapboxDirections({
-        accessToken: mapboxgl.accessToken,
-        unit: 'metric',
-        exclude: ['motorway', exclusionArea]
-      }),
-      'top-left'
-    );
   }
 
   populatePolygons() {
@@ -143,11 +137,16 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
 
   async selectResult(selectedResult: any) {
+    // console.log(selectedResult);
     console.log(selectedResult);
+    console.log(this.longitude);
+    console.log(this.latitude);
 
-    const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/28.261181,-25.771179;27.682397,-26.346665?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
+    const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.center[0]},${selectedResult.center[1]}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
+    console.log("ROUTE" + JSON.stringify(query));
 
     const json = await query.json();
+
     const data = json.routes[0];
     const route = data.geometry.coordinates;
     const geojson = {
