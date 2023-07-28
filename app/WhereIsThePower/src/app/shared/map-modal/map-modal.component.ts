@@ -20,7 +20,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   constructor(private mapSuburbsService: MapSuburbsService) { }
   map: any;
   dat: any;
-  searchresults: any[] = [];
+  searchResults: any[] = [];
 
   ngOnInit() {
     this.mapSuburbsService.getSuburbData().subscribe((data: any) => {
@@ -55,7 +55,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           mapboxgl: mapboxgl, // Set the mapbox-gl instance
           marker: false, // Do not use the default marker style
           placeholder: 'Search for places', // Placeholder text for the search bar
-    
+
         });
         // Add the geocoder to the map
         this.map.addControl(geocoder);
@@ -150,7 +150,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       .then(response => response.json())
       .then(data => {
         // Process the API response
-        this.searchresults = data.features.map((feature: any) => {
+        this.searchResults = data.features.map((feature: any) => {
           const place_name = feature.place_name;
           const firstCommaIndex = place_name.indexOf(',');
           const trimmedPlaceName = place_name.substring(firstCommaIndex + 2);
@@ -161,13 +161,13 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           };
         });
 
-        console.log(this.searchresults);
+        console.log(this.searchResults);
       })
       .catch(error => console.error(error));
   }
-  
 
-  selectresult(selectedResult: any) {
+
+  selectResult(selectedResult: any) {
     // Here, you can handle what happens when the user selects a specific result
     console.log(selectedResult);
   }
