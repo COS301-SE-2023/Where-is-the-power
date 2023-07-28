@@ -49,18 +49,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       this.map.resize(); // Trigger map resize after the initial rendering
     });
     /*
-        const geocoder = new MapboxGeocoder({
-          // Initialize the geocoder
-          accessToken: environment.MapboxApiKey, // Set the access token
-          mapboxgl: mapboxgl, // Set the mapbox-gl instance
-          marker: false, // Do not use the default marker style
-          placeholder: 'Search for places', // Placeholder text for the search bar
-
-        });
-        // Add the geocoder to the map
-        this.map.addControl(geocoder);
-        */
-    /*
         // Add the Navigation Control
         let exclusionArea: string = 'point(28.278153 -25.781812),point(28.277781 -25.78166),point(28.276252 -25.781039),point(28.274805 -25.780169),point(28.271878 -25.778368),point(28.271868 -25.778362),point(28.271357 -25.780567),point(28.272005 -25.780674),point(28.272028 -25.780909),point(28.272131 -25.781988),point(28.27693 -25.78533),point(28.28062 -25.78286),point(28.27941 -25.78539),point(28.28524 -25.78414)';
         this.navigate(exclusionArea);
@@ -135,12 +123,13 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?proximity=ip&access_token=${environment.MapboxApiKey}`)
       .then(response => response.json()) // Parsing the response body as JSON
       .then(data => {
-        console.log("DATA " + data);
+        //console.log("DATA " + JSON.stringify(data));
         this.searchResults = data.features.map((feature: any) => {
           const place_name = feature.place_name;
           const firstCommaIndex = place_name.indexOf(',');
           const trimmedPlaceName = place_name.substring(firstCommaIndex + 2);
 
+          // return each feature with an updated place_name property that excludes the text property
           return {
             ...feature,
             place_name: trimmedPlaceName,
@@ -153,8 +142,47 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   }
 
 
-  selectResult(selectedResult: any) {
+  async selectResult(selectedResult: any) {
     console.log(selectedResult);
+
+    const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/28.261181,-25.771179;27.682397,-26.346665?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
+
+    const json = await query.json();
+    const data = json.routes[0];
+    const route = data.geometry.coordinates;
+    const geojson = {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'LineString',
+        coordinates: route
+      }
+    };
+    // if the route already exists on the map, we'll reset it using setData
+    if (this.map.getSource('route')) {
+      this.map.getSource('route').setData(geojson);
+    }
+    // otherwise, we'll make a new request
+    else {
+      this.map.addLayer({
+        id: 'route',
+        type: 'line',
+        source: {
+          type: 'geojson',
+          data: geojson
+        },
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#3887be',
+          'line-width': 5,
+          'line-opacity': 0.75
+        }
+      });
+    }
+    // add turn instructions here at the end
   }
 }
 
