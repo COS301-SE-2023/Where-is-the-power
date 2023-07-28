@@ -2,9 +2,11 @@
   <ion-row>
     <ion-col class="searchbar-container" size-xs="12" size-md="4" offset-md="7.8">
       <ion-searchbar animated="true" placeholder="Search for a place..." (ionInput)="onSearchInput($event)"></ion-searchbar>
-      <ion-list>
-        <ion-item *ngFor="let searchresult of searchresults" (click)="selectresult(searchresult)">
-          {{ searchresult.place_name }}
+      <ion-list *ngIf="searchresults.length > 0">        <ion-item *ngFor="let searchresult of searchresults" (click)="selectresult(searchresult)">
+        <ion-label>
+          <h3><strong>{{ searchresult.text }}</strong></h3>
+          <ion-note>{{ searchresult.place_name }}</ion-note>
+          </ion-label>
         </ion-item>
       </ion-list>
     </ion-col>

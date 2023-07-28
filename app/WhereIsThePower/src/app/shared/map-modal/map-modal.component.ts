@@ -146,14 +146,26 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     const query = event.target.value;
 
     // Make a request to Mapbox Geocoding API
-    fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?access_token=${environment.MapboxApiKey}`)
+    fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?proximity=ip&access_token=${environment.MapboxApiKey}`)
       .then(response => response.json())
       .then(data => {
         // Process the API response
-        this.searchresults = data.features;
+        this.searchresults = data.features.map((feature: any) => {
+          const place_name = feature.place_name;
+          const firstCommaIndex = place_name.indexOf(',');
+          const trimmedPlaceName = place_name.substring(firstCommaIndex + 2);
+
+          return {
+            ...feature,
+            place_name: trimmedPlaceName,
+          };
+        });
+
+        console.log(this.searchresults);
       })
       .catch(error => console.error(error));
   }
+  
 
   selectresult(selectedResult: any) {
     // Here, you can handle what happens when the user selects a specific result
