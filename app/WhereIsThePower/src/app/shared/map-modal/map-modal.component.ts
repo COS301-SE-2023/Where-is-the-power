@@ -244,5 +244,24 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     }
     // add turn instructions here at the end
   }
+
+  onSearchBarClear() {
+    if (this.map.getSource('route')) {
+      this.map.removeLayer('route');
+      this.map.removeSource('route');
+    }
+
+    // Remove the start point marker layer (if it exists)
+    if (this.map.getLayer('start')) {
+      this.map.removeLayer('start');
+      this.map.removeSource('start');
+    }
+
+    // Remove the end point marker layer (if it exists)
+    if (this.map.getLayer('end')) {
+      this.map.removeLayer('end');
+      this.map.removeSource('end');
+    }
+  }
 }
 
