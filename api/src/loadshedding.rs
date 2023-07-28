@@ -96,28 +96,22 @@ pub async fn fetch_suburb_stats<'a>(
     db: &State<Option<Client>>,
     request: Json<SuburbStatsRequest>,
 ) -> ApiResponse<'a, SuburbStatsResponse> {
-    if let Some(data) = request.suburb_id.as_ref() {
-        let oid = ObjectId::parse_str(data);
-        if let Err(_err) = oid {
-            return ApiError::ServerError("Invalid Object ID").into();
-        }
-        let connection = db.as_ref().unwrap().database("production");
-        let query = doc! {"_id" : oid.unwrap()};
-        let suburb: SuburbEntity = match connection
-            .collection("suburbs")
-            .find_one(query, None)
-            .await
-            .unwrap()
-        {
-            Some(result) => result,
-            None => return ApiError::ServerError("Document not found").into(),
-        };
-        match suburb.get_stats(&connection).await {
-            Ok(data) => return ApiResponse::Ok(data),
-            Err(_) => return ApiError::ServerError("server side error :<").into(),
-        }
+    let oid = &request.suburb_id;
+    let connection = db.as_ref().unwrap().database("production");
+    let query = doc! {"geometry" : {"$in" : [oid]}};
+    let suburb: SuburbEntity = match connection
+        .collection("suburbs")
+        .find_one(query, None)
+        .await
+        .unwrap()
+    {
+        Some(result) => result,
+        None => return ApiError::ServerError("Document not found").into(),
+    };
+    match suburb.get_stats(&connection).await {
+        Ok(data) => return ApiResponse::Ok(data),
+        Err(_) => return ApiError::ServerError("server side error :<").into(),
     }
-    todo!()
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Entity)]
@@ -329,13 +323,11 @@ pub struct MapDataDefaultResponse {
 #[serde(rename_all = "camelCase")]
 #[schema(example = json! {
     SuburbStatsRequest {
-        suburb_id : Some("64b522a848b2645f6f627c1e".to_string()),
-        suburb_object : None
+        suburb_id : 1245
     }
 })]
 pub struct SuburbStatsRequest {
-    pub suburb_id: Option<String>,
-    pub suburb_object: Option<SuburbEntity>,
+    pub suburb_id: u32
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
@@ -343,6 +335,7 @@ pub struct SuburbStatsRequest {
 pub struct SuburbStatsResponse {
     pub total_time: TotalTime,
     pub per_day_times: HashMap<String, TotalTime>,
+    pub suburb: SuburbEntity
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -714,6 +707,7 @@ impl SuburbEntity {
                 off: down_time,
             },
             per_day_times: daily_stats,
+            suburb : self
         })
     }
 }
