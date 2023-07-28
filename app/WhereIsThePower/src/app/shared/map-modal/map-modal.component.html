@@ -1,9 +1,9 @@
 <ion-content>
   <ion-row>
     <ion-col class="searchbar-container" size-xs="12" size-md="4" offset-md="7.8">
-      <ion-searchbar class="ion-hide-md-up" animated="true" placeholder="Search for a place..." (ionInput)="onSearchInput($event)"></ion-searchbar>
+      <ion-searchbar animated="true" placeholder="Search for a place..." (ionInput)="onSearchInput($event)"></ion-searchbar>
       <ion-list *ngIf="searchResults.length > 0">
-        <ion-item *ngFor="let result of searchResults" (click)="selectResult(result)">
+        <ion-item *ngFor="let result of searchResults" (click)="getRoute(result)">
           <ion-label>
             <h3><strong>{{ result.text }}</strong></h3>
             <ion-note>{{ result.place_name }}</ion-note>
