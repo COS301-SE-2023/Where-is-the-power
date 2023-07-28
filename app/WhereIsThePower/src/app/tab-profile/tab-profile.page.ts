@@ -20,7 +20,7 @@ export class TabProfilePage implements OnInit {
   userInitialDataURL: string | null = null;
 
   isLoggedIn: boolean = false;
-  constructor(private authService: AuthService, 
+  constructor(private authService: AuthService,
               private modalController: ModalController) { }
 
   ngOnInit() {
