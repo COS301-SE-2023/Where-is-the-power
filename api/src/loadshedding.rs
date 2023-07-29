@@ -746,7 +746,8 @@ impl LoadSheddingStage {
         loop {
             let stage = reqwest::get("https://loadshedding.eskom.co.za/LoadShedding/GetStatus").await?;
             if stage.status().is_success() {
-                match stage.text().await?.parse::<i32>() {
+                let text = stage.text().await?;
+                match (&text).parse::<i32>() {
                     Ok(num) => {
                         if num >= 1 {
                             self.stage = num - 1;
@@ -755,12 +756,12 @@ impl LoadSheddingStage {
                             break;
                         }
                     }
-                    Err(_) => warn!("Eskom API did not return a integer when we queried it."),
+                    Err(_) => warn!("Eskom API did not return a integer when we queried it: {:?}", text),
                 }
             } else {
                 warn!("Connection to Eskom Dropped before any operations could take place");
             }
-            thread::sleep(std::time::Duration::from_secs(5)); // Sleep for 10 minutes
+            thread::sleep(std::time::Duration::from_secs(10));
         }
         Ok(self.stage)
     }
