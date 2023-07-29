@@ -112,28 +112,30 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   }
 
   onSearchInput(event: any) {
-    this.showResultsList = true;
-    const query = event.target.value;
+    if (event.target.value.length > 0) {
+      this.showResultsList = true;
+      const query = event.target.value;
 
-    // Make a request to Mapbox Geocoding API
-    fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?proximity=ip&access_token=${environment.MapboxApiKey}`)
-      .then(response => response.json()) // Parsing the response body as JSON
-      .then(data => {
-        //console.log("DATA " + JSON.stringify(data));
-        this.searchResults = data.features.map((feature: any) => {
-          const place_name = feature.place_name;
-          const firstCommaIndex = place_name.indexOf(',');
-          const trimmedPlaceName = place_name.substring(firstCommaIndex + 2);
+      // Make a request to Mapbox Geocoding API
+      fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?proximity=ip&access_token=${environment.MapboxApiKey}`)
+        .then(response => response.json()) // Parsing the response body as JSON
+        .then(data => {
+          //console.log("DATA " + JSON.stringify(data));
+          this.searchResults = data.features.map((feature: any) => {
+            const place_name = feature.place_name;
+            const firstCommaIndex = place_name.indexOf(',');
+            const trimmedPlaceName = place_name.substring(firstCommaIndex + 2);
 
-          // return each feature with an updated place_name property that excludes the text property
-          return {
-            ...feature,
-            place_name: trimmedPlaceName,
-          };
-        });
-        console.log(this.searchResults);
-      })
-      .catch(error => console.error(error));
+            // return each feature with an updated place_name property that excludes the text property
+            return {
+              ...feature,
+              place_name: trimmedPlaceName,
+            };
+          });
+          console.log(this.searchResults);
+        })
+        .catch(error => console.error(error));
+    }
   }
 
 
@@ -283,10 +285,11 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         }
       });
     }
-    // add turn instructions here at the end
   }
 
   onSearchBarClear() {
+    this.showResultsList = false;
+
     if (this.map.getSource('route')) {
       this.map.removeLayer('route');
       this.map.removeSource('route');
