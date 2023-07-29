@@ -2,6 +2,7 @@ import {
   Component,
   OnInit,
   AfterViewInit,
+  ViewChild,
 } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { UserLocationService } from '../../user-location.service';
@@ -19,6 +20,7 @@ declare let MapboxGeocoder: any;
   styleUrls: ['./map-modal.component.scss'],
 })
 export class MapModalComponent implements OnInit, AfterViewInit {
+  @ViewChild('searchBar', { static: false }) searchBar: any;
   constructor(private mapSuburbsService: MapSuburbsService, private userLocationService: UserLocationService) { }
   map: any;
   dat: any;
@@ -26,6 +28,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   start = [];
   latitude: any;
   longitude: any;
+  showResultsList: boolean = false;
 
   ngOnInit() {
     this.mapSuburbsService.getSuburbData().subscribe((data: any) => {
@@ -109,6 +112,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   }
 
   onSearchInput(event: any) {
+    this.showResultsList = true;
     const query = event.target.value;
 
     // Make a request to Mapbox Geocoding API
@@ -127,7 +131,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
             place_name: trimmedPlaceName,
           };
         });
-
         console.log(this.searchResults);
       })
       .catch(error => console.error(error));
@@ -135,6 +138,10 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
 
   async getRoute(selectedResult: any) {
+    console.log(this.searchBar);
+    this.searchBar.value = `${selectedResult.text}, ${selectedResult.place_name}`;
+
+    this.showResultsList = false;
     let coords: any;
 
     // console.log(selectedResult);
