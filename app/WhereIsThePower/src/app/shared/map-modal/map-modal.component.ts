@@ -201,6 +201,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           'circle-color': '#1a9107' // Green color for the start point
         }
       });
+      // Center the map on the start point (user's current location)
+      this.centerOnStartPoint();
     }
 
     const end = {
@@ -306,6 +308,14 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       this.map.removeLayer('end');
       this.map.removeSource('end');
     }
+  }
+
+  centerOnStartPoint() {
+    this.map.flyTo({
+      center: [this.longitude, this.latitude], // Center on user position
+      zoom: 15, // Adjust the zoom level
+      speed: 1.2, // Adjust the speed of the animation
+    });
   }
 }
 
