@@ -116,8 +116,17 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       this.showResultsList = true;
       const query = event.target.value;
 
+      // The bounding box for South Africa
+      const MIN_LONGITUDE = 16.344976;
+      const MIN_LATITUDE = -34.819166;
+      const MAX_LONGITUDE = 32.830120;
+      const MAX_LATITUDE = -22.126612;
+
+      // Define the bounding box coordinates for South Africa (limit search results to SA only)
+      const bbox = `${MIN_LONGITUDE},${MIN_LATITUDE},${MAX_LONGITUDE},${MAX_LATITUDE}`;
+
       // Make a request to Mapbox Geocoding API
-      fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?proximity=ip&access_token=${environment.MapboxApiKey}`)
+      fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?proximity=ip&bbox=${bbox}&access_token=${environment.MapboxApiKey}`)
         .then(response => response.json()) // Parsing the response body as JSON
         .then(data => {
           //console.log("DATA " + JSON.stringify(data));
