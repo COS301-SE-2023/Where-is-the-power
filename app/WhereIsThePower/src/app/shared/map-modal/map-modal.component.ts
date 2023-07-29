@@ -35,6 +35,10 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   latitude: any;
   longitude: any;
   showResultsList: boolean = false;
+  instructions: string[] = [];
+  tripDuration: number = 0;
+  tripDistance: number = 0;
+
 
   ngOnInit() {
     this.mapSuburbsService.getSuburbData().subscribe((data: any) => {
@@ -281,19 +285,16 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       }
     };
     // get the sidebar and add the instructions
-    const instructions = document.getElementById('instructions');
     const steps = data.legs[0].steps;
-
-    let tripInstructions = '';
     for (const step of steps) {
-      tripInstructions += `<li>${step.maneuver.instruction}</li>`;
+      this.instructions.push(step.maneuver.instruction);
     }
-    if (instructions)
-      instructions.innerHTML = `<p><strong>Trip duration: ${Math.floor(
-        data.duration / 60
-      )} min 🚴 </strong></p><ol>${tripInstructions}</ol>`;
+    this.tripDuration = Math.floor(data.duration / 60);
+    this.tripDistance = Math.floor(data.distance / 1000);
+    console.log("DATA" + JSON.stringify(data));
 
-
+    console.log(this.tripDuration);
+    console.log(this.instructions);
     // if the route already exists on the map, we'll reset it using setData
     if (this.map.getSource('route')) {
       this.map.getSource('route').setData(geojson);
@@ -339,6 +340,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       this.map.removeLayer('end');
       this.map.removeSource('end');
     }
+    this.myModal.dismiss();
   }
 
   centerOnStartPoint() {
