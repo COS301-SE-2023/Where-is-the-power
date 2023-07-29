@@ -1,9 +1,9 @@
 <ion-content>
   <ion-row>
     <ion-col class="searchbar-container" size-xs="12" size-md="4" offset-md="7.8">
-      <ion-searchbar animated="true" placeholder="Search for a place..." (ionInput)="onSearchInput($event)" (ionClear)="onSearchBarClear()" #searchBar></ion-searchbar>
+      <ion-searchbar animated="true" placeholder="Search for a place..." (ionInput)="onSearchInput($event)" (keyup.enter)="onSearchInput($event)" (ionClear)="onSearchBarClear()" #searchBar></ion-searchbar>
       <ion-list *ngIf="searchResults.length > 0 && showResultsList">
-        <ion-item *ngFor="let result of searchResults" (click)="getRoute(result)" button>
+        <ion-item *ngFor="let result of searchResults" (click)="getRoute(result)" (click)="openModal(result)" button>
           <ion-label>
             <h3><strong>{{ result.text }}</strong></h3>
             <ion-note>{{ result.place_name }}</ion-note>
@@ -12,5 +12,17 @@
       </ion-list>
     </ion-col>
   </ion-row>
-  <div id="map"></div>
+  <ion-row id="map"></ion-row>
+  <ion-modal #myModal *ngIf="searchResults.length > 0" trigger="open-modal"
+    [initialBreakpoint]="0.1"
+    [breakpoints]="[0, 0.5, 0.75]"
+    [backdropBreakpoint]="0.3"
+    [backdropDismiss]="false"
+    >
+    <ng-template class="ion-padding">
+      <div id="instructions"></div>
+      <p>Result Text: {{ modalResult?.text }}</p>
+      <p>Result Place Name: {{ modalResult?.place_name }}</p>
+    </ng-template>
+  </ion-modal>
 </ion-content>

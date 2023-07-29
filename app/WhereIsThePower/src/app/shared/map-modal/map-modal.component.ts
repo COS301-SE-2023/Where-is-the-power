@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { UserLocationService } from '../../user-location.service';
+import { IonContent, ModalController } from '@ionic/angular';
 
 //import * as mapboxgl from 'mapbox-gl';
 //import * as MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
@@ -21,7 +22,12 @@ declare let MapboxGeocoder: any;
 })
 export class MapModalComponent implements OnInit, AfterViewInit {
   @ViewChild('searchBar', { static: false }) searchBar: any;
-  constructor(private mapSuburbsService: MapSuburbsService, private userLocationService: UserLocationService) { }
+
+  constructor(
+    private mapSuburbsService: MapSuburbsService,
+    private userLocationService: UserLocationService,
+    private modalCtrl: ModalController
+  ) { }
   map: any;
   dat: any;
   searchResults: any[] = [];
@@ -112,6 +118,10 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   }
 
   onSearchInput(event: any) {
+    console.log("searchBar" + this.searchBar.value);
+    if (event.target.value == this.searchBar.value) {
+
+    }
     if (event.target.value.length > 0) {
       this.showResultsList = true;
       const query = event.target.value;
@@ -134,7 +144,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
             const place_name = feature.place_name;
             const firstCommaIndex = place_name.indexOf(',');
             const trimmedPlaceName = place_name.substring(firstCommaIndex + 2);
-
             // return each feature with an updated place_name property that excludes the text property
             return {
               ...feature,
@@ -271,6 +280,19 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         coordinates: route
       }
     };
+    // get the sidebar and add the instructions
+    const instructions = document.getElementById('instructions');
+    const steps = data.legs[0].steps;
+
+    let tripInstructions = '';
+    for (const step of steps) {
+      tripInstructions += `<li>${step.maneuver.instruction}</li>`;
+    }
+    if (instructions)
+      instructions.innerHTML = `<p><strong>Trip duration: ${Math.floor(
+        data.duration / 60
+      )} min 🚴 </strong></p><ol>${tripInstructions}</ol>`;
+
 
     // if the route already exists on the map, we'll reset it using setData
     if (this.map.getSource('route')) {
@@ -325,6 +347,13 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       zoom: 15, // Adjust the zoom level
       speed: 1.2, // Adjust the speed of the animation
     });
+  }
+  @ViewChild('myModal') myModal: any; // Reference to the ion-modal element
+  modalResult: any; // To store the selected result data
+
+  openModal(result: any) {
+    this.modalResult = result;
+    this.myModal.present();
   }
 }
 
