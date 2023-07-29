@@ -51,7 +51,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     });
 
     // get user location
-    await this.userLocationService.getUserLocation();
     this.latitude = this.userLocationService.getLatitude();
     this.longitude = this.userLocationService.getLongitude();
 

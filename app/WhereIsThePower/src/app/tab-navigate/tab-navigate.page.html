@@ -2,5 +2,34 @@
 <ion-content [fullscreen]="true">
   <ion-header>
   </ion-header>
-  <app-map-modal></app-map-modal>
+  <div *ngIf="isLocationProvide === false; else noLocationProvided">
+    <ion-row class="ion-padding-top ion-margin-top">
+      <ion-col size="6" offset="3" size-md="4" offset-md="4" size-xl="3" offset-xl="4.5">
+        <ion-img
+          src="assets/locatonPin.svg"
+          alt="Location pin Illustration"
+        >
+        </ion-img>
+      </ion-col>
+    </ion-row>
+    <ion-row class="ion-align-items-end" style="height: 100%;">
+      <ion-col size="12" size-md="6" offset-md="3" size-xl="4" offset-xl="4" class="ion-text-center ion-padding-horizontal">
+        <h3><strong>Enable Device location</strong></h3>
+        <ion-text>Hi there! Please grant location access for the app to function correctly.</ion-text>
+      </ion-col>
+    </ion-row>
+  </div>
+  <ng-template #noLocationProvided>
+    <app-map-modal></app-map-modal>
+  </ng-template>
 </ion-content>
+	<ion-toolbar position="bottom" class="ion-padding-bottom">
+    <ion-button
+      expand="block"
+      (click)="onLocateUser()"
+      style="text-transform:none"
+      >
+        Turn on Location
+    </ion-button>
+  </ion-toolbar>
+
