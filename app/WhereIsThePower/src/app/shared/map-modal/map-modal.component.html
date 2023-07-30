@@ -16,7 +16,7 @@
   <ion-modal #myModal *ngIf="searchResults.length > 0" trigger="open-modal"
     class="ion-hide-md-up"
     [initialBreakpoint]="0.2"
-    [breakpoints]="[0.1, currentBreakpoint, 0.5, 0.75]"
+    [breakpoints]="[0.1, currentBreakpoint, 0.75]"
     [backdropBreakpoint]="0.1"
     [backdropDismiss]="true"
     gestureEnabled="false"
@@ -71,7 +71,7 @@
       </div>
       <!--  Start trip  -->
       <ng-template #start>
-        <ion-row>
+        <ion-row class="ion-padding-horizontal">
           <ion-col size="8">
             <h3 style="margin-top: 12px;">
               <div>
@@ -82,8 +82,11 @@
             <ion-text style="padding-left: 8px; padding-right: 8px;">&#8226;</ion-text>
             <ion-text>13:00</ion-text>
           </ion-col>
-          <ion-col size="4">
-            <ion-icon src="assets/cancel.svg" size="large" slot="end" (click)="onSearchBarClear()" icon-only button></ion-icon>
+          <ion-col size="4" class="ion-text-end ion-align-items-center" style="
+            display: flex;
+            justify-content: end;
+            align-items: center;">
+            <ion-icon src="assets/cancel.svg" (click)="onSearchBarClear()"  class="ion-text-end align-items-center ion-text-center" style="font-size: 55px;"></ion-icon>
           </ion-col>
         </ion-row>
       </ng-template>
