@@ -4,7 +4,7 @@ import {
   AfterViewInit,
   ViewChild,
   ChangeDetectorRef,
-  HostListener 
+  HostListener
 } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { UserLocationService } from '../../user-location.service';
@@ -44,47 +44,46 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   startTrip: boolean = false; // Only displayed when "Begin trip" button is clicked
   gettingRoute: boolean = false;
 
-  ngOnInit() {
+  ngOnInit() { }
+  ngAfterViewInit() {
     this.mapSuburbsService.getSuburbData().subscribe((data: any) => {
-      console.log(data);
-      this.dat = data.mapPolygons;
-      //  console.log(this.dat);
+      console.log(data.result.mapPolygons[0]);
+      this.dat = data.result.mapPolygons[0];
+      // Render the Map
+      (mapboxgl as any).accessToken = environment.MapboxApiKey;
+      this.map = new mapboxgl.Map({
+        container: 'map', // container ID
+        style: 'mapbox://styles/mapbox/streets-v12', // style URL
+        center: [28.261181, -25.771179], // starting position [lng, lat]
+        zoom: 12 // starting zoom
+      });
+
+      // get user location
+      this.latitude = this.userLocationService.getLatitude();
+      this.longitude = this.userLocationService.getLongitude();
+
+      this.map.on('load', () => {
+        this.map.resize(); // Trigger map resize after the initial rendering
+      });
+
+      // Populate Map(suburbs) with Polygons
+      this.populatePolygons();
 
     },
       (error: any) => {
         console.log(error);
       }
     );
-  }
 
-  async ngAfterViewInit() {
-    // Render the Map
-    (mapboxgl as any).accessToken = environment.MapboxApiKey;
-    this.map = new mapboxgl.Map({
-      container: 'map', // container ID
-      style: 'mapbox://styles/mapbox/streets-v12', // style URL
-      center: [28.261181, -25.771179], // starting position [lng, lat]
-      zoom: 12 // starting zoom
-    });
-
-    // get user location
-    this.latitude = this.userLocationService.getLatitude();
-    this.longitude = this.userLocationService.getLongitude();
-
-    this.map.on('load', () => {
-      this.map.resize(); // Trigger map resize after the initial rendering
-    });
-
-    // Populate Map(suburbs) with Polygons
-    this.populatePolygons();
   }
 
   populatePolygons() {
+    console.log(this.dat);
     this.map.on('load', () => {
       // Add a data source containing GeoJSON data.
       this.map.addSource('polygons', {
         'type': 'geojson',
-        'data': 'assets/suburbs.json'
+        'data': this.dat
       });
       // console.log('./suburbs.geojson');
       // Add a new layer to visualize the polygon.
@@ -94,20 +93,29 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         'source': 'polygons', // reference the data source
         'layout': {},
         'paint': {
-          'fill-color': '#12960e', // blue color fill
-          'fill-opacity': 0.4
+          'fill-color': [
+            'match',
+            ['get', 'PowerStatus'], // Property to evaluate
+            'on', '#12960e',       // Fill color when 'Powerstatus' is 'on'
+            'off', '#ff0000',      // Fill color when 'Powerstatus' is 'off'
+            /* Add more cases if needed */
+            '#cccccc'              // Default fill color when 'Powerstatus' doesn't match any case
+          ],
+          'fill-opacity': 0.5
         }
       });
 
-      // Add a black outline around the polygon.
       this.map.addLayer({
-        'id': 'outline',
+        'id': 'lines-layer',
         'type': 'line',
-        'source': 'polygons',
-        'layout': {},
+        'source': 'polygons', // reference the data source containing line features
+        'layout': {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
         'paint': {
-          'line-color': '#1c470c',
-          'line-width': 0.5
+          'line-color': '#1c470c', // Set the color of the lines
+          'line-width': 0.5 // Set the width of the lines in pixels
         }
       });
 
@@ -424,7 +432,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       this.userMarker.remove();
     }
   }
-  
+
   userMarker: any;
 
   pin() {
@@ -434,7 +442,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     if (this.userMarker) {
       this.userMarker.remove();
     }
-  
+
     // Create a new marker at the user's location
     this.userMarker = new mapboxgl.Marker({ color: '#4287f5' }) // Customize the pin color if desired
       .setLngLat([this.longitude, this.latitude]) // Set the marker's position to the user's location
@@ -446,7 +454,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   @HostListener('window:resize', ['$event'])
   onResize(event: any) {
     this.screenWidth = event.target.innerWidth;
-    console.log("FFFFFFFFFF"+this.screenWidth);
+    console.log("FFFFFFFFFF" + this.screenWidth);
   }
 }
 
