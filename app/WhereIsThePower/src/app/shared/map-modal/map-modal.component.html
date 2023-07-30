@@ -45,7 +45,7 @@
             <ion-col size="4">
               <ion-icon name="icon-name" size="large" src="assets/schedule.svg" color="primary"></ion-icon>
               <div><ion-text color="medium"><small>ETA</small></ion-text></div>
-              <h4>13:00 pm</h4>
+              <h4>13:00</h4>
             </ion-col>
           </ion-row>
 
@@ -71,13 +71,21 @@
       </div>
       <!--  Start trip  -->
       <ng-template #start>
-        <ion-item>
-          <h3>
-            <ion-text color="primary">{{ tripDuration }} min </ion-text>{{ tripDistance }} km
-            <ion-text color="primary"> </ion-text>
-          </h3>
-          <ion-icon src="assets/cancel.svg" size="large" slot="end" (click)="onSearchBarClear()" icon-only button></ion-icon>
-        </ion-item>
+        <ion-row>
+          <ion-col size="8">
+            <h3 style="margin-top: 12px;">
+              <div>
+                <ion-text color="primary"><strong>{{ tripDistance }} km </strong></ion-text>
+              </div>
+            </h3>
+            <ion-text>{{ tripDuration}} min</ion-text>
+            <ion-text style="padding-left: 8px; padding-right: 8px;">&#8226;</ion-text>
+            <ion-text>13:00</ion-text>
+          </ion-col>
+          <ion-col size="4">
+            <ion-icon src="assets/cancel.svg" size="large" slot="end" (click)="onSearchBarClear()" icon-only button></ion-icon>
+          </ion-col>
+        </ion-row>
       </ng-template>
       <ion-content class="ion-padding">
         <ion-list *ngIf="instructions.length > 0; else loadInstructions">
