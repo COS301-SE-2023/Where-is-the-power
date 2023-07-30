@@ -325,8 +325,12 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   }
 
   onSearchBarClear() {
-    this.showResultsList = false;
+    this.myModal.dismiss();
     this.startTrip = false;
+    this.showResultsList = false;
+    this.myModal.setCurrentBreakpoint(0.2);
+    this.tripDuration = 0;
+    this.tripDistance = 0;
 
     if (this.map.getSource('route')) {
       this.map.removeLayer('route');
@@ -344,8 +348,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       this.map.removeLayer('end');
       this.map.removeSource('end');
     }
-    this.myModal.dismiss();
-    this.myModal.setCurrentBreakpoint(0.2);
   }
 
   centerOnStartPoint() {
