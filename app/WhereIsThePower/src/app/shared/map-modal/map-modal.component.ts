@@ -274,7 +274,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
     const data = json.routes[0]; // Pick 1st route in list of route recommendations
     const route = data.geometry.coordinates; // list of coordinates forming route
-    console.log("DATTTA" + JSON.stringify(data));
     const geojson = {
       type: 'Feature',
       properties: {},
