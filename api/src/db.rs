@@ -23,7 +23,7 @@ pub trait Entity {
         options: Option<FindOptions>,
     ) -> Option<Box<Self>>;
 
-    #[deprecated]
+    #[deprecated(note = "Use `Entity::find_one` instead.")]
     async fn query(filter: Document, db: &Database) -> Result<Cursor<Self>, mongodb::error::Error>
     where
         Self: Sized;
