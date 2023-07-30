@@ -122,6 +122,18 @@ pub fn insertable(input: TokenStream) -> TokenStream {
         }
     };
 
+    let find_one = quote! {
+        async fn find_one(
+            filter: bson::document::Document,
+            db: &mongodb::Database,
+            options: std::option::Option<mongodb::options::FindOptions>
+        ) -> std::option::Option<std::boxed::Box<Self>> {
+            let mut cursor = db.collection::<#ident>(#collection_name).find(filter, options).await.ok()?;
+            cursor.advance().await.ok()?;
+            cursor.deserialize_current().ok().map(|x| std::boxed::Box::new(x))
+        }
+    };
+
     let update = quote! {
         async fn update(
             &mut self,
@@ -143,6 +155,7 @@ pub fn insertable(input: TokenStream) -> TokenStream {
             #query
             #update
             #find
+            #find_one
         }
     }
     .into()

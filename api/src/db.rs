@@ -17,6 +17,12 @@ pub trait Entity {
         options: Option<FindOptions>,
     ) -> Result<Vec<Box<Self>>, mongodb::error::Error>;
 
+    async fn find_one(
+        filter: Document,
+        db: &Database,
+        options: Option<FindOptions>,
+    ) -> Option<Box<Self>>;
+
     #[deprecated]
     async fn query(filter: Document, db: &Database) -> Result<Cursor<Self>, mongodb::error::Error>
     where
