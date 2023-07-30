@@ -3,7 +3,8 @@ import {
   OnInit,
   AfterViewInit,
   ViewChild,
-  ChangeDetectorRef
+  ChangeDetectorRef,
+  HostListener 
 } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { UserLocationService } from '../../user-location.service';
@@ -440,5 +441,12 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       .addTo(this.map); // Add the marker to the map
   }
 
+  screenWidth: number = 0;
+
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any) {
+    this.screenWidth = event.target.innerWidth;
+    console.log("FFFFFFFFFF"+this.screenWidth);
+  }
 }
 

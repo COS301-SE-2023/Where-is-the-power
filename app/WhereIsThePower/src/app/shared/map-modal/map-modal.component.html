@@ -12,7 +12,7 @@
       </ion-list>
     </ion-col>
   </ion-row>
-  <ion-fab slot="fixed" *ngIf="!gettingRoute" vertical="bottom" horizontal="end">
+  <ion-fab slot="fixed" *ngIf="!gettingRoute || screenWidth > 768" vertical="bottom" horizontal="end">
     <ion-fab-button (click) = "pin()">
       <ion-icon name="locate-outline" size="large"></ion-icon>
     </ion-fab-button>
