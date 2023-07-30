@@ -41,6 +41,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   tripDuration: number = 0;
   tripDistance: number = 0;
   startTrip: boolean = false; // Only displayed when "Begin trip" button is clicked
+  gettingRoute: boolean = false;
 
   ngOnInit() {
     this.mapSuburbsService.getSuburbData().subscribe((data: any) => {
@@ -165,6 +166,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
 
   async getRoute(selectedResult: any) {
+    this.gettingRoute = true;
     console.log(this.searchBar);
     this.searchBar.value = `${selectedResult.place_name}`;
 
@@ -316,7 +318,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         }
       });
     }
-    console.log("ROUTE" + JSON.stringify(route));
 
     // Calculate the bounding box OF THE ROUTE
     let minLng = Infinity;
@@ -353,6 +354,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     this.myModal.setCurrentBreakpoint(0.2);
     this.tripDuration = 0;
     this.tripDistance = 0;
+    this.gettingRoute = false;
 
     if (this.map.getSource('route')) {
       this.map.removeLayer('route');
