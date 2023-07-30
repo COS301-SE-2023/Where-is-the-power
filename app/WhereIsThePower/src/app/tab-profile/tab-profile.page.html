@@ -51,7 +51,7 @@
       </ion-avatar>
     </ion-row>
     <ion-text class="ion-text-center">
-      <h1> Welcome {{user?.firstName}} !</h1>
+      <h1 data-cy="Welcome-text"> Welcome {{user?.firstName}} !</h1>
     </ion-text>
     <ion-list>
       <ion-item button>
@@ -68,7 +68,7 @@
           <ion-select-option value="dark" >Dark</ion-select-option>
         </ion-select>
       </ion-item>
-      <ion-item button (click)="logout()">
+      <ion-item button (click)="logout()" data-cy="logout-button">
         <ion-icon name="log-out-outline" class="ion-padding-end"></ion-icon>
         <ion-label>Logout</ion-label>
       </ion-item>
