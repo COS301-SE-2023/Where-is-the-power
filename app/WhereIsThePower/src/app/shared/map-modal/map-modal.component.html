@@ -15,20 +15,49 @@
   <ion-row id="map"></ion-row>
   <ion-modal #myModal *ngIf="searchResults.length > 0" trigger="open-modal"
     class="ion-hide-md-up"
-    [initialBreakpoint]="0.15"
-    [breakpoints]="[0, 0.15, 0.5, 0.75]"
+    [initialBreakpoint]="0.25"
+    [breakpoints]="[0, 0.25, 0.5, 0.75]"
     [backdropBreakpoint]="0.5"
     [backdropDismiss]="false"
     >
     <ng-template>
+       <!-- Ionic grid to create the row with three items -->
+    <ion-row class="ion-text-center ion-padding-top">
+      <!-- DISTANCE -->
+      <ion-col size="4">
+        <ion-icon name="icon-name" size="large" src="assets/car.svg" color="primary"></ion-icon>
+        <div><ion-text color="medium"><small>DISTANCE</small></ion-text></div>
+        <h4>{{ tripDistance }} km</h4>
+      </ion-col>
+
+      <!-- DURATION -->
+      <ion-col size="4">
+        <ion-icon name="icon-name" size="large" src="assets/timer.svg" color="primary"></ion-icon>
+        <div><ion-text color="medium"><small>DURATION</small></ion-text></div>
+        <h4>{{ tripDuration }} min</h4>
+      </ion-col>
+
+      <!-- ETA -->
+      <ion-col size="4">
+        <ion-icon name="icon-name" size="large" src="assets/schedule.svg" color="primary"></ion-icon>
+        <div><ion-text color="medium"><small>ETA</small></ion-text></div>
+        <h4>13:00 pm</h4>
+      </ion-col>
+    </ion-row>
+
+<ion-button expand="block" class="ion-margin-top" style="text-transform: none;">
+  <ion-icon slot="start" name="navigate-circle-outline"></ion-icon>
+  Begin Trip
+</ion-button>
       <ion-content class="ion-padding">
         <ion-item>
           <h3 *ngIf="tripDuration!== 0 || tripDistance!==0; else loadData">
             <ion-text color="primary">{{ tripDuration }} min </ion-text>{{ tripDistance }} km
+            <ion-text color="primary"> </ion-text>
           </h3>
           <ion-icon src="assets/cancel.svg" size="large" slot="end" (click)="onSearchBarClear()" icon-only button></ion-icon>
         </ion-item>
-        
+
         <ng-template #loadData>
           <ion-skeleton-text [animated]="true"></ion-skeleton-text>
         </ng-template>
