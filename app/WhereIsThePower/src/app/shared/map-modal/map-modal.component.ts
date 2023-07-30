@@ -38,6 +38,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   instructions: string[] = [];
   tripDuration: number = 0;
   tripDistance: number = 0;
+  startTrip: boolean = false; // Only displayed when "Begin trip" button is clicked
 
   ngOnInit() {
     this.mapSuburbsService.getSuburbData().subscribe((data: any) => {
@@ -273,7 +274,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
     const data = json.routes[0]; // Pick 1st route in list of route recommendations
     const route = data.geometry.coordinates; // list of coordinates forming route
-    console.log("DATTTA"+JSON.stringify(data));
+    console.log("DATTTA" + JSON.stringify(data));
     const geojson = {
       type: 'Feature',
       properties: {},
@@ -324,6 +325,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
   onSearchBarClear() {
     this.showResultsList = false;
+    this.startTrip = false;
 
     if (this.map.getSource('route')) {
       this.map.removeLayer('route');
@@ -379,6 +381,10 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
     // If no arrow keyword is found, return a default icon
     return 'information-circle-outline';
+  }
+
+  beginTrip() {
+    this.startTrip = true;
   }
 }
 
