@@ -12,6 +12,11 @@
       </ion-list>
     </ion-col>
   </ion-row>
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+    <ion-fab-button (click) = "pin()">
+      <ion-icon name="locate-outline" size="large"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
   <ion-row id="map"></ion-row>
   <ion-modal #myModal *ngIf="searchResults.length > 0" trigger="open-modal"
     class="ion-hide-md-up"

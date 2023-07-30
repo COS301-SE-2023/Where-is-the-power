@@ -416,6 +416,27 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     this.currentBreakpoint = 0.1
     this.myModal.setCurrentBreakpoint(0.1);
     this.centerOnStartPoint();
+
+    if (this.userMarker) {
+      this.userMarker.remove();
+    }
   }
+  
+  userMarker: any;
+
+  pin() {
+    this.centerOnStartPoint();
+
+    // Check if the userMarker already exists
+    if (this.userMarker) {
+      this.userMarker.remove();
+    }
+  
+    // Create a new marker at the user's location
+    this.userMarker = new mapboxgl.Marker({ color: '#4287f5' }) // Customize the pin color if desired
+      .setLngLat([this.longitude, this.latitude]) // Set the marker's position to the user's location
+      .addTo(this.map); // Add the marker to the map
+  }
+
 }
 
