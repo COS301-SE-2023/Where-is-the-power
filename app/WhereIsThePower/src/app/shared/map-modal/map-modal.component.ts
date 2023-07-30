@@ -39,7 +39,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   tripDuration: number = 0;
   tripDistance: number = 0;
 
-
   ngOnInit() {
     this.mapSuburbsService.getSuburbData().subscribe((data: any) => {
       console.log(data);
@@ -162,7 +161,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
   async getRoute(selectedResult: any) {
     console.log(this.searchBar);
-    this.searchBar.value = `${selectedResult.text}, ${selectedResult.place_name}`;
+    this.searchBar.value = `${selectedResult.place_name}`;
 
     this.showResultsList = false;
     let coords: any;
@@ -176,7 +175,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult[0]},${selectedResult[1]}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
     }
     else {
-      query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.center[0]},${selectedResult.center[1]}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
+      query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.center[0]},${selectedResult.center[1]}?alternatives=true&geometries=geojson&language=en&steps=true&access_token=${environment.MapboxApiKey}`)
       coords = [selectedResult.center[0], selectedResult.center[1]];
     }
     console.log(coords);
@@ -218,7 +217,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           }
         },
         paint: {
-          'circle-radius': 10,
+          'circle-radius': 12,
           'circle-color': '#1a9107' // Green color for the start point
         }
       });
@@ -262,7 +261,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           }
         },
         paint: {
-          'circle-radius': 10,
+          'circle-radius': 12,
           'circle-color': '#f30'
         }
       });
@@ -274,7 +273,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
     const data = json.routes[0]; // Pick 1st route in list of route recommendations
     const route = data.geometry.coordinates; // list of coordinates forming route
-
+    console.log("DATTTA"+JSON.stringify(data));
     const geojson = {
       type: 'Feature',
       properties: {},
@@ -288,9 +287,10 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     for (const step of steps) {
       this.instructions.push(step.maneuver.instruction);
     }
-  
+
     this.tripDuration = Math.floor(data.duration / 60);
     this.tripDistance = Math.floor(data.distance / 1000);
+    console.log("congestion" + data.congestion);
 
     // if the route already exists on the map, we'll reset it using setData
     if (this.map.getSource('route')) {
@@ -312,7 +312,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         paint: {
           'line-color': '#3887be',
           'line-width': 10,
-          'line-opacity': 0.75
+          'line-opacity': 1
         }
       });
     }
@@ -362,11 +362,12 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   getIconForInstruction(instruction: string) {
     // Regular expressions to match keywords related to arrows
     const arrowKeywords = [
-      { keyword: /(north|toward|straight|south)/i, icon: 'assets/arrow_upwards.svg'},
-      { keyword: /(west|left)/i, icon: 'assets/turn_left.svg'},
+      { keyword: /(north|toward|straight|south)/i, icon: 'assets/arrow_upwards.svg' },
+      { keyword: /(west|left)/i, icon: 'assets/turn_left.svg' },
       { keyword: /(east|right)/i, icon: 'assets/turn_right.svg' },
       { keyword: /(back| u-turn)/i, icon: 'assets/u_turn.svg' },
-      { keyword: /(roundabout)/i, icon: 'assets/roundabout.svg' }
+      { keyword: /(roundabout)/i, icon: 'assets/roundabout.svg' },
+      { keyword: /(exit)/i, icon: 'assets/exit.svg' }
     ];
 
     // Search for arrow keywords in the instruction text

@@ -22,8 +22,13 @@
     >
     <ng-template>
       <ion-content class="ion-padding">
-        <h3 *ngIf="tripDuration!== 0 || tripDistance!==0; else loadData"><ion-text color="primary">{{ tripDuration }} min </ion-text>{{ tripDistance }} km</h3>
-
+        <ion-item>
+          <h3 *ngIf="tripDuration!== 0 || tripDistance!==0; else loadData">
+            <ion-text color="primary">{{ tripDuration }} min </ion-text>{{ tripDistance }} km
+          </h3>
+          <ion-icon src="assets/cancel.svg" size="large" slot="end" (click)="onSearchBarClear()" icon-only button></ion-icon>
+        </ion-item>
+        
         <ng-template #loadData>
           <ion-skeleton-text [animated]="true"></ion-skeleton-text>
         </ng-template>
