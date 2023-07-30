@@ -16,10 +16,11 @@
   <ion-modal #myModal *ngIf="searchResults.length > 0" trigger="open-modal"
     class="ion-hide-md-up"
     [initialBreakpoint]="0.2"
-    [breakpoints]="[0, currentBreakpoint, 0.5, 0.75]"
-    [backdropBreakpoint]="0.5"
-    [backdropDismiss]="false"
-    >
+    [breakpoints]="[0.1, currentBreakpoint, 0.5, 0.75]"
+    [backdropBreakpoint]="0.1"
+    [backdropDismiss]="true"
+    gestureEnabled="false"
+    > <!--  Modal can be dismissed before the trip starts -->
     <ng-template>
       <!--  Display trip details -->
       <div *ngIf="!startTrip; else start">
