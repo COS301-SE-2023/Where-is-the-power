@@ -3,6 +3,7 @@ import {
   OnInit,
   AfterViewInit,
   ViewChild,
+  ChangeDetectorRef
 } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { UserLocationService } from '../../user-location.service';
@@ -26,7 +27,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   constructor(
     private mapSuburbsService: MapSuburbsService,
     private userLocationService: UserLocationService,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private changeDetectorRef: ChangeDetectorRef
   ) { }
   map: any;
   dat: any;
@@ -343,6 +345,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       this.map.removeSource('end');
     }
     this.myModal.dismiss();
+    this.myModal.setCurrentBreakpoint(0.2);
   }
 
   centerOnStartPoint() {
@@ -382,8 +385,12 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     return 'information-circle-outline';
   }
 
+  currentBreakpoint = 0.2;
+
   beginTrip() {
     this.startTrip = true;
+    this.currentBreakpoint = 0.1
+    this.myModal.setCurrentBreakpoint(0.1);
   }
 }
 
