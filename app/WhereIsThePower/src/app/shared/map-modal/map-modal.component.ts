@@ -151,7 +151,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
             // return each feature with an updated place_name property that excludes the text property
             return {
               ...feature,
-              place_name: trimmedPlaceName,
             };
           });
           console.log(this.searchResults);
@@ -289,12 +288,10 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     for (const step of steps) {
       this.instructions.push(step.maneuver.instruction);
     }
+  
     this.tripDuration = Math.floor(data.duration / 60);
     this.tripDistance = Math.floor(data.distance / 1000);
-    console.log("DATA" + JSON.stringify(data));
 
-    console.log(this.tripDuration);
-    console.log(this.instructions);
     // if the route already exists on the map, we'll reset it using setData
     if (this.map.getSource('route')) {
       this.map.getSource('route').setData(geojson);
@@ -319,6 +316,10 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         }
       });
     }
+  }
+
+  delay(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   onSearchBarClear() {
@@ -356,6 +357,27 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   openModal(result: any) {
     this.modalResult = result;
     this.myModal.present();
+  }
+
+  getIconForInstruction(instruction: string) {
+    // Regular expressions to match keywords related to arrows
+    const arrowKeywords = [
+      { keyword: /(north|toward|straight|south)/i, icon: 'assets/arrow_upwards.svg'},
+      { keyword: /(west|left)/i, icon: 'assets/turn_left.svg'},
+      { keyword: /(east|right)/i, icon: 'assets/turn_right.svg' },
+      { keyword: /(back| u-turn)/i, icon: 'assets/u_turn.svg' },
+      { keyword: /(roundabout)/i, icon: 'assets/roundabout.svg' }
+    ];
+
+    // Search for arrow keywords in the instruction text
+    for (const arrow of arrowKeywords) {
+      if (arrow.keyword.test(instruction)) {
+        return arrow.icon;
+      }
+    }
+
+    // If no arrow keyword is found, return a default icon
+    return 'information-circle-outline';
   }
 }
 

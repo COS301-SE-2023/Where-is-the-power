@@ -22,15 +22,40 @@
     >
     <ng-template>
       <ion-content class="ion-padding">
-        <h3> {{ tripDuration }} min {{ tripDistance }} km</h3>
+        <h3 *ngIf="tripDuration!== 0 || tripDistance!==0; else loadData"><ion-text color="primary">{{ tripDuration }} min </ion-text>{{ tripDistance }} km</h3>
 
-        <ion-list *ngIf="instructions.length > 0">
-          <ion-item *ngFor="let instruction of instructions; let i = index">
+        <ng-template #loadData>
+          <ion-skeleton-text [animated]="true"></ion-skeleton-text>
+        </ng-template>
+        <ion-list *ngIf="instructions.length > 0; else loadInstructions">
+          <ion-item *ngFor="let instruction of instructions">
+            <ion-icon [src]="getIconForInstruction(instruction)" class="ion-padding-end"></ion-icon>
             <ion-label>
               {{instruction}}
             </ion-label>
           </ion-item>
         </ion-list>
+
+        <!-- Skeleton Text for rendering placeholder content -->
+        <ng-template #loadInstructions>
+          <ion-list *ngIf="instructions.length <= 0">
+            <ion-item>
+              <ion-skeleton-text [animated]="true"></ion-skeleton-text>
+            </ion-item>
+            <ion-item>
+              <ion-skeleton-text [animated]="true"></ion-skeleton-text>
+            </ion-item>
+            <ion-item>
+              <ion-skeleton-text [animated]="true"></ion-skeleton-text>
+            </ion-item>
+            <ion-item>
+              <ion-skeleton-text [animated]="true"></ion-skeleton-text>
+            </ion-item>
+            <ion-item>
+              <ion-skeleton-text [animated]="true"></ion-skeleton-text>
+            </ion-item>
+          </ion-list>
+        </ng-template>
       </ion-content>
     </ng-template>
   </ion-modal>
