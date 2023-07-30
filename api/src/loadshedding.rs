@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc, thread, time::Duration};
+use std::{collections::HashMap, sync::Arc, thread};
 
 use crate::{
     api::{ApiError, ApiResponse},
@@ -6,22 +6,20 @@ use crate::{
 };
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId};
-use chrono::{DateTime, Datelike, FixedOffset, Local, NaiveDateTime, Timelike};
+use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, NaiveDateTime, Timelike, TimeZone};
 use log::warn;
 use macros::Entity;
-use mongodb::{options::FindOptions, Client, Cursor, Database};
+use mongodb::{options::FindOneOptions, options::FindOptions, Client, Cursor, Database};
 use rocket::{
     fairing::{self, Fairing, Info, Kind},
     futures::{future::try_join_all, StreamExt, TryStreamExt},
     post,
     serde::json::Json,
-    Rocket, State,
+    Orbit, Rocket, State,
 };
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use tokio::{runtime::Runtime, sync::RwLock};
 use utoipa::ToSchema;
-
-// Rocket Persistent Data Structs
 pub struct StageUpdater;
 
 // Rocket endpoints
@@ -32,7 +30,7 @@ pub async fn fetch_map_data<'a>(
     loadshedding_stage: &State<Option<Arc<RwLock<LoadSheddingStage>>>>,
     request: Json<MapDataRequest>,
 ) -> ApiResponse<'a, MapDataDefaultResponse> {
-    let connection = &db.inner().as_ref().unwrap().database("staging");
+    let connection = &db.inner().as_ref().unwrap().database("production");
     let south_west: Vec<f64> = request.bottom_left.iter().cloned().map(|x| x).collect();
     let north_east: Vec<f64> = request.top_right.iter().cloned().map(|x| x).collect();
     let query = doc! {
@@ -66,6 +64,7 @@ pub async fn fetch_map_data<'a>(
         .read()
         .await
         .stage;
+    println!("{:?}", &loadshedding_stage.inner().as_ref().clone().unwrap().read().await);
     let municipalities: Vec<MunicipalityEntity> = match cursor.try_collect().await {
         Ok(item) => item,
         Err(err) => {
@@ -81,8 +80,6 @@ pub async fn fetch_map_data<'a>(
         return ApiResponse::Ok(data.into_iter().fold(
             MapDataDefaultResponse {
                 map_polygons: vec![],
-                on: vec![],
-                off: vec![],
             },
             |acc, obj| acc + obj,
         ));
@@ -92,8 +89,49 @@ pub async fn fetch_map_data<'a>(
     }
 }
 
-#[derive(Debug)]
+#[utoipa::path(post, tag = "Suburb Statistics", path = "/api/fetchSuburbStats", request_body = Stats)]
+#[post("/fetchSuburbStats", format = "application/json", data = "<request>")]
+pub async fn fetch_suburb_stats<'a>(
+    db: &State<Option<Client>>,
+    request: Json<SuburbStatsRequest>,
+) -> ApiResponse<'a, SuburbStatsResponse> {
+    let oid = &request.suburb_id;
+    let connection = db.as_ref().unwrap().database("production");
+    let query = doc! {"geometry" : {"$in" : [oid]}};
+    let suburb: SuburbEntity = match connection
+        .collection("suburbs")
+        .find_one(query, None)
+        .await
+        .unwrap()
+    {
+        Some(result) => result,
+        None => return ApiError::ServerError("Document not found").into(),
+    };
+    match suburb.get_stats(&connection).await {
+        Ok(data) => return ApiResponse::Ok(data),
+        Err(_) => return ApiError::ServerError("server side error :<").into(),
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Entity)]
+#[serde(rename_all = "camelCase")]
+#[collection_name = "stage_log"]
 pub struct LoadSheddingStage {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "_id")]
+    pub id: Option<ObjectId>,
+    pub start_time: i64,
+    pub end_time: i64,
+    #[serde(skip_serializing, skip_deserializing)]
+    db: Option<Client>,
+    stage: i32,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct LoadsheddingData {
+    pub start: SASTDateTime,
+    pub end: SASTDateTime,
+    #[serde(deserialize_with = "deserialize_stage")]
     pub stage: i32,
 }
 
@@ -129,25 +167,29 @@ pub struct GeoJson {
 #[serde(rename_all = "camelCase")]
 pub struct Feature {
     pub r#type: String,
-    pub id: u32,
+    pub id: i32,
     pub properties: Properties,
     pub geometry: Geometry,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Properties {
+    #[serde(skip)]
     #[serde(rename = "SP_CODE")]
     pub sp_code: f64,
 
+    #[serde(skip)]
     #[serde(rename = "SP_CODE_st")]
     pub sp_code_st: String,
 
     #[serde(rename = "SP_NAME")]
     pub sp_name: String,
 
+    #[serde(skip)]
     #[serde(rename = "MP_CODE")]
     pub mp_code: f64,
 
+    #[serde(skip)]
     #[serde(rename = "MP_CODE_st")]
     pub mp_code_st: String,
 
@@ -157,9 +199,11 @@ pub struct Properties {
     #[serde(rename = "MN_MDB_C")]
     pub mn_mdb_c: String,
 
+    #[serde(skip)]
     #[serde(rename = "MN_CODE")]
     pub mn_code: f64,
 
+    #[serde(skip)]
     #[serde(rename = "MN_CODE_st")]
     pub mn_code_st: String,
 
@@ -169,9 +213,11 @@ pub struct Properties {
     #[serde(rename = "DC_MDB_C")]
     pub dc_mdb_c: String,
 
+    #[serde(skip)]
     #[serde(rename = "DC_MN_C")]
     pub dc_mn_c: f64,
 
+    #[serde(skip)]
     #[serde(rename = "DC_MN_C_st")]
     pub dc_mn_c_st: String,
 
@@ -181,6 +227,7 @@ pub struct Properties {
     #[serde(rename = "PR_MDB_C")]
     pub pr_mdb_c: String,
 
+    #[serde(skip)]
     #[serde(rename = "PR_CODE")]
     pub pr_code: f64,
 
@@ -190,14 +237,20 @@ pub struct Properties {
     #[serde(rename = "PR_NAME")]
     pub pr_name: String,
 
+    #[serde(skip)]
     #[serde(rename = "ALBERS_ARE")]
     pub albers_are: f64,
 
+    #[serde(skip)]
     #[serde(rename = "Shape_Leng")]
     pub shape_leng: f64,
 
+    #[serde(skip)]
     #[serde(rename = "Shape_Area")]
-    pub shape_area: f64,
+    pub shape_arek: f64,
+
+    #[serde(rename = "PowerStatus")]
+    pub power_status: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -217,6 +270,7 @@ pub struct GroupEntity {
     pub id: Option<ObjectId>,
     pub number: i32,
     pub suburbs: Vec<ObjectId>,
+    // consider a small refactor to add groups associated municipalities for better efficiency
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Entity)]
@@ -284,8 +338,31 @@ pub struct MapDataRequest {
 #[serde(rename_all = "camelCase")]
 pub struct MapDataDefaultResponse {
     pub map_polygons: Vec<GeoJson>,
-    pub on: Vec<SuburbEntity>,
-    pub off: Vec<SuburbEntity>,
+}
+
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[serde(rename_all = "camelCase")]
+#[schema(example = json! {
+    SuburbStatsRequest {
+        suburb_id : 1245
+    }
+})]
+pub struct SuburbStatsRequest {
+    pub suburb_id: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SuburbStatsResponse {
+    pub total_time: TotalTime,
+    pub per_day_times: HashMap<String, TotalTime>,
+    pub suburb: SuburbEntity,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TotalTime {
+    pub on: i32,
+    pub off: i32,
 }
 
 impl std::ops::Add for MapDataDefaultResponse {
@@ -294,9 +371,30 @@ impl std::ops::Add for MapDataDefaultResponse {
     fn add(self, other: Self) -> Self {
         let mut merged = self;
         merged.map_polygons.extend(other.map_polygons);
-        merged.on.extend(other.on);
-        merged.off.extend(other.off);
         merged
+    }
+}
+
+impl TotalTime {
+    fn new() -> TotalTime {
+        // total minutes
+        TotalTime { on: 1440, off: 0 }
+    }
+
+    fn add_off_time(&mut self, minutes: i32) {
+        self.off += minutes;
+        self.on -= minutes;
+    }
+}
+
+// entity implimentations:
+fn get_date_time(time: Option<i64>) -> DateTime<FixedOffset> {
+    // South African Standard Time Offset
+    let sast = FixedOffset::west_opt(2 * 3600).unwrap();
+    // get search time
+    match time {
+        Some(time) => sast.from_local_datetime(&NaiveDateTime::from_timestamp_opt(time, 0).unwrap()).unwrap(),
+        None => Local::now().with_timezone(&sast),
     }
 }
 
@@ -308,43 +406,14 @@ impl MunicipalityEntity {
         connection: &Database,
     ) -> Result<MapDataDefaultResponse, ApiError> {
         let mut suburbs_off = Vec::<SuburbEntity>::new();
-        let suburbs_on: Vec<SuburbEntity>;
-
-        // get search time
-        let sast = FixedOffset::east_opt(2 * 3600).unwrap(); // SAST
-        let time_to_search: DateTime<FixedOffset>;
-        if let Some(time) = time {
-            time_to_search =
-                DateTime::from_utc(NaiveDateTime::from_timestamp_opt(time, 0).unwrap(), sast);
-        } else {
-            time_to_search = Local::now().with_timezone(&sast);
-        }
+        let time_to_search: DateTime<FixedOffset> = get_date_time(time);
+        let mut geography = self.geometry.clone();
 
         // schedule query: all that fit the search time
         let query = doc! {
-            "$and": [
-                {
-                    "start_hour": {
-                        "$lte": time_to_search.hour()
-                    },
-                    "start_minute": {
-                        "$lte": time_to_search.minute()
-                    }
-                },
-                {
-                    "end_hour": {
-                        "$gte": time_to_search.hour()
-                    },
-                    "end_minute": {
-                        "$gte": time_to_search.minute()
-                    }
-                },
-                {
-                    "municipality": self.id.unwrap()
-                }
-            ]
+            "municipality": self.id.unwrap()
         };
-        let mut schedule_cursor: Cursor<TimeScheduleEntity> = match connection
+        let schedule_cursor: Cursor<TimeScheduleEntity> = match connection
             .collection("timeschedule")
             .find(query, mongodb::options::FindOptions::default())
             .await
@@ -357,6 +426,41 @@ impl MunicipalityEntity {
                 ));
             }
         };
+
+        let unfiltered_schedules: Vec<TimeScheduleEntity> =
+            match schedule_cursor.try_collect().await {
+                Ok(item) => item,
+                Err(err) => {
+                    log::error!("Unable to Collect suburbs from cursor {err}");
+                    return Err(ApiError::ServerError(
+                        "Error occured on the server, sorry :<",
+                    ));
+                }
+            };
+        let mut schedules: Vec<TimeScheduleEntity> = Vec::new();
+        // filter schedules to relevant ones
+        for schedule in unfiltered_schedules {
+            let mut keep = false;
+            if schedule.start_hour <= time_to_search.hour() as i32 {
+                if schedule.stop_hour >= time_to_search.hour() as i32 {
+                    keep = true;
+                    if schedule.stop_minute >= time_to_search.minute() as i32
+                        && schedule.stop_hour == time_to_search.hour() as i32
+                    {
+                        keep = false;
+                    }
+                    if schedule.start_minute > time_to_search.minute() as i32
+                        && schedule.start_hour == time_to_search.hour() as i32
+                    {
+                        keep = false;
+                    }
+                }
+            }
+            if keep {
+                schedules.push(schedule);
+            }
+        }
+
         // schedule query end
 
         // suburbs query: all suburbs
@@ -394,7 +498,7 @@ impl MunicipalityEntity {
             .collect();
 
         // go through schedules
-        while let Some(Ok(doc)) = schedule_cursor.next().await {
+        for doc in schedules {
             // All the groups that could be affected by the current stage
             let times: Vec<StageTimes> = doc
                 .stages
@@ -445,34 +549,311 @@ impl MunicipalityEntity {
                 suburbs_off.extend(removed);
             }
         }
-        // place all the remaining suburbs after checking into the on array
-        suburbs_on = suburbs.drain().map(|(_, value)| value).collect();
+        // now we must mark all of our map stuff
+        for feature in &mut geography.features {
+            for suburb in &suburbs_off {
+                if suburb.geometry.contains(&feature.id) {
+                    feature.properties.power_status = Some("off".to_string());
+                    break;
+                }
+            }
+            if let None = feature.properties.power_status {
+                feature.properties.power_status = Some("on".to_string());
+            }
+        }
 
         Ok(MapDataDefaultResponse {
-            map_polygons: vec![self.geometry.clone()],
-            on: suburbs_on,
-            off: suburbs_off,
+            map_polygons: vec![geography],
+        })
+    }
+}
+
+impl SuburbEntity {
+    pub async fn get_stats(self, connection: &Database) -> Result<SuburbStatsResponse, ApiError> {
+        // queries
+        // get the relevant group
+        let query = doc! {
+            "suburbs" : {
+                "$in" : [self.id.unwrap()]
+            }
+        };
+        let group: GroupEntity = match connection
+            .collection("groups")
+            .find_one(query, None)
+            .await
+            .unwrap()
+        {
+            Some(group) => group,
+            None => {
+                warn!("Error, a suburb is not associated with a group: {:?}", self);
+                return Err(ApiError::ServerError(
+                    "Group cannot be identified for specified suburb",
+                ));
+            }
+        };
+
+        // get all the stage changes from the past week
+        let time_now = Local::now();
+        let one_week_ago = (Local::now() - chrono::Duration::weeks(1)).timestamp();
+        let query = doc! {
+            "time": {
+                "$gte": one_week_ago
+            }
+        };
+        let find_options = FindOptions::builder().sort(doc! { "timestamp": 1 }).build();
+        let stage_change_cursor: Cursor<LoadSheddingStage> = match connection
+            .collection("stage_log")
+            .find(query, find_options)
+            .await
+        {
+            Ok(cursor) => cursor,
+            Err(err) => {
+                log::error!("Database error occured when querying suburbs: {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
+            }
+        };
+        let mut all_stages: Vec<LoadSheddingStage> = match stage_change_cursor.try_collect().await {
+            Ok(item) => item,
+            Err(err) => {
+                log::error!("Unable to Collect suburbs from cursor {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
+            }
+        };
+        all_stages.reverse();
+
+        // find first timestamp after one week ago
+        let query = doc! {
+            "time": {
+                "$lte": one_week_ago
+            }
+        };
+        let find_options = FindOneOptions::builder()
+            .sort(doc! { "timestamp": -1 })
+            .build();
+        let first_stage_change: Option<LoadSheddingStage> = match connection
+            .collection("stage_log")
+            .find_one(query, find_options)
+            .await
+        {
+            Ok(cursor) => cursor,
+            Err(err) => {
+                log::error!("Database error occured when querying suburbs: {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
+            }
+        };
+        match first_stage_change {
+            Some(item) => all_stages.push(item),
+            None => (),
+        };
+
+        // get the timeschedules
+        let query = doc! {
+            "municipality" : self.municipality,
+        };
+        let timeschedule_cursor: Cursor<TimeScheduleEntity> = match connection
+            .collection("timeschedule")
+            .find(query, None)
+            .await
+        {
+            Ok(cursor) => cursor,
+            Err(err) => {
+                log::error!("Database error occured when querying suburbs: {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
+            }
+        };
+        let schedule: Vec<TimeScheduleEntity> = match timeschedule_cursor.try_collect().await {
+            Ok(item) => item,
+            Err(err) => {
+                log::error!("Unable to Collect suburbs from cursor {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
+            }
+        };
+
+        // Time
+        let mut time_to_search: DateTime<FixedOffset> = get_date_time(Some(one_week_ago));
+        time_to_search = time_to_search.with_minute(0).unwrap();
+        let mut down_time = 0;
+        let mut daily_stats: HashMap<String, TotalTime> = HashMap::new();
+        while time_to_search <= time_now {
+            let hour = time_to_search.hour() as i32;
+            let minute = time_to_search.minute() as i32;
+            let day = time_to_search.day() as i32;
+            // get the timeslots for the current time interval
+            let time_slots: Vec<TimeScheduleEntity> = schedule
+                .clone()
+                .into_iter()
+                .filter(|time| {
+                    // check what time it falls under
+                    if time.stop_hour >= hour
+                        && time.stop_minute >= minute
+                        && time.start_hour <= hour
+                        && time.start_minute <= minute
+                    {
+                        true
+                    } else {
+                        false
+                    }
+                })
+                .collect();
+            // check next to see if its less than the current TTS
+            if all_stages.len() >= 2 {
+                if all_stages[1].start_time <= time_to_search.timestamp() {
+                    all_stages.remove(0);
+                }
+            }
+
+            let mut add_time = false;
+            for time_slot in time_slots {
+                let mut count: usize = 0;
+                let stage = &all_stages[0];
+                while (count as i32) < stage.stage {
+                    if time_slot.stages.get(count).unwrap().groups[(day - 1) as usize]
+                        == group.id.unwrap()
+                    {
+                        add_time = true;
+                        break;
+                    }
+                    count = count + 1;
+                }
+                if add_time {
+                    break;
+                }
+            }
+            if add_time {
+                down_time += 30;
+                let day = daily_stats
+                    .entry(time_to_search.weekday().to_string())
+                    .or_insert(TotalTime::new());
+                day.add_off_time(30);
+            }
+            // update times
+            time_to_search = time_to_search
+                .checked_add_signed(Duration::minutes(30))
+                .unwrap();
+        }
+        let total_time = 10080;
+        let uptime = total_time - down_time;
+        Ok(SuburbStatsResponse {
+            total_time: TotalTime {
+                on: uptime,
+                off: down_time,
+            },
+            per_day_times: daily_stats,
+            suburb: self,
         })
     }
 }
 
 // Rocket State Loop Objects
 impl LoadSheddingStage {
-    pub async fn fetch_stage(&mut self) -> Result<i32, reqwest::Error> {
-        let stage = reqwest::get("https://loadshedding.eskom.co.za/LoadShedding/GetStatus").await?;
-        if stage.status().is_success() {
-            match stage.text().await?.parse::<i32>() {
-                Ok(num) => {
-                    if num >= 1 {
-                        self.stage = num - 1;
-                    }
-                }
-                Err(_) => warn!("Eskom API did not return a integer when we queried it."),
+    pub async fn set_stage(&mut self) {
+        // get the next thing from db
+        let con = &self.db.as_ref().unwrap().database("production");
+        let now = get_date_time(None).timestamp();
+        let query = doc! {
+            "startTime" : {
+                "$lte" : now
             }
-        } else {
-            warn!("Connection to Eskom Dropped before any operations could take place");
+        };
+        let filter = doc! {
+            "startTime" : -1
+        };
+        let find_options = FindOneOptions::builder().sort(filter).build();
+        let new_status: LoadSheddingStage = con
+            .collection("stage_log")
+            .find_one(query, find_options)
+            .await
+            .unwrap()
+            .unwrap();
+
+        self.end_time = new_status.end_time;
+        self.start_time = new_status.start_time;
+        self.stage = new_status.stage;
+        //println!("{:?}", self);
+    }
+
+    pub async fn request_stage_data_update(&mut self) -> Result<i32, reqwest::Error> {
+        loop {
+            let stage = reqwest::get(
+                "https://d42sspn7yra3u.cloudfront.net/coct-load-shedding-extended-status.json",
+            )
+            .await?;
+            if stage.status().is_success() {
+                let text = stage.text().await?;
+                let times: Vec<LoadsheddingData> = serde_json::from_str(&text).unwrap();
+                self.log_stage_data(times).await;
+                break;
+            } else {
+                warn!("Connection to https://d42sspn7yra3u.cloudfront.net/coct-load-shedding-extended-status.json Dropped before any operations could take place. Check that url is still up {:?}", stage);
+            }
+            thread::sleep(std::time::Duration::from_secs(10));
         }
         Ok(self.stage)
+    }
+
+    async fn log_stage_data(&mut self, mut times: Vec<LoadsheddingData>) {
+        if let Some(client) = &self.db.as_ref() {
+            let db_con = &client.database("production");
+            let query = doc! {
+                "start_time" : -1
+            };
+            let find_options = FindOneOptions::builder().sort(query).build();
+
+            // Execute the query to find the latest item
+            let result: LoadSheddingStage = match db_con
+                .collection("stage_log")
+                .find_one(None, find_options)
+                .await
+                .unwrap()
+            {
+                Some(data) => data,
+                None => LoadSheddingStage {
+                    id: None,
+                    stage: -1,
+                    start_time: 0,
+                    end_time: 0,
+                    db: None,
+                },
+            };
+            let latest_info = times.last().unwrap().start.0;
+            let latest_in_db = get_date_time(Some(result.start_time));
+            if latest_info > latest_in_db {
+                // find point where we must update and update the rest
+                loop {
+                    let next = times.pop();
+                    if let Some(data) = next {
+                        if latest_in_db >= data.start.0 {
+                            break;
+                        }
+                        let to_insert = LoadSheddingStage {
+                            id: None,
+                            start_time: get_date_time(Some(data.start.0.timestamp())).timestamp(),
+                            end_time: get_date_time(Some(data.end.0.timestamp())).timestamp(),
+                            db: None,
+                            stage: data.stage,
+                        };
+                        let _ = to_insert.insert(db_con).await;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        } else {
+            return ();
+        }
+    }
+    pub fn set_db(&mut self, db: &Client) {
+        self.db = Some(db.to_owned());
     }
 }
 
@@ -481,27 +862,87 @@ impl Fairing for StageUpdater {
     fn info(&self) -> Info {
         Info {
             name: "Stage Updater",
-            kind: Kind::Ignite,
+            kind: Kind::Ignite | Kind::Liftoff,
         }
     }
 
     async fn on_ignite(&self, rocket: Rocket<rocket::Build>) -> fairing::Result {
-        let stage_info = Arc::new(RwLock::new(LoadSheddingStage { stage: 0 }));
-        let stage_info_ref = stage_info.clone();
-        thread::spawn(move || {
-            loop {
-                {
-                    let stage_info = stage_info_ref.write();
-                    let runtime = Runtime::new().unwrap();
-                    let mut info = runtime.block_on(stage_info);
-                    let stage = info.fetch_stage();
-                    let _ = runtime.block_on(stage);
-                }
-                // Perform any other necessary processing on stage info
-                thread::sleep(Duration::from_secs(600)); // Sleep for 10 minutes
-            }
-        });
+        let stage_info = Arc::new(RwLock::new(LoadSheddingStage {
+            id: None,
+            stage: 0,
+            start_time: 0,
+            end_time: 0,
+            db: None,
+        }));
         let rocket = rocket.manage(Some(stage_info));
         Ok(rocket)
     }
+    async fn on_liftoff(&self, rocket: &Rocket<Orbit>) {
+        let db = rocket.state::<Option<Client>>().unwrap();
+        let stage_updater = rocket
+            .state::<Option<Arc<RwLock<LoadSheddingStage>>>>()
+            .unwrap();
+        if let Some(stage) = stage_updater {
+            {
+                let mut stage_ref = stage.as_ref().clone().write().await;
+                if let Some(db) = db {
+                    stage_ref.set_db(&db.clone());
+                }
+            }
+            let stage_info_ref = stage.clone();
+            thread::spawn(move || {
+                loop {
+                    {
+                        let stage_info = stage_info_ref.write();
+                        let runtime = Runtime::new().unwrap();
+                        let mut info = runtime.block_on(stage_info);
+                        let stage = info.set_stage();
+                        let _ = runtime.block_on(stage);
+                    }
+                    // Perform any other necessary processing on stage info
+                    thread::sleep(std::time::Duration::from_secs(1600)); // Sleep for 20 mins
+                }
+            });
+            let stage_info_ref = stage.clone();
+            thread::spawn(move || {
+                loop {
+                    {
+                        let stage_info = stage_info_ref.write();
+                        let runtime = Runtime::new().unwrap();
+                        let mut info = runtime.block_on(stage_info);
+                        let stage = info.request_stage_data_update();
+                        let _ = runtime.block_on(stage);
+                    }
+                    // Perform any other necessary processing on stage info
+                    thread::sleep(std::time::Duration::from_secs(18000)); // Sleep for 5 hours
+                }
+            });
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SASTDateTime(DateTime<FixedOffset>);
+
+const FORMAT: &str = "%Y-%m-%dT%H:%M";
+impl<'de> Deserialize<'de> for SASTDateTime {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        // get search time
+        let s = String::deserialize(deserializer)?;
+        let dt = NaiveDateTime::parse_from_str(&s, FORMAT).unwrap();
+        let sast = FixedOffset::east_opt(2 * 3600).unwrap().from_local_datetime(&dt).unwrap();
+        Ok(SASTDateTime(sast))
+        // DateTime::<FixedOffset>::from_str(&s).map_err(serde::de::Error::custom)
+    }
+}
+
+fn deserialize_stage<'de, D>(deserializer: D) -> Result<i32, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s: &str = Deserialize::deserialize(deserializer)?;
+    s.parse::<i32>().map_err(serde::de::Error::custom)
 }

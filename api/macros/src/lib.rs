@@ -44,8 +44,11 @@ pub fn insertable(input: TokenStream) -> TokenStream {
     // This code tests that the struct we are dering for
     // has an id field with a type of Option<u32>
     let mut has_id: bool = false;
+    let mut id_field_ident = None;
     for field in fields.into_iter() {
-        if field.ident.unwrap().to_string() == "id" {
+        if field.ident.clone().unwrap().to_string() == "_id"
+            || field.ident.clone().unwrap().to_string() == "id"
+        {
             if let Type::Path(TypePath {
                 path: Path { segments, .. },
                 ..
@@ -65,6 +68,7 @@ pub fn insertable(input: TokenStream) -> TokenStream {
                         {
                             let last_segment = segments.last().unwrap().ident.to_string();
                             has_id = last_segment == "ObjectId" || last_segment == "u32";
+                            id_field_ident = field.ident;
                         }
                     }
                 }
@@ -102,7 +106,10 @@ pub fn insertable(input: TokenStream) -> TokenStream {
 
     let update = quote! {
         async fn update(&mut self, update: mongodb::options::UpdateModifications, db: &mongodb::Database) -> std::result::Result<mongodb::results::UpdateResult, mongodb::error::Error> {
-            db.collection::<#ident>(#collection_name).update_one(bson::ser::to_document(&self).unwrap(), update, None).await
+            let doc = mongodb::bson::doc! {
+                "_id": self.#id_field_ident.unwrap()
+            };
+            db.collection::<#ident>(#collection_name).update_one(doc, update, None).await
         }
     };
 
