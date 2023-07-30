@@ -6,7 +6,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId};
-use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, NaiveDateTime, Timelike};
+use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, NaiveDateTime, Timelike, TimeZone};
 use log::warn;
 use macros::Entity;
 use mongodb::{options::FindOneOptions, options::FindOptions, Client, Cursor, Database};
@@ -17,7 +17,7 @@ use rocket::{
     serde::json::Json,
     Orbit, Rocket, State,
 };
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use tokio::{runtime::Runtime, sync::RwLock};
 use utoipa::ToSchema;
 pub struct StageUpdater;
@@ -64,6 +64,7 @@ pub async fn fetch_map_data<'a>(
         .read()
         .await
         .stage;
+    println!("{:?}", &loadshedding_stage.inner().as_ref().clone().unwrap().read().await);
     let municipalities: Vec<MunicipalityEntity> = match cursor.try_collect().await {
         Ok(item) => item,
         Err(err) => {
@@ -119,10 +120,19 @@ pub struct LoadSheddingStage {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "_id")]
     pub id: Option<ObjectId>,
-    pub stage: i32,
-    pub time: i64,
+    pub start_time: i64,
+    pub end_time: i64,
     #[serde(skip_serializing, skip_deserializing)]
     db: Option<Client>,
+    stage: i32,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct LoadsheddingData {
+    pub start: SASTDateTime,
+    pub end: SASTDateTime,
+    #[serde(deserialize_with = "deserialize_stage")]
+    pub stage: i32,
 }
 
 // GeoJson Struct
@@ -338,7 +348,7 @@ pub struct MapDataDefaultResponse {
     }
 })]
 pub struct SuburbStatsRequest {
-    pub suburb_id: u32
+    pub suburb_id: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
@@ -346,7 +356,7 @@ pub struct SuburbStatsRequest {
 pub struct SuburbStatsResponse {
     pub total_time: TotalTime,
     pub per_day_times: HashMap<String, TotalTime>,
-    pub suburb: SuburbEntity
+    pub suburb: SuburbEntity,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -380,10 +390,10 @@ impl TotalTime {
 // entity implimentations:
 fn get_date_time(time: Option<i64>) -> DateTime<FixedOffset> {
     // South African Standard Time Offset
-    let sast = FixedOffset::east_opt(2 * 3600).unwrap();
+    let sast = FixedOffset::west_opt(2 * 3600).unwrap();
     // get search time
     match time {
-        Some(time) => DateTime::from_utc(NaiveDateTime::from_timestamp_opt(time, 0).unwrap(), sast),
+        Some(time) => sast.from_local_datetime(&NaiveDateTime::from_timestamp_opt(time, 0).unwrap()).unwrap(),
         None => Local::now().with_timezone(&sast),
     }
 }
@@ -417,15 +427,16 @@ impl MunicipalityEntity {
             }
         };
 
-        let unfiltered_schedules: Vec<TimeScheduleEntity> = match schedule_cursor.try_collect().await {
-            Ok(item) => item,
-            Err(err) => {
-                log::error!("Unable to Collect suburbs from cursor {err}");
-                return Err(ApiError::ServerError(
-                    "Error occured on the server, sorry :<",
-                ));
-            }
-        };
+        let unfiltered_schedules: Vec<TimeScheduleEntity> =
+            match schedule_cursor.try_collect().await {
+                Ok(item) => item,
+                Err(err) => {
+                    log::error!("Unable to Collect suburbs from cursor {err}");
+                    return Err(ApiError::ServerError(
+                        "Error occured on the server, sorry :<",
+                    ));
+                }
+            };
         let mut schedules: Vec<TimeScheduleEntity> = Vec::new();
         // filter schedules to relevant ones
         for schedule in unfiltered_schedules {
@@ -433,19 +444,22 @@ impl MunicipalityEntity {
             if schedule.start_hour <= time_to_search.hour() as i32 {
                 if schedule.stop_hour >= time_to_search.hour() as i32 {
                     keep = true;
-                    if schedule.stop_minute >= time_to_search.minute() as i32 && schedule.stop_hour == time_to_search.hour() as i32{
+                    if schedule.stop_minute >= time_to_search.minute() as i32
+                        && schedule.stop_hour == time_to_search.hour() as i32
+                    {
                         keep = false;
                     }
-                    if schedule.start_minute > time_to_search.minute() as i32 && schedule.start_hour == time_to_search.hour() as i32{
+                    if schedule.start_minute > time_to_search.minute() as i32
+                        && schedule.start_hour == time_to_search.hour() as i32
+                    {
                         keep = false;
                     }
-                } 
+                }
             }
             if keep {
                 schedules.push(schedule);
             }
         }
-
 
         // schedule query end
 
@@ -540,7 +554,7 @@ impl MunicipalityEntity {
             for suburb in &suburbs_off {
                 if suburb.geometry.contains(&feature.id) {
                     feature.properties.power_status = Some("off".to_string());
-                    break
+                    break;
                 }
             }
             if let None = feature.properties.power_status {
@@ -693,7 +707,7 @@ impl SuburbEntity {
                 .collect();
             // check next to see if its less than the current TTS
             if all_stages.len() >= 2 {
-                if all_stages[1].time <= time_to_search.timestamp() {
+                if all_stages[1].start_time <= time_to_search.timestamp() {
                     all_stages.remove(0);
                 }
             }
@@ -735,41 +749,63 @@ impl SuburbEntity {
                 off: down_time,
             },
             per_day_times: daily_stats,
-            suburb : self
+            suburb: self,
         })
     }
 }
 
 // Rocket State Loop Objects
 impl LoadSheddingStage {
-    pub async fn fetch_stage(&mut self) -> Result<i32, reqwest::Error> {
-        loop {
-            let stage = reqwest::get("https://loadshedding.eskom.co.za/LoadShedding/GetStatus").await?;
-            if stage.status().is_success() {
-                match stage.text().await?.parse::<i32>() {
-                    Ok(num) => {
-                        if num >= 1 {
-                            self.stage = num - 1;
-                            self.time = Local::now().timestamp();
-                            self.log_stage_data().await;
-                            break;
-                        }
-                    }
-                    Err(_) => warn!("Eskom API did not return a integer when we queried it."),
-                }
-            } else {
-                warn!("Connection to Eskom Dropped before any operations could take place");
+    pub async fn set_stage(&mut self) {
+        // get the next thing from db
+        let con = &self.db.as_ref().unwrap().database("production");
+        let now = get_date_time(None).timestamp();
+        let query = doc! {
+            "startTime" : {
+                "$lte" : now
             }
-            thread::sleep(std::time::Duration::from_secs(5)); // Sleep for 10 minutes
+        };
+        let filter = doc! {
+            "startTime" : -1
+        };
+        let find_options = FindOneOptions::builder().sort(filter).build();
+        let new_status: LoadSheddingStage = con
+            .collection("stage_log")
+            .find_one(query, find_options)
+            .await
+            .unwrap()
+            .unwrap();
+
+        self.end_time = new_status.end_time;
+        self.start_time = new_status.start_time;
+        self.stage = new_status.stage;
+        //println!("{:?}", self);
+    }
+
+    pub async fn request_stage_data_update(&mut self) -> Result<i32, reqwest::Error> {
+        loop {
+            let stage = reqwest::get(
+                "https://d42sspn7yra3u.cloudfront.net/coct-load-shedding-extended-status.json",
+            )
+            .await?;
+            if stage.status().is_success() {
+                let text = stage.text().await?;
+                let times: Vec<LoadsheddingData> = serde_json::from_str(&text).unwrap();
+                self.log_stage_data(times).await;
+                break;
+            } else {
+                warn!("Connection to https://d42sspn7yra3u.cloudfront.net/coct-load-shedding-extended-status.json Dropped before any operations could take place. Check that url is still up {:?}", stage);
+            }
+            thread::sleep(std::time::Duration::from_secs(10));
         }
         Ok(self.stage)
     }
 
-    pub async fn log_stage_data(&self) {
-        if let Some(client) = &self.db {
+    async fn log_stage_data(&mut self, mut times: Vec<LoadsheddingData>) {
+        if let Some(client) = &self.db.as_ref() {
             let db_con = &client.database("production");
             let query = doc! {
-                "time" : 1
+                "start_time" : -1
             };
             let find_options = FindOneOptions::builder().sort(query).build();
 
@@ -784,12 +820,33 @@ impl LoadSheddingStage {
                 None => LoadSheddingStage {
                     id: None,
                     stage: -1,
-                    time: 0,
+                    start_time: 0,
+                    end_time: 0,
                     db: None,
                 },
             };
-            if result.stage != self.stage {
-                let _ = self.insert(db_con).await;
+            let latest_info = times.last().unwrap().start.0;
+            let latest_in_db = get_date_time(Some(result.start_time));
+            if latest_info > latest_in_db {
+                // find point where we must update and update the rest
+                loop {
+                    let next = times.pop();
+                    if let Some(data) = next {
+                        if latest_in_db >= data.start.0 {
+                            break;
+                        }
+                        let to_insert = LoadSheddingStage {
+                            id: None,
+                            start_time: get_date_time(Some(data.start.0.timestamp())).timestamp(),
+                            end_time: get_date_time(Some(data.end.0.timestamp())).timestamp(),
+                            db: None,
+                            stage: data.stage,
+                        };
+                        let _ = to_insert.insert(db_con).await;
+                    } else {
+                        break;
+                    }
+                }
             }
         } else {
             return ();
@@ -813,23 +870,10 @@ impl Fairing for StageUpdater {
         let stage_info = Arc::new(RwLock::new(LoadSheddingStage {
             id: None,
             stage: 0,
-            time: Local::now().timestamp(),
+            start_time: 0,
+            end_time: 0,
             db: None,
         }));
-        let stage_info_ref = stage_info.clone();
-        thread::spawn(move || {
-            loop {
-                {
-                    let stage_info = stage_info_ref.write();
-                    let runtime = Runtime::new().unwrap();
-                    let mut info = runtime.block_on(stage_info);
-                    let stage = info.fetch_stage();
-                    let _ = runtime.block_on(stage);
-                }
-                // Perform any other necessary processing on stage info
-                thread::sleep(std::time::Duration::from_secs(600)); // Sleep for 10 minutes
-            }
-        });
         let rocket = rocket.manage(Some(stage_info));
         Ok(rocket)
     }
@@ -839,10 +883,66 @@ impl Fairing for StageUpdater {
             .state::<Option<Arc<RwLock<LoadSheddingStage>>>>()
             .unwrap();
         if let Some(stage) = stage_updater {
-            let mut stage_ref = stage.as_ref().clone().write().await;
-            if let Some(db) = db {
-                stage_ref.set_db(&db.clone());
+            {
+                let mut stage_ref = stage.as_ref().clone().write().await;
+                if let Some(db) = db {
+                    stage_ref.set_db(&db.clone());
+                }
             }
+            let stage_info_ref = stage.clone();
+            thread::spawn(move || {
+                loop {
+                    {
+                        let stage_info = stage_info_ref.write();
+                        let runtime = Runtime::new().unwrap();
+                        let mut info = runtime.block_on(stage_info);
+                        let stage = info.set_stage();
+                        let _ = runtime.block_on(stage);
+                    }
+                    // Perform any other necessary processing on stage info
+                    thread::sleep(std::time::Duration::from_secs(1600)); // Sleep for 20 mins
+                }
+            });
+            let stage_info_ref = stage.clone();
+            thread::spawn(move || {
+                loop {
+                    {
+                        let stage_info = stage_info_ref.write();
+                        let runtime = Runtime::new().unwrap();
+                        let mut info = runtime.block_on(stage_info);
+                        let stage = info.request_stage_data_update();
+                        let _ = runtime.block_on(stage);
+                    }
+                    // Perform any other necessary processing on stage info
+                    thread::sleep(std::time::Duration::from_secs(18000)); // Sleep for 5 hours
+                }
+            });
         }
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct SASTDateTime(DateTime<FixedOffset>);
+
+const FORMAT: &str = "%Y-%m-%dT%H:%M";
+impl<'de> Deserialize<'de> for SASTDateTime {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        // get search time
+        let s = String::deserialize(deserializer)?;
+        let dt = NaiveDateTime::parse_from_str(&s, FORMAT).unwrap();
+        let sast = FixedOffset::east_opt(2 * 3600).unwrap().from_local_datetime(&dt).unwrap();
+        Ok(SASTDateTime(sast))
+        // DateTime::<FixedOffset>::from_str(&s).map_err(serde::de::Error::custom)
+    }
+}
+
+fn deserialize_stage<'de, D>(deserializer: D) -> Result<i32, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s: &str = Deserialize::deserialize(deserializer)?;
+    s.parse::<i32>().map_err(serde::de::Error::custom)
 }
