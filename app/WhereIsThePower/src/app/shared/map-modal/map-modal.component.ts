@@ -123,11 +123,13 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     this.mapSuburbsService.getSuburbData();
   }
 
-  onSearchInput(event: any) {
-    console.log("searchBar" + this.searchBar.value);
-    if (event.target.value == this.searchBar.value) {
+  onSearchBarFocus() {
+    // Show the list when the search bar gets focused on
+    if (this.searchBar.value.length > 0)
+      this.showResultsList = true;
+  }
 
-    }
+  onSearchInput(event: any) {
     if (event.target.value.length > 0) {
       this.showResultsList = true;
       const query = event.target.value;
@@ -225,7 +227,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         }
       });
       // Center the map on the start point (user's current location)
-      this.centerOnStartPoint();
     }
 
     const end = {
@@ -270,8 +271,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       });
     }
 
-    console.log("ROUTE" + JSON.stringify(query));
-
     const json = await query.json();
 
     const data = json.routes[0]; // Pick 1st route in list of route recommendations
@@ -292,7 +291,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
     this.tripDuration = Math.floor(data.duration / 60);
     this.tripDistance = Math.floor(data.distance / 1000);
-    console.log("congestion" + data.congestion);
 
     // if the route already exists on the map, we'll reset it using setData
     if (this.map.getSource('route')) {
@@ -318,6 +316,30 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         }
       });
     }
+    console.log("ROUTE" + JSON.stringify(route));
+
+    // Calculate the bounding box OF THE ROUTE
+    let minLng = Infinity;
+    let maxLng = -Infinity;
+    let minLat = Infinity;
+    let maxLat = -Infinity;
+
+    for (const coord of route) {
+      minLng = Math.min(minLng, coord[0]);
+      maxLng = Math.max(maxLng, coord[0]);
+      minLat = Math.min(minLat, coord[1]);
+      maxLat = Math.max(maxLat, coord[1]);
+    }
+
+    const boundingBox = [
+      [minLng, minLat],
+      [maxLng, maxLat]
+    ];
+
+    this.map.fitBounds(boundingBox, {
+      padding: 100, // Adjust padding as needed
+      maxZoom: 12 // Adjust the maximum zoom level as needed
+    });
   }
 
   delay(ms: number) {
@@ -393,6 +415,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     this.startTrip = true;
     this.currentBreakpoint = 0.1
     this.myModal.setCurrentBreakpoint(0.1);
+    this.centerOnStartPoint();
   }
 }
 

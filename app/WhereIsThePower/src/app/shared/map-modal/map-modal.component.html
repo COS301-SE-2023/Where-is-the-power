@@ -1,7 +1,7 @@
 <ion-content>
   <ion-row>
     <ion-col class="searchbar-container" size-xs="12" size-md="4" offset-md="7.8">
-      <ion-searchbar animated="true" placeholder="Search for a place..." (ionInput)="onSearchInput($event)" (keyup.enter)="onSearchInput($event)" (ionClear)="onSearchBarClear()" #searchBar></ion-searchbar>
+      <ion-searchbar animated="true" placeholder="Search for a place..." (ionInput)="onSearchInput($event)" (keyup.enter)="onSearchInput($event)" (ionClear)="onSearchBarClear()" (ionFocus)="onSearchBarFocus()" #searchBar></ion-searchbar>
       <ion-list *ngIf="searchResults.length > 0 && showResultsList">
         <ion-item *ngFor="let result of searchResults" (click)="getRoute(result)" (click)="openModal(result)" button>
           <ion-label>
