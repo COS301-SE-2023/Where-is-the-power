@@ -533,6 +533,7 @@ impl MunicipalityEntity {
     ) -> Result<MapDataDefaultResponse, ApiError<'static>> {
         let mut suburbs_off = Vec::<SuburbEntity>::new();
         let time_to_search: DateTime<FixedOffset> = get_date_time(time);
+        println!("Time to search is: {:?}", time_to_search.timestamp());
         let mut geography = self.geometry.clone();
 
         // schedule query: all that fit the search time
@@ -568,6 +569,7 @@ impl MunicipalityEntity {
                 schedules.push(schedule);
             }
         }
+        println!("schedules: {:?}", schedules);
         // schedule query end
 
         // suburbs query: all suburbs
@@ -912,20 +914,20 @@ impl LoadSheddingStage {
                     db: None,
                 },
             };
-            let latest_info = times.last().unwrap().start.0;
-            let latest_in_db = get_date_time(Some(result.start_time));
+            let latest_info = times.last().unwrap().start.0.naive_local();
+            let latest_in_db = NaiveDateTime::from_timestamp_opt(result.start_time,0).unwrap();
             if latest_info > latest_in_db {
                 // find point where we must update and update the rest
                 loop {
                     let next = times.pop();
                     if let Some(data) = next {
-                        if latest_in_db >= data.start.0 {
+                        if latest_in_db >= data.start.0.naive_local() {
                             break;
                         }
                         let to_insert = LoadSheddingStage {
                             id: None,
-                            start_time: get_date_time(Some(data.start.0.timestamp())).timestamp(),
-                            end_time: get_date_time(Some(data.end.0.timestamp())).timestamp(),
+                            start_time: data.start.0.timestamp(),
+                            end_time: data.end.0.timestamp(),
                             db: None,
                             stage: data.stage,
                         };
