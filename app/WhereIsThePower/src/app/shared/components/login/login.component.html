@@ -16,17 +16,17 @@
 <ion-content [fullscreen]="true">
   <div class="ion-padding">
     <form class="form" [formGroup]="loginForm" (ngSubmit)="login()">
-      <ion-item>
+      <ion-item data-cy="login-email-input">
         <ion-label position="floating">Email</ion-label>
         <ion-input type="email" formControlName="email" aria-label="Input for email"></ion-input>
       </ion-item>
 
-      <ion-item>
-        <ion-label position="floating">Password</ion-label>
+      <ion-item data-cy="login-password-input">
+        <ion-label position="floating" >Password</ion-label>
         <ion-input type="password" formControlName="password" aria-label="Input for password"></ion-input>
       </ion-item>
 
-      <ion-button expand="full" type="submit">Login</ion-button>
+      <ion-button expand="full" type="submit" data-cy="btn-login-confirm">Login</ion-button>
     </form>
   </div>
 </ion-content>

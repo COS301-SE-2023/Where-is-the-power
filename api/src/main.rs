@@ -29,6 +29,7 @@ use rocket_cors::{AllowedHeaders, CorsOptions};
 use std::env;
 use std::net::IpAddr;
 use std::time::SystemTime;
+use utoipa::openapi::security::{Http, HttpAuthScheme, SecurityScheme};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -40,7 +41,10 @@ const DB_NAME: &'static str = "wip";
         user::create_user,
         loadshedding::fetch_map_data,
         auth::authenticate,
-        ai::get_ai_info
+        ai::get_ai_info,
+        user::get_saved_places,
+        user::add_saved_place,
+        user::delete_saved_place
     ),
     components(schemas(
         auth::AuthRequest,
@@ -51,11 +55,25 @@ const DB_NAME: &'static str = "wip";
         loadshedding::MapDataDefaultResponse,
         api::ResponseString,
         api::ApiError,
-        ai::AiInfoRequest
+        ai::AiInfoRequest,
+        user::SavedPlace
     )),
-    info(title = "Where Is The Power API Specification")
+    info(title = "Where Is The Power API Specification"),
+    modifiers(&SecurityAddon)
 )]
 pub struct ApiDoc;
+
+struct SecurityAddon;
+
+impl utoipa::Modify for SecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        let components = openapi.components.as_mut().unwrap();
+        components.add_security_scheme(
+            "jwt",
+            SecurityScheme::Http(Http::new(HttpAuthScheme::Bearer)),
+        )
+    }
+}
 
 #[post("/uploadData", format = "application/json", data = "<upload_data>")]
 async fn upload_data(
@@ -170,10 +188,18 @@ async fn build_rocket() -> Rocket<Build> {
     // Cors Options, we should modify to our needs but leave as default for now.
     let cors = CorsOptions {
         allowed_origins: rocket_cors::AllOrSome::All,
-        allowed_methods: vec![Method::Get, Method::Post]
-            .into_iter()
-            .map(From::from)
-            .collect(),
+        allowed_methods: vec![
+            Method::Get,
+            Method::Post,
+            Method::Put,
+            Method::Delete,
+            Method::Patch,
+            Method::Options,
+            Method::Head,
+        ]
+        .into_iter()
+        .map(From::from)
+        .collect(),
         allowed_headers: AllowedHeaders::some(&["Authorization", "Accept", "Content-Type"]),
         allow_credentials: true,
         ..Default::default()
@@ -195,7 +221,11 @@ async fn build_rocket() -> Rocket<Build> {
                     auth::authenticate,
                     user::create_user,
                     loadshedding::fetch_map_data,
-                    loadshedding::fetch_suburb_stats
+                    loadshedding::fetch_suburb_stats,
+                    user::add_saved_place,
+                    user::get_saved_places,
+                    ai::get_ai_info,
+                    user::delete_saved_place
                 ),
             )
             .mount("/upload", routes![upload_data])
@@ -224,7 +254,10 @@ async fn build_rocket() -> Rocket<Build> {
                         user::create_user,
                         loadshedding::fetch_map_data,
                         loadshedding::fetch_suburb_stats,
-                        ai::get_ai_info
+                        user::add_saved_place,
+                        user::get_saved_places,
+                        ai::get_ai_info,
+                        user::delete_saved_place
                     ),
                 )
                 .mount("/upload", routes![upload_data])

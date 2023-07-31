@@ -5,11 +5,12 @@ use rocket::{http::ContentType, response::Responder};
 use serde::Serialize;
 use utoipa::ToSchema;
 
-#[derive(Serialize, ToSchema, Clone)]
+#[derive(Debug, Serialize, ToSchema, Clone)]
 #[non_exhaustive]
 pub enum ApiError<'a> {
     AuthError(&'a str),
     UserCreationError(&'a str),
+    SavedPlacesError(&'a str),
     ServerError(&'a str),
     ScraperUploadError(&'a str),
     RequestError(&'a str),

@@ -1,3 +1,133 @@
 <ion-content>
-  <div id="map"></div>
+  <ion-row>
+    <ion-col class="searchbar-container" size-xs="12" size-md="4" offset-md="7.8">
+      <ion-searchbar animated="true" placeholder="Search for a place..." (ionInput)="onSearchInput($event)" (keyup.enter)="onSearchInput($event)" (ionClear)="onSearchBarClear()" (ionFocus)="onSearchBarFocus()" #searchBar></ion-searchbar>
+      <ion-list *ngIf="searchResults.length > 0 && showResultsList">
+        <ion-item *ngFor="let result of searchResults" (click)="getRoute(result)" (click)="openModal(result)" button>
+          <ion-label>
+            <h3><strong>{{ result.text }}</strong></h3>
+            <ion-note>{{ result.place_name }}</ion-note>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-col>
+  </ion-row>
+  <ion-fab slot="fixed" *ngIf="!gettingRoute || screenWidth > 768" vertical="bottom" horizontal="end">
+    <ion-fab-button (click) = "pin()">
+      <ion-icon name="locate-outline" size="large"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+  <ion-row id="map"></ion-row>
+  <ion-modal #myModal *ngIf="searchResults.length > 0" trigger="open-modal"
+    class="ion-hide-md-up"
+    [initialBreakpoint]="0.2"
+    [breakpoints]="[0.1, currentBreakpoint, 0.75]"
+    [backdropBreakpoint]="0.1"
+    [backdropDismiss]="true"
+    gestureEnabled="false"
+    > <!--  Modal can be dismissed before the trip starts -->
+    <ion-content>
+      <ng-template>
+        <!--  Display trip details -->
+        <div *ngIf="!startTrip; else start">
+          <div *ngIf="tripDuration !== 0 || tripDistance !== 0; else loadData">
+            <!-- Ionic grid to create the row with three items -->
+            <ion-row class="ion-text-center ion-padding-top">
+              <!-- DISTANCE -->
+              <ion-col size="4">
+                <ion-icon name="icon-name" size="large" src="assets/car.svg" color="primary"></ion-icon>
+                <div><ion-text color="medium"><small>DISTANCE</small></ion-text></div>
+                <h4>{{ tripDistance }} km</h4>
+              </ion-col>
+
+              <!-- DURATION -->
+              <ion-col size="4">
+                <ion-icon name="icon-name" size="large" src="assets/timer.svg" color="primary"></ion-icon>
+                <div><ion-text color="medium"><small>DURATION</small></ion-text></div>
+                <h4>{{ tripDuration }} min</h4>
+              </ion-col>
+
+              <!-- ETA -->
+              <ion-col size="4">
+                <ion-icon name="icon-name" size="large" src="assets/schedule.svg" color="primary"></ion-icon>
+                <div><ion-text color="medium"><small>ETA</small></ion-text></div>
+                <h4>13:00</h4>
+              </ion-col>
+            </ion-row>
+
+            <ion-button expand="block" class="ion-margin-top" (click)="beginTrip()"style="text-transform: none;">
+              <ion-icon slot="start" name="navigate-circle-outline"></ion-icon>
+              <ion-text>Begin Trip</ion-text>
+            </ion-button>
+          </div>
+          <!-- If data still loading from directions api request -->
+          <ng-template #loadData>
+            <ion-row class="ion-text-center ion-padding-top">
+              <ion-col size="4">
+                <ion-skeleton-text [animated]="true"></ion-skeleton-text>
+              </ion-col>
+              <ion-col size="4">
+                <ion-skeleton-text [animated]="true"></ion-skeleton-text>
+              </ion-col>
+              <ion-col size="4">
+                <ion-skeleton-text [animated]="true"></ion-skeleton-text>
+              </ion-col>
+          </ion-row>
+          </ng-template>
+        </div>
+        <!--  Start trip  -->
+        <ng-template #start>
+          <ion-row class="ion-padding-horizontal">
+            <ion-col size="8">
+              <h3 style="margin-top: 12px;">
+                <div>
+                  <ion-text color="primary"><strong>{{ tripDistance }} km </strong></ion-text>
+                </div>
+              </h3>
+              <ion-text>{{ tripDuration}} min</ion-text>
+              <ion-text style="padding-left: 8px; padding-right: 8px;">&#8226;</ion-text>
+              <ion-text>13:00</ion-text>
+            </ion-col>
+            <ion-col size="4" class="ion-text-end ion-align-items-center" style="
+              display: flex;
+              justify-content: end;
+              align-items: center;">
+              <ion-icon src="assets/cancel.svg" (click)="onSearchBarClear()"  class="ion-text-end align-items-center ion-text-center" style="font-size: 55px;"></ion-icon>
+            </ion-col>
+          </ion-row>
+        </ng-template>
+        <ion-content class="ion-padding">
+          <ion-list *ngIf="instructions.length > 0; else loadInstructions">
+            <ion-item *ngFor="let instruction of instructions">
+              <ion-icon [src]="getIconForInstruction(instruction)" class="ion-padding-end"></ion-icon>
+              <ion-label>
+                {{instruction}}
+              </ion-label>
+            </ion-item>
+          </ion-list>
+
+          <!-- Skeleton Text for rendering placeholder content -->
+          <ng-template #loadInstructions>
+            <ion-list *ngIf="instructions.length <= 0">
+              <ion-item>
+                <ion-skeleton-text [animated]="true"></ion-skeleton-text>
+              </ion-item>
+              <ion-item>
+                <ion-skeleton-text [animated]="true"></ion-skeleton-text>
+              </ion-item>
+              <ion-item>
+                <ion-skeleton-text [animated]="true"></ion-skeleton-text>
+              </ion-item>
+              <ion-item>
+                <ion-skeleton-text [animated]="true"></ion-skeleton-text>
+              </ion-item>
+              <ion-item>
+                <ion-skeleton-text [animated]="true"></ion-skeleton-text>
+              </ion-item>
+            </ion-list>
+          </ng-template>
+        </ion-content>
+      </ng-template>
+    </ion-content>
+  </ion-modal>
 </ion-content>
