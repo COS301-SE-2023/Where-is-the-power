@@ -75,7 +75,7 @@ pub async fn fetch_map_data<'a>(
         .stage;
     let db_functions = DBFunctions {};
     let future_data = municipalities.iter().map(|municipality| {
-        municipality.get_regions_at_time(stage.to_owned(), request.time, connection, &db_functions)
+        municipality.get_regions_at_time(stage.to_owned(), request.time, Some(connection), &db_functions)
     });
     let response = try_join_all(future_data).await;
     if let Ok(data) = response {
@@ -403,10 +403,10 @@ pub struct DBFunctions {}
 
 #[automock]
 impl DBFunctions {
-    pub async fn collect_schedule(
+    pub async fn collect_schedule<'a>(
         &self,
         query: Document,
-        connection: &Database,
+        connection: Option<&'a Database>,
         options: Option<FindOptions>
     ) -> Result<Vec<TimeScheduleEntity>,ApiError<'static>> {
         let query_options: FindOptions;
@@ -416,7 +416,7 @@ impl DBFunctions {
             query_options = options.unwrap();
         }
 
-        let schedule_cursor: Cursor<TimeScheduleEntity> = match connection
+        let schedule_cursor: Cursor<TimeScheduleEntity> = match connection.unwrap()
             .collection("timeschedule")
             .find(query, query_options)
             .await
@@ -442,10 +442,10 @@ impl DBFunctions {
         return Ok(unfiltered_schedules)
     }
 
-    pub async fn collect_suburbs(
+    pub async fn collect_suburbs<'a>(
         &self,
         query: Document,
-        connection: &Database,
+        connection: Option<&'a Database>,
         options: Option<FindOptions>
     ) -> Result<Vec<SuburbEntity>,ApiError<'static>> {
         let query_options: FindOptions;
@@ -455,7 +455,7 @@ impl DBFunctions {
             query_options = options.unwrap();
         }
 
-        let suburbs_cursor: Cursor<SuburbEntity> = match connection
+        let suburbs_cursor: Cursor<SuburbEntity> = match connection.unwrap()
             .collection("suburbs")
             .find(query, query_options)
             .await
@@ -480,10 +480,10 @@ impl DBFunctions {
         Ok(suburbs)
     }
 
-    pub async fn collect_groups(
+    pub async fn collect_groups<'a>(
         &self,
         query: Document,
-        connection: &Database,
+        connection: Option<&'a Database>,
         options: Option<FindOptions>
     ) -> Result<Vec<GroupEntity>,ApiError<'static>> {
         let query_options: FindOptions;
@@ -493,7 +493,7 @@ impl DBFunctions {
             query_options = options.unwrap();
         }
 
-        let group_cursor: Cursor<GroupEntity> = match connection
+        let group_cursor: Cursor<GroupEntity> = match connection.unwrap()
             .collection("groups")
             .find(query, query_options)
             .await
@@ -526,7 +526,7 @@ impl MunicipalityEntity {
         &self,
         stage: i32,
         time: Option<i64>,
-        connection: &Database,
+        connection: Option<&Database>,
         db_functions: &DBFunctions
     ) -> Result<MapDataDefaultResponse, ApiError<'static>> {
         let mut suburbs_off = Vec::<SuburbEntity>::new();

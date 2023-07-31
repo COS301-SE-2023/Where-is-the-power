@@ -1,6 +1,9 @@
 use super::build_rocket;
+use mockall_double::double;
 use crate::auth::{AuthClaims, AuthRequest, AuthType, JWTAuthToken};
-use crate::loadshedding::{MockDBFunctions, GroupEntity, TimeScheduleEntity};
+use crate::loadshedding::{GroupEntity, TimeScheduleEntity, SuburbEntity, MunicipalityEntity};
+#[double]
+use crate::loadshedding::DBFunctions;
 use crate::scraper::convert_to_ints;
 // use crate::db::Entity;
 // use crate::user::User;
@@ -109,14 +112,15 @@ fn time_range_validation_test_pass() {
         .collect::<Vec<_>>();
 }
 
-#[test]
-fn polygon_request_test() {
-    let mut mock = MockDBFunctions::new();
-    let data = r#"[{ "_id": { "$oid": "64b6b9b30d09aa7756061c0d" }, "startHour": 20, "startMinute": 0, "stopHour": 22, "stopMinute": 30, "stages": [ { "stage": 7, "groups": [ { "$oid": "64b6b9b30d09aa7756061bc9" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, ] }, { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b00" }, ] }, { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061aea" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, ] }, { "stage": 8, "groups": [ { "$oid": "64b6b9b30d09aa7756061b49" }, { "$oid": "64b6b9b30d09aa7756061bc9" }, ] }, { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061b00" }, { "$oid": "64b6b9b30d09aa7756061acd" }, ] }, { "stage": 6, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061b7a" }, ] }, { "stage": 5, "groups": [ { "$oid": "64b6b9b30d09aa7756061b7a" }, { "$oid": "64b6b9b30d09aa7756061b49" }, ] }, { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061acd" }, { "$oid": "64b6b9b30d09aa7756061aea" }, ] } ], "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } }] "#;
+#[rocket::async_test]
+async fn polygon_request_test() {
+    let mut mock = DBFunctions::new();
+    let data = r#"[{ "_id": { "$oid": "64b6b9b30d09aa7756061c0d" }, "startHour": 20, "startMinute": 0, "stopHour": 22, "stopMinute": 30, "stages": [ { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] }, { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" }, ] }, { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }, { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] }], "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } }] "#;
     let test_schedule: Vec<TimeScheduleEntity> = serde_json::from_str(data).unwrap();
-    let data = r#"[{ "_id": { "$oid": "64b6b9b30d09aa7756061b9d" }, "number": 3, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061b7b" }, ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061a79" }, "number": 4, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061a48" }, ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061a94" }, "number": 16, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061a7a" }, ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061ab6" }, "number": 14, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061a95" }, ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061acd" }, "number": 11, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061ab7" }, ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061aea" }, "number": 7, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061ace" }, ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061b00" }, "number": 15, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061aeb" }, ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061b2e" }, "number": 13, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061b01" }, ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061b49" }, "number": 6, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061b2f" }, ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061b7a" }, "number": 10, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061b4a" }, ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061ba9" }, "number": 12, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061b9e" }, ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061bc9" }, "number": 2, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061baa" }, ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061bcb" }, "number": 1, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061bca" } ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061bcd" }, "number": 9, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061bcc" } ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061be2" }, "number": 5, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061bce" }, ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061c0c" }, "number": 8, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061be3" }, ] } ] "#;
+    let data = r#"[{ "_id": { "$oid": "64b6b9b30d09aa7756061b9d" }, "number": 1, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061b30" }, ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061a79" }, "number": 2, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061b7d" }, ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061a94" }, "number": 3, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061a63" }, ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061ab6" }, "number": 4, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061a7b" }, ] }]"#;
     let test_groups: Vec<GroupEntity> = serde_json::from_str(data).unwrap();
-    let data = r#""#;
+    let data = r#"[ { "_id": { "$oid": "64b6b9b30d09aa7756061b30" }, "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, "name": "MUCKLENEUK", "geometry": [ 1 ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061b7d" }, "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, "name": "NEWLANDS", "geometry": [ 2 ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061a63" }, "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, "name": "SOSHANGUVE EAST", "geometry": [ 3 ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061a7b" }, "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, "name": "MAGALIESKRUIN", "geometry": [ 4 ] }]"#;
+    let test_suburbs: Vec<SuburbEntity> = serde_json::from_str(data).unwrap();
     mock.expect_collect_schedule()
         .returning(move |_,_,_| {
             Ok(test_schedule.clone())
@@ -125,6 +129,18 @@ fn polygon_request_test() {
         .returning(move|_query, _conn, _opts| {
            Ok(test_groups.clone())
         });
+    mock.expect_collect_suburbs()
+        .returning(move|_query, _conn, _opts| {
+           Ok(test_suburbs.clone())
+        });
+    let data = r#"{ "_id": { "$oid": "64b6b9b30d09aa7756061a47" }, "name": "tshwane", "geometry": { "name": "SP_SA_2011|Selection", "map_layer_type": "Area", "bounds": [ [ 27.890227, -26.077549 ], [ 29.098541, -25.110155 ] ], "center": [ 28.494384, -25.593852 ], "zoom": 6, "median_zoom": 13, "count": 594, "property_names": [ "SP_CODE", "SP_CODE_st", "SP_NAME", "MP_CODE", "MP_CODE_st", "MP_NAME", "MN_MDB_C", "MN_CODE", "MN_CODE_st", "MN_NAME", "DC_MDB_C", "DC_MN_C", "DC_MN_C_st", "DC_NAME", "PR_MDB_C", "PR_CODE", "PR_CODE_st", "PR_NAME", "ALBERS_ARE", "Shape_Leng", "Shape_Area" ], "type": "FeatureCollection", "features": [ { "type": "Feature", "id": 1, "properties": { "SP_CODE": 799078003, "SP_CODE_st": "799078003", "SP_NAME": "Olievenhoutbos Ext 21", "MP_CODE": 799078, "MP_CODE_st": "799078", "MP_NAME": "Olievenhoutbos", "MN_MDB_C": "TSH", "MN_CODE": 799, "MN_CODE_st": "799", "MN_NAME": "City of Tshwane", "DC_MDB_C": "TSH", "DC_MN_C": 799, "DC_MN_C_st": "799", "DC_NAME": "City of Tshwane", "PR_MDB_C": "GT", "PR_CODE": 7, "PR_CODE_st": "7", "PR_NAME": "Gauteng", "ALBERS_ARE": 0.143416, "Shape_Leng": 0.015471, "Shape_Area": 0.000013 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 28.094077, -25.908263 ], [ 28.093557, -25.908198 ], [ 28.090423, -25.907788 ], [ 28.094077, -25.908263 ] ] ] } }, { "type": "Feature", "id": 2, "properties": { "SP_CODE": 799078004, "SP_CODE_st": "799078004", "SP_NAME": "Olievenhoutbos Ext 15", "MP_CODE": 799078, "MP_CODE_st": "799078", "MP_NAME": "Olievenhoutbos", "MN_MDB_C": "TSH", "MN_CODE": 799, "MN_CODE_st": "799", "MN_NAME": "City of Tshwane", "DC_MDB_C": "TSH", "DC_MN_C": 799, "DC_MN_C_st": "799", "DC_NAME": "City of Tshwane", "PR_MDB_C": "GT", "PR_CODE": 7, "PR_CODE_st": "7", "PR_NAME": "Gauteng", "ALBERS_ARE": 0.59043, "Shape_Leng": 0.038927, "Shape_Area": 0.000053 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 28.096909, -25.905686 ], [ 28.096212, -25.90543 ], [ 28.093557, -25.908198 ], [ 28.096909, -25.905686 ] ] ] } }, { "type": "Feature", "id": 3, "properties": { "SP_CODE": 799078005, "SP_CODE_st": "799078005", "SP_NAME": "Olievenhoutbos Ext 4, 19, 22", "MP_CODE": 799078, "MP_CODE_st": "799078", "MP_NAME": "Olievenhoutbos", "MN_MDB_C": "TSH", "MN_CODE": 799, "MN_CODE_st": "799", "MN_NAME": "City of Tshwane", "DC_MDB_C": "TSH", "DC_MN_C": 799, "DC_MN_C_st": "799", "DC_NAME": "City of Tshwane", "PR_MDB_C": "GT", "PR_CODE": 7, "PR_CODE_st": "7", "PR_NAME": "Gauteng", "ALBERS_ARE": 5.111315, "Shape_Leng": 0.11507, "Shape_Area": 0.00046 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 28.120268, -25.900284 ], [ 28.120077, -25.89996 ], [ 28.119871, -25.899611 ], [ 28.117086, -25.9021 ], [ 28.117425, -25.902778 ], [ 28.117464, -25.902857 ], [ 28.120268, -25.900284 ] ] ] } }, { "type": "Feature", "id": 4, "properties": { "SP_CODE": 799078006, "SP_CODE_st": "799078006", "SP_NAME": "Olievenhoutbos Ext 24", "MP_CODE": 799078, "MP_CODE_st": "799078", "MP_NAME": "Olievenhoutbos", "MN_MDB_C": "TSH", "MN_CODE": 799, "MN_CODE_st": "799", "MN_NAME": "City of Tshwane", "DC_MDB_C": "TSH", "DC_MN_C": 799, "DC_MN_C_st": "799", "DC_NAME": "City of Tshwane", "PR_MDB_C": "GT", "PR_CODE": 7, "PR_CODE_st": "7", "PR_NAME": "Gauteng", "ALBERS_ARE": 0.414983, "Shape_Leng": 0.030855, "Shape_Area": 0.000037 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 28.098344, -25.917966 ], [ 28.097966, -25.917912 ], [ 28.097348, -25.918184 ], [ 28.09721, -25.918154 ], [ 28.098344, -25.917966 ] ] ] } }, ] } }"#;
+    let test_municipality: MunicipalityEntity = serde_json::from_str(data).unwrap();
+
+    // Create a mock db
+
+    // the time is the first day of a month matching the time_schedule
+    //test_municipality.get_regions_at_time(1, Some(1688237449), None , &mock);
+    assert_eq!(1,1)
 }
 
 // #[rocket::async_test]
