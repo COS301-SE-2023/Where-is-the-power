@@ -99,9 +99,9 @@ async fn polygon_request_test() {
     let mut mock = MockDBFunctionsTrait::new();
     let data = r#"[{ "_id": { "$oid": "64b6b9b30d09aa7756061c0d" }, "startHour": 20, "startMinute": 0, "stopHour": 22, "stopMinute": 30, "stages": [ { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] }, { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] }, { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }, { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] }], "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } }] "#;
     let test_schedule: Vec<TimeScheduleEntity> = serde_json::from_str(data).unwrap();
-    let data = r#"[{ "_id": { "$oid": "64b6b9b30d09aa7756061b9d" }, "number": 1, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061b30" } ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061a79" }, "number": 2, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061b7d" } ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061a94" }, "number": 3, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061a63" } ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061ab6" }, "number": 4, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061a7b" } ] }]"#;
+    let data = r#"[{ "_id": { "$oid": "64b6b9b30d09aa7756061b9d" }, "number": 1, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061b30" } ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061a79" }, "number": 2, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061b7d" } ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061a94" }, "number": 3, "suburbs": [ { "$oid": "64b6b9b30d09aa7756061a63" }]} ]"#;
     let test_groups: Vec<GroupEntity> = serde_json::from_str(data).unwrap();
-    let data = r#"[ { "_id": { "$oid": "64b6b9b30d09aa7756061b30" }, "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, "name": "MUCKLENEUK", "geometry": [ 1 ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061b7d" }, "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, "name": "NEWLANDS", "geometry": [ 2 ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061a63" }, "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, "name": "SOSHANGUVE EAST", "geometry": [ 3 ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061a7b" }, "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, "name": "MAGALIESKRUIN", "geometry": [ 4 ] }]"#;
+    let data = r#"[ { "_id": { "$oid": "64b6b9b30d09aa7756061b30" }, "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, "name": "MUCKLENEUK", "geometry": [ 1 ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061b7d" }, "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, "name": "NEWLANDS", "geometry": [ 2 ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061a63" }, "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, "name": "SOSHANGUVE EAST", "geometry": [ ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061a7b" }, "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, "name": "MAGALIESKRUIN", "geometry": [ 4 ] }]"#;
     let test_suburbs: Vec<SuburbEntity> = serde_json::from_str(data).unwrap();
     mock.expect_collect_schedule()
         .returning(move |_,_,_| {
@@ -119,13 +119,11 @@ async fn polygon_request_test() {
     let test_municipality: MunicipalityEntity = serde_json::from_str(data).unwrap();
 
     // the time is the first day of a month matching the time_schedule
-    let result = test_municipality.get_regions_at_time(1, Some(1688237449), None , &mock).await;
-    if let Ok(data) = result {
-        println!("{:?}", data);
-    } else if  let Err(data) = result {
-        println!("{:?}", data);
-    }
-    assert_eq!(1,1)
+    let result = test_municipality.get_regions_at_time(2, Some(1688237449), None , &mock).await.unwrap();
+    assert_eq!(result.map_polygons.get(0).unwrap().features.get(0).unwrap().properties.power_status, Some("off".to_string()));
+    assert_eq!(result.map_polygons.get(0).unwrap().features.get(1).unwrap().properties.power_status, Some("off".to_string()));
+    assert_eq!(result.map_polygons.get(0).unwrap().features.get(2).unwrap().properties.power_status, Some("undefined".to_string()));
+    assert_eq!(result.map_polygons.get(0).unwrap().features.get(3).unwrap().properties.power_status, Some("on".to_string()));
 }
 
 // #[rocket::async_test]

@@ -579,7 +579,7 @@ impl MunicipalityEntity {
             if schedule.start_hour <= time_to_search.hour() as i32 {
                 if schedule.stop_hour >= time_to_search.hour() as i32 {
                     keep = true;
-                    if schedule.stop_minute >= time_to_search.minute() as i32
+                    if schedule.stop_minute <= time_to_search.minute() as i32
                         && schedule.stop_hour == time_to_search.hour() as i32
                     {
                         keep = false;
@@ -908,7 +908,7 @@ impl LoadSheddingStage {
     pub async fn request_stage_data_update(&mut self) -> Result<i32, reqwest::Error> {
         loop {
             let stage = reqwest::get(
-                "https://d42sspn7yra3u.cloudfront.net/coct-load-shedding-extended-status.json",
+                "https://d42sspn7yra3u.cloudfront.net/eskom-load-shedding-extended-status.json",
             )
             .await?;
             if stage.status().is_success() {
@@ -917,7 +917,7 @@ impl LoadSheddingStage {
                 self.log_stage_data(times).await;
                 break;
             } else {
-                warn!("Connection to https://d42sspn7yra3u.cloudfront.net/coct-load-shedding-extended-status.json Dropped before any operations could take place. Check that url is still up {:?}", stage);
+                warn!("Connection to https://d42sspn7yra3u.cloudfront.net/eskom-load-shedding-extended-status.json Dropped before any operations could take place. Check that url is still up {:?}", stage);
             }
             thread::sleep(std::time::Duration::from_secs(10));
         }
