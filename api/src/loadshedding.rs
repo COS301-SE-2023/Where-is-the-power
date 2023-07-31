@@ -681,7 +681,6 @@ impl MunicipalityEntity {
             }
             if let None = feature.properties.power_status {
                 feature.properties.power_status = Some("undefined".to_string());
-                break;
             }
         }
         Ok(MapDataDefaultResponse {
