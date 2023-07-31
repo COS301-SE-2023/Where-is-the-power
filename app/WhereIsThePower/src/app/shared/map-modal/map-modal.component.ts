@@ -13,6 +13,7 @@ import { IonContent, ModalController } from '@ionic/angular';
 //import * as mapboxgl from 'mapbox-gl';
 //import * as MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 import { MapSuburbsService } from './map-suburbs.service';
+import { EventEmitter, Output } from '@angular/core';
 declare let MapboxDirections: any;
 declare let mapboxgl: any;
 declare let MapboxGeocoder: any;
@@ -44,8 +45,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   startTrip: boolean = false; // Only displayed when "Begin trip" button is clicked
   gettingRoute: boolean = false;
   mapLoaded: boolean = false; // Check if map rendered
-
   ngOnInit() { }
+
   ngAfterViewInit() {
     this.mapSuburbsService.getSuburbData().subscribe(async (data: any) => {
       console.log(data.result.mapPolygons[0]);
@@ -176,6 +177,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
 
   async getRoute(selectedResult: any) {
+    this.emitGetDirections();
     this.gettingRoute = true;
     console.log(this.searchBar);
     this.searchBar.value = `${selectedResult.place_name}`;
@@ -362,6 +364,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     this.tripDuration = 0;
     this.tripDistance = 0;
     this.gettingRoute = false;
+    this.emitCancelDirections();
 
     if (this.map.getSource('route')) {
       this.map.removeLayer('route');
@@ -456,6 +459,17 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
   onModalDismiss() {
     this.onSearchBarClear();
+  }
+
+  emitCancelDirections() {
+    this.mapSuburbsService.gettingDirections.next(false);
+    this.map.resize();
+  }
+
+  async emitGetDirections() {
+    this.mapSuburbsService.gettingDirections.next(true);
+    await this.delay(500);
+    this.map.resize();
   }
 }
 
