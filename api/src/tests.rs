@@ -2,8 +2,6 @@ use super::build_rocket;
 use crate::auth::{AuthClaims, AuthRequest, AuthType, JWTAuthToken};
 use crate::loadshedding::{GroupEntity, TimeScheduleEntity, SuburbEntity, MunicipalityEntity, MockDBFunctionsTrait};
 use crate::scraper::convert_to_ints;
-// use crate::db::Entity;
-// use crate::user::User;
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
 use rocket::http::{ContentType, Status};
 use rocket::local::asynchronous::Client;
@@ -11,19 +9,6 @@ use rocket::serde::json::{self};
 use rocket::uri;
 use tokio::io::AsyncReadExt;
 use tokio::task::spawn_blocking;
-
-#[rocket::async_test]
-async fn hello_world() {
-    let client = Client::tracked(build_rocket().await)
-        .await
-        .expect("valid rocket instance");
-    let response = client
-        .get(format!("/hello{}", uri!(super::hi)))
-        .dispatch()
-        .await;
-    assert_eq!(response.status(), Status::Ok);
-    assert_eq!(response.into_string().await.unwrap(), "Hello World!");
-}
 
 #[rocket::async_test]
 async fn test_anonymous_auth() {
