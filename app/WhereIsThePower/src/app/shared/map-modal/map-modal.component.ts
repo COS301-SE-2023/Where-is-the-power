@@ -43,20 +43,22 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   tripDistance: number = 0;
   startTrip: boolean = false; // Only displayed when "Begin trip" button is clicked
   gettingRoute: boolean = false;
+  mapLoaded: boolean = false; // Disable while map is loading
 
   ngOnInit() { }
   ngAfterViewInit() {
-    this.mapSuburbsService.getSuburbData().subscribe((data: any) => {
+    this.mapSuburbsService.getSuburbData().subscribe(async (data: any) => {
       console.log(data.result.mapPolygons[0]);
       this.dat = data.result.mapPolygons[0];
       // Render the Map
       (mapboxgl as any).accessToken = environment.MapboxApiKey;
-      this.map = new mapboxgl.Map({
+      this.map = await new mapboxgl.Map({
         container: 'map', // container ID
         style: 'mapbox://styles/mapbox/streets-v12', // style URL
         center: [28.261181, -25.771179], // starting position [lng, lat]
         zoom: 12 // starting zoom
       });
+      this.mapLoaded = true; // map has finished rendering
 
       // get user location
       this.latitude = this.userLocationService.getLatitude();
