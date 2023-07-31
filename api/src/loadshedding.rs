@@ -6,7 +6,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, Document};
-use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, NaiveDateTime, Timelike, TimeZone};
+use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, NaiveDateTime, Timelike, TimeZone, Utc};
 use log::warn;
 use macros::Entity;
 use mockall::automock;
@@ -392,20 +392,44 @@ impl TotalTime {
 // entity implimentations:
 fn get_date_time(time: Option<i64>) -> DateTime<FixedOffset> {
     // South African Standard Time Offset
-    let sast = FixedOffset::west_opt(2 * 3600).unwrap();
+    let sast = FixedOffset::east_opt(2 * 3600).unwrap();
     // get search time
     match time {
-        Some(time) => sast.from_local_datetime(&NaiveDateTime::from_timestamp_opt(time, 0).unwrap()).unwrap(),
+        Some(time) => DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp_opt(time, 0).unwrap(), Utc).with_timezone(&sast),
         None => Local::now().with_timezone(&sast),
     }
 }
 
 // temporary database resturcturing
+#[automock]
+#[async_trait]
+pub trait DBFunctionsTrait: Sync {
+    async fn collect_schedule<'a>(
+        &self,
+        query: Document,
+        connection: Option<&'a Database>,
+        options: Option<FindOptions>
+    ) -> Result<Vec<TimeScheduleEntity>,ApiError<'static>>;
+    async fn collect_groups<'a>(
+        &self,
+        query: Document,
+        connection: Option<&'a Database>,
+        options: Option<FindOptions>
+    ) -> Result<Vec<GroupEntity>,ApiError<'static>>;
+    async fn collect_suburbs<'a>(
+        &self,
+        query: Document,
+        connection: Option<&'a Database>,
+        options: Option<FindOptions>
+    ) -> Result<Vec<SuburbEntity>,ApiError<'static>>;
+}
+
+
 pub struct DBFunctions {}
 
-#[automock]
-impl DBFunctions {
-    pub async fn collect_schedule<'a>(
+#[async_trait]
+impl DBFunctionsTrait for  DBFunctions {
+    async fn collect_schedule<'a>(
         &self,
         query: Document,
         connection: Option<&'a Database>,
@@ -444,7 +468,7 @@ impl DBFunctions {
         return Ok(unfiltered_schedules)
     }
 
-    pub async fn collect_suburbs<'a>(
+    async fn collect_suburbs<'a>(
         &self,
         query: Document,
         connection: Option<&'a Database>,
@@ -482,7 +506,7 @@ impl DBFunctions {
         Ok(suburbs)
     }
 
-    pub async fn collect_groups<'a>(
+    async fn collect_groups<'a>(
         &self,
         query: Document,
         connection: Option<&'a Database>,
@@ -529,11 +553,12 @@ impl MunicipalityEntity {
         stage: i32,
         time: Option<i64>,
         connection: Option<&Database>,
-        db_functions: &DBFunctions
+        db_functions: &dyn DBFunctionsTrait
     ) -> Result<MapDataDefaultResponse, ApiError<'static>> {
         let mut suburbs_off = Vec::<SuburbEntity>::new();
         let time_to_search: DateTime<FixedOffset> = get_date_time(time);
-        println!("Time to search is: {:?}", time_to_search.timestamp());
+        println!("Time to search is: {:?}", time_to_search.to_string());
+        println!("is secs: {:?}", time_to_search.timestamp());
         let mut geography = self.geometry.clone();
 
         // schedule query: all that fit the search time
@@ -550,6 +575,7 @@ impl MunicipalityEntity {
         // filter schedules to relevant ones
         for schedule in unfiltered_schedules {
             let mut keep = false;
+            println!("{:?}",time_to_search.hour());
             if schedule.start_hour <= time_to_search.hour() as i32 {
                 if schedule.stop_hour >= time_to_search.hour() as i32 {
                     keep = true;
@@ -1021,9 +1047,10 @@ impl<'de> Deserialize<'de> for SASTDateTime {
         D: Deserializer<'de>,
     {
         // get search time
+        let sast = FixedOffset::east_opt(2 * 3600).unwrap();
         let s = String::deserialize(deserializer)?;
         let dt = NaiveDateTime::parse_from_str(&s, FORMAT).unwrap();
-        let sast = FixedOffset::east_opt(2 * 3600).unwrap().from_local_datetime(&dt).unwrap();
+        let sast = DateTime::<Utc>::from_utc(dt, Utc).with_timezone(&sast);
         Ok(SASTDateTime(sast))
         // DateTime::<FixedOffset>::from_str(&s).map_err(serde::de::Error::custom)
     }
