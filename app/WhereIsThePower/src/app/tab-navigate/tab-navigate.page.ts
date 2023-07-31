@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { UserLocationService } from '../user-location.service';
 
 @Component({
   selector: 'app-tab-navigate',
@@ -7,6 +8,21 @@ import { Component } from '@angular/core';
 })
 export class TabNavigatePage {
 
-  constructor() {}
+  constructor(private UserLocationService: UserLocationService) { }
+  isLocationProvide = false;
 
+  async ionViewDidEnter() {
+    // Attempt to get location
+    this.UserLocationService.getUserLocation();
+
+    // Check if the location is available
+    this.UserLocationService.isLocationAvailable.subscribe((isLocationAvailable) => {
+      console.log('isLocationAvailable', isLocationAvailable);
+      this.isLocationProvide = isLocationAvailable;
+    });
+  }
+
+  onLocateUser() {
+    this.UserLocationService.getUserLocation();
+  }
 }
