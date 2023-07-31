@@ -860,10 +860,12 @@ impl LoadSheddingStage {
             .await
             .unwrap()
             .unwrap();
-
+        println!("self is: {:?}", self);
+        println!("new is: {:?}", new_status);
         self.end_time = new_status.end_time;
         self.start_time = new_status.start_time;
         self.stage = new_status.stage;
+        println!("self is after operation: {:?}", self);
         //println!("{:?}", self);
     }
 
@@ -933,6 +935,7 @@ impl LoadSheddingStage {
                     }
                 }
             }
+            self.set_stage().await;
         } else {
             return ();
         }
