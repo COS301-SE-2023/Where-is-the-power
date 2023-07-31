@@ -79,4 +79,8 @@ export class AuthService {
   async isUserLoggedIn() {
     return this.isLoggedin;
   }
+
+  getAuthHeaders() {
+    return this.headers;
+  }
 }
