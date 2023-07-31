@@ -43,7 +43,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   tripDistance: number = 0;
   startTrip: boolean = false; // Only displayed when "Begin trip" button is clicked
   gettingRoute: boolean = false;
-  mapLoaded: boolean = false; // Disable while map is loading
+  mapLoaded: boolean = false; // Check if map rendered
 
   ngOnInit() { }
   ngAfterViewInit() {
