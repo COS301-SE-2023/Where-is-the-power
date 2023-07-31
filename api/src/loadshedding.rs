@@ -670,11 +670,20 @@ impl MunicipalityEntity {
                     break;
                 }
             }
+
             if let None = feature.properties.power_status {
-                feature.properties.power_status = Some("on".to_string());
+                for (_,suburb) in &suburbs {
+                    if suburb.geometry.contains(&feature.id) {
+                        feature.properties.power_status = Some("on".to_string());
+                        break;
+                    }
+                }
+            }
+            if let None = feature.properties.power_status {
+                feature.properties.power_status = Some("undefined".to_string());
+                break;
             }
         }
-
         Ok(MapDataDefaultResponse {
             map_polygons: vec![geography],
         })
