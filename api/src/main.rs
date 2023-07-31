@@ -101,17 +101,6 @@ async fn upload_data(
     }
 }
 
-#[get("/mock")]
-#[allow(dead_code)]
-async fn mock_data() -> Result<(), Json<ApiError<'static>>> {
-    todo!("Implement")
-}
-
-#[get("/world")]
-async fn hi() -> &'static str {
-    "Hello World!"
-}
-
 #[cfg(debug_assertions)]
 const LOG_LEVEL: LevelFilter = LevelFilter::Debug;
 #[cfg(not(debug_assertions))]
@@ -214,7 +203,6 @@ async fn build_rocket() -> Rocket<Build> {
                 SwaggerUi::new("/swagger-ui/<_..>")
                     .url("/api-docs/openapi.json", ApiDoc::openapi()),
             )
-            .mount("/hello", routes![hi])
             .mount(
                 "/api",
                 routes!(
@@ -246,7 +234,6 @@ async fn build_rocket() -> Rocket<Build> {
                     SwaggerUi::new("/swagger-ui/<_..>")
                         .url("/api-docs/openapi.json", ApiDoc::openapi()),
                 )
-                .mount("/hello", routes![hi])
                 .mount(
                     "/api",
                     routes!(
