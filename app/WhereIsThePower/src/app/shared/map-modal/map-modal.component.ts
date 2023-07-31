@@ -78,7 +78,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   }
 
   populatePolygons() {
-    console.log(this.dat);
     this.map.on('load', () => {
       // Add a data source containing GeoJSON data.
       this.map.addSource('polygons', {
@@ -181,11 +180,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
     this.showResultsList = false;
     let coords: any;
-
-    // console.log(selectedResult);
     console.log(selectedResult);
-    console.log(this.longitude);
-    console.log(this.latitude);
+
     let query: any;
     if (Array.isArray(selectedResult)) {
       query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult[0]},${selectedResult[1]}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
@@ -454,7 +450,10 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   @HostListener('window:resize', ['$event'])
   onResize(event: any) {
     this.screenWidth = event.target.innerWidth;
-    console.log("FFFFFFFFFF" + this.screenWidth);
+  }
+
+  onModalDismiss() {
+    this.onSearchBarClear();
   }
 }
 
