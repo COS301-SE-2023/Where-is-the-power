@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Geolocation } from '@capacitor/geolocation'
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -7,8 +8,9 @@ import { Geolocation } from '@capacitor/geolocation'
 export class UserLocationService {
   latitude: number = 0;
   longitude: number = 0;
+  isLocationAvailable: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
-  constructor() { 
+  constructor() {
   }
 
   getLatitude() {
@@ -21,6 +23,7 @@ export class UserLocationService {
 
   getUserLocation = async () => {
     const coordinates = await Geolocation.getCurrentPosition();
+    this.isLocationAvailable.next(true);
     this.latitude = coordinates.coords.latitude;
     this.longitude = coordinates.coords.longitude;
   };
