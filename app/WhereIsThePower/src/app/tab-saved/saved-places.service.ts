@@ -31,12 +31,12 @@ headers = new HttpHeaders();
     return this.httpClient.get(`${this.apiUrl}user/savedPlaces`, { headers: this.auth.headers });
   }
 
-  
+  /*
   addSavedPlace(place: Place) {
     console.log("add saved place");
-    console.log(this.place);
-    console.log(this.headers);
+    console.log("place",this.place);
+    console.log("HEADER", this.headers);
 
     return this.httpClient.put(`${this.apiUrl}user/savedPlaces`, this.place, { headers: this.headers })
-  }
+  }*/
 }

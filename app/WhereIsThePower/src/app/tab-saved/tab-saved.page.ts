@@ -65,7 +65,7 @@ export class TabSavedPage {
     console.log("newPlace ",newPlace);
 
     this.sucessToast('Succesfully added place');
-    this.savedPlaceService.addSavedPlace(newPlace).subscribe(data => {
+    this.authService.addSavedPlace(newPlace).subscribe(data => {
       console.log("savedPlaceService ",data);
     });
   }
