@@ -19,7 +19,8 @@ export class TabStatisticsPage implements OnInit {
     const suburbId = 17959;
     this.statisticsService.getSuburbData(suburbId).subscribe((data) => {
       console.log("statisticsService: ",data);
-      this. processDoughnutChart(data);
+
+      this.processDoughnutChart(data);
       this.processBarChart(data);
     }, 
     (error) => {
@@ -73,34 +74,22 @@ export class TabStatisticsPage implements OnInit {
 
   processBarChart(data: any)
   {
-    // Data for Bar Chart (Uptime/Downtime for the week)
-    const labels = Object.keys(data.result.perDayTimes);
-
-    // Extract the "on" data and put it into an array
-    let onHoursDaily: number [] = [];
-    for (const day of Object.keys(data.result.perDayTimes)) {
-      let onTime = Math.floor(data.result.perDayTimes[day].on / 60);
-      onHoursDaily.push(onTime);
-    }
-
-    let offHoursDaily: number [] = [];
-    for (const day of Object.keys(data.result.perDayTimes)) {
-      let offTime = Math.floor(data.result.perDayTimes[day].off / 60);
-      offHoursDaily.push(offTime);
-    }
+    const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const todayIndex = new Date().getDay(); // 0 for Sunday, 1 for Monday, etc.
+    const orderedDaysOfWeek = [...daysOfWeek.slice(todayIndex+1), ...daysOfWeek.slice(0, todayIndex+1)];
 
     const barData = {
-      labels: labels,
+      labels: orderedDaysOfWeek,
       datasets: [
         {
           label: 'Uptime',
-          data: onHoursDaily, // Uptime(No. of hours without Loadshedding)
+          data: orderedDaysOfWeek.map(day => data.result.perDayTimes[day]?.on / 60 || 0), // Uptime(No. of hours without Loadshedding)
           borderColor: '#007A4D',
           backgroundColor: '#007A4D',
         },
         {
           label: 'Downtime',
-          data: offHoursDaily, // Downtime(Loadshedding hours)
+          data: orderedDaysOfWeek.map(day => data.result.perDayTimes[day]?.off / 60 || 0), // Downtime(Loadshedding hours)
           borderColor: '#DE3831',
           backgroundColor: '#DE3831',
         }
