@@ -2,10 +2,10 @@
 
 use crate::loadshedding::MapDataDefaultResponse;
 use rocket::{http::ContentType, response::Responder};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-#[derive(Debug, Serialize, ToSchema, Clone)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
 #[non_exhaustive]
 pub enum ApiError<'a> {
     AuthError(&'a str),
@@ -21,7 +21,7 @@ pub enum ApiResponse<'a, O: Serialize> {
     Err(ApiError<'a>),
 }
 
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema)]
 #[schema(example = json! {
     UnifiedResponse::<()> {
         success: false,
@@ -34,9 +34,10 @@ pub enum ApiResponse<'a, O: Serialize> {
     ResponseMapData = UnifiedResponse<'a, MapDataDefaultResponse>
 )]
 pub struct UnifiedResponse<'b, O: Serialize> {
-    success: bool,
-    result: Option<O>,
-    error: Option<ApiError<'b>>,
+    pub success: bool,
+    pub result: Option<O>,
+    #[serde(borrow)]
+    pub error: Option<ApiError<'b>>,
 }
 
 impl<'r, 'a, O: Serialize> Responder<'r, 'static> for ApiResponse<'a, O> {
