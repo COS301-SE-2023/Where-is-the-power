@@ -1,7 +1,16 @@
 <ion-content>
   <ion-row>
     <ion-col class="searchbar-container" size-xs="12" size-md="4" offset-md="7.8">
-      <ion-searchbar animated="true" placeholder="Search for a place..." (ionInput)="onSearchInput($event)" (keyup.enter)="onSearchInput($event)" (ionClear)="onSearchBarClear()" (ionFocus)="onSearchBarFocus()" #searchBar></ion-searchbar>
+      <ion-searchbar
+        animated="true"
+        placeholder="Search for a place..."
+        (ionInput)="onSearchInput($event)"
+        (keyup.enter)="onSearchInput($event)"
+        (ionClear)="onSearchBarClear()"
+        (ionFocus)="onSearchBarFocus()"
+        [disabled]="!mapLoaded"
+        #searchBar>
+      </ion-searchbar>
       <ion-list *ngIf="searchResults.length > 0 && showResultsList">
         <ion-item *ngFor="let result of searchResults" (click)="getRoute(result)" (click)="openModal(result)" button>
           <ion-label>
@@ -12,19 +21,19 @@
       </ion-list>
     </ion-col>
   </ion-row>
-  <ion-fab slot="fixed" *ngIf="!gettingRoute || screenWidth > 768" vertical="bottom" horizontal="end">
-    <ion-fab-button (click) = "pin()">
+  <ion-fab slot="fixed" *ngIf="!gettingRoute || screenWidth > 768" vertical="bottom" horizontal="end" >
+    <ion-fab-button (click) = "pin()" [disabled]="!mapLoaded">
       <ion-icon name="locate-outline" size="large"></ion-icon>
     </ion-fab-button>
   </ion-fab>
   <ion-row id="map"></ion-row>
-  <ion-modal #myModal *ngIf="searchResults.length > 0" trigger="open-modal"
+  <ion-modal #myModal *ngIf="searchResults.length > 0"
     class="ion-hide-md-up"
-    [initialBreakpoint]="0.2"
-    [breakpoints]="[0.1, currentBreakpoint, 0.75]"
-    [backdropBreakpoint]="0.1"
+    [initialBreakpoint]="currentBreakpoint"
+    [breakpoints]="[0.12, currentBreakpoint, 0.5 , 0.75, 1]"
+    [backdropBreakpoint]="0.12"
     [backdropDismiss]="true"
-    gestureEnabled="false"
+    (ionModalDidDismiss)="onModalDismiss()"
     > <!--  Modal can be dismissed before the trip starts -->
     <ion-content>
       <ng-template>
@@ -41,20 +50,26 @@
               </ion-col>
 
               <!-- DURATION -->
-              <ion-col size="4">
+              <ion-col size="4" *ngIf="tripDuration >= 60">
                 <ion-icon name="icon-name" size="large" src="assets/timer.svg" color="primary"></ion-icon>
                 <div><ion-text color="medium"><small>DURATION</small></ion-text></div>
-                <h4>{{ tripDuration }} min</h4>
+                <h4>{{ tripDuration * 1000 * 60 | date:'H':'UTC'}}h {{ tripDuration * 1000 * 60 | date:'mm':'UTC'}}m</h4>
+              </ion-col>
+              <!-- DURATION ONLY IN MINUTES -->
+              <ion-col size="4" *ngIf="tripDuration < 60">
+                <ion-icon name="icon-name" size="large" src="assets/timer.svg" color="primary"></ion-icon>
+                <div><ion-text color="medium"><small>DURATION</small></ion-text></div>
+                <h4>{{ tripDuration * 1000 * 60 | date:'m':'UTC'}}m</h4>
               </ion-col>
 
               <!-- ETA -->
               <ion-col size="4">
                 <ion-icon name="icon-name" size="large" src="assets/schedule.svg" color="primary"></ion-icon>
                 <div><ion-text color="medium"><small>ETA</small></ion-text></div>
-                <h4>13:00</h4>
+                <h4>{{tripETAH}}:{{tripETAM}}</h4>
               </ion-col>
             </ion-row>
-
+            
             <ion-button expand="block" class="ion-margin-top" (click)="beginTrip()"style="text-transform: none;">
               <ion-icon slot="start" name="navigate-circle-outline"></ion-icon>
               <ion-text>Begin Trip</ion-text>
@@ -96,8 +111,8 @@
             </ion-col>
           </ion-row>
         </ng-template>
-        <ion-content class="ion-padding">
-          <ion-list *ngIf="instructions.length > 0; else loadInstructions">
+        <ion-content class="ion-padding scroll">
+          <ion-list *ngIf="instructions.length > 0; else loadInstructions" class="scroll">
             <ion-item *ngFor="let instruction of instructions">
               <ion-icon [src]="getIconForInstruction(instruction)" class="ion-padding-end"></ion-icon>
               <ion-label>

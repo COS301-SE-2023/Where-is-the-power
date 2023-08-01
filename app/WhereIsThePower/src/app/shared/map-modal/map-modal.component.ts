@@ -13,6 +13,7 @@ import { IonContent, ModalController } from '@ionic/angular';
 //import * as mapboxgl from 'mapbox-gl';
 //import * as MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 import { MapSuburbsService } from './map-suburbs.service';
+import { EventEmitter, Output } from '@angular/core';
 declare let MapboxDirections: any;
 declare let mapboxgl: any;
 declare let MapboxGeocoder: any;
@@ -43,20 +44,32 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   tripDistance: number = 0;
   startTrip: boolean = false; // Only displayed when "Begin trip" button is clicked
   gettingRoute: boolean = false;
+  mapLoaded: boolean = false; // Check if map rendered
+  public currentBreakpoint = 0.2;
+  screenWidth: number = 0;
+  screenHeight: number = 0;
+  popup: any = null;
+  tripETA: Date = new Date();
+  tripETAH: string = '';
+  tripETAM: string = '';
 
   ngOnInit() { }
+
   ngAfterViewInit() {
-    this.mapSuburbsService.getSuburbData().subscribe((data: any) => {
+    this.mapSuburbsService.getSuburbData().subscribe(async (data: any) => {
       console.log(data.result.mapPolygons[0]);
+      console.log("Data: ", data);
+
       this.dat = data.result.mapPolygons[0];
       // Render the Map
       (mapboxgl as any).accessToken = environment.MapboxApiKey;
-      this.map = new mapboxgl.Map({
+      this.map = await new mapboxgl.Map({
         container: 'map', // container ID
         style: 'mapbox://styles/mapbox/streets-v12', // style URL
-        center: [28.261181, -25.771179], // starting position [lng, lat]
-        zoom: 12 // starting zoom
+        center: [28.2, -25.754995], // starting position [lng, lat]
+        zoom: 11 // starting zoom
       });
+      this.mapLoaded = true; // map has finished rendering
 
       // get user location
       this.latitude = this.userLocationService.getLatitude();
@@ -78,7 +91,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   }
 
   populatePolygons() {
-    console.log(this.dat);
     this.map.on('load', () => {
       // Add a data source containing GeoJSON data.
       this.map.addSource('polygons', {
@@ -96,12 +108,12 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           'fill-color': [
             'match',
             ['get', 'PowerStatus'], // Property to evaluate
-            'on', '#12960e',       // Fill color when 'Powerstatus' is 'on'
-            'off', '#ff0000',      // Fill color when 'Powerstatus' is 'off'
+            'on', 'green',       // Fill color when 'Powerstatus' is 'on'
+            'off', 'red',      // Fill color when 'Powerstatus' is 'off'
             /* Add more cases if needed */
-            '#cccccc'              // Default fill color when 'Powerstatus' doesn't match any case
+            '#9a9ba1'              // Default fill color when 'Powerstatus' doesn't match any case
           ],
-          'fill-opacity': 0.5
+          'fill-opacity': 0.3
         }
       });
 
@@ -125,8 +137,30 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         //console.log(e);
 
         if (clickedFeature) {
-          // Handle the click event here, for example, you can log the properties of the clicked feature
-          console.log(clickedFeature.properties);
+
+          // Get the properties of the clicked feature (suburb information)
+          const suburbInfo = clickedFeature.properties;
+          if (suburbInfo.PowerStatus == "undefined") {
+            suburbInfo.PowerStatus = "unavailable"
+          }
+
+          const popupContent = `
+          <ion-card class="popup-ion-card">
+            <ion-card-header class="popup-ion-card-header">
+              <ion-card-title color="primary">${suburbInfo?.SP_NAME}</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <h4><ion-icon src="assets/lightbulb.svg"></ion-icon><ion-text>Power Status: <strong>${suburbInfo?.PowerStatus}</strong></ion-text></h4>
+              <h4><ion-icon src="assets/schedule.svg"></ion-icon><ion-text> Schedule: <strong>12:00 - 14:00</strong></ion-text></h4>
+            </ion-card-content>
+          </ion-card>
+          `;
+          // Create a new popup and set its HTML content
+          this.popup = new mapboxgl.Popup()
+            .setLngLat(e.lngLat)
+            .setHTML(popupContent)
+            .addTo(this.map);
+
         }
       });
     });
@@ -140,6 +174,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   }
 
   onSearchInput(event: any) {
+    this.closePopup();
+
     if (event.target.value.length > 0) {
       this.showResultsList = true;
       const query = event.target.value;
@@ -167,7 +203,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
               ...feature,
             };
           });
-          console.log(this.searchResults);
+          //console.log("searchResults: ",this.searchResults);
         })
         .catch(error => console.error(error));
     }
@@ -175,17 +211,17 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
 
   async getRoute(selectedResult: any) {
+    this.updateBreakpoint();
+    this.emitGetDirections();
     this.gettingRoute = true;
-    console.log(this.searchBar);
+    this.closePopup();
+
     this.searchBar.value = `${selectedResult.place_name}`;
 
     this.showResultsList = false;
     let coords: any;
-
-    // console.log(selectedResult);
     console.log(selectedResult);
-    console.log(this.longitude);
-    console.log(this.latitude);
+
     let query: any;
     if (Array.isArray(selectedResult)) {
       query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult[0]},${selectedResult[1]}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
@@ -302,6 +338,11 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
     this.tripDuration = Math.floor(data.duration / 60);
     this.tripDistance = Math.floor(data.distance / 1000);
+    
+    //CALCULATE ETA 
+    this.tripETA = new Date();
+    this.calculateETA();
+    
 
     // if the route already exists on the map, we'll reset it using setData
     if (this.map.getSource('route')) {
@@ -360,10 +401,11 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     this.myModal.dismiss();
     this.startTrip = false;
     this.showResultsList = false;
-    this.myModal.setCurrentBreakpoint(0.2);
     this.tripDuration = 0;
     this.tripDistance = 0;
     this.gettingRoute = false;
+    this.emitCancelDirections();
+    this.updateBreakpoint();
 
     if (this.map.getSource('route')) {
       this.map.removeLayer('route');
@@ -389,24 +431,44 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       zoom: 15, // Adjust the zoom level
       speed: 1.2, // Adjust the speed of the animation
     });
+    this.closePopup();
   }
   @ViewChild('myModal') myModal: any; // Reference to the ion-modal element
   modalResult: any; // To store the selected result data
 
   openModal(result: any) {
+    // if (!this.myModal) {
     this.modalResult = result;
     this.myModal.present();
+  }
+
+  calculateETA() {
+    let tripETAHours: number = 0;
+    let tripETAMinutes: number = 0;
+
+    if(this.tripDuration >= 60) {
+      tripETAHours = Math.floor(this.tripDuration / 60);
+      tripETAMinutes = this.tripDuration - (tripETAHours * 60);
+    } else {
+      tripETAMinutes = this.tripDuration;
+    }
+
+    this.tripETA.setHours(this.tripETA.getHours() + tripETAHours);
+    this.tripETA.setMinutes(this.tripETA.getMinutes() + tripETAMinutes);
+    // (date.getMinutes()<10?'0':'') + date.getMinutes()
+    this.tripETAH = (this.tripETA.getHours() < 10 ? '0' : '') + this.tripETA.getHours();
+    this.tripETAM = (this.tripETA.getMinutes() < 10 ? '0' : '') + this.tripETA.getMinutes();
   }
 
   getIconForInstruction(instruction: string) {
     // Regular expressions to match keywords related to arrows
     const arrowKeywords = [
-      { keyword: /(north|toward|straight|south)/i, icon: 'assets/arrow_upwards.svg' },
+      { keyword: /(north|toward|straight|south|continue)/i, icon: 'assets/arrow_upwards.svg' },
       { keyword: /(west|left)/i, icon: 'assets/turn_left.svg' },
       { keyword: /(east|right)/i, icon: 'assets/turn_right.svg' },
       { keyword: /(back| u-turn)/i, icon: 'assets/u_turn.svg' },
       { keyword: /(roundabout)/i, icon: 'assets/roundabout.svg' },
-      { keyword: /(exit)/i, icon: 'assets/exit.svg' }
+      { keyword: /(exit | ramp)/i, icon: 'assets/exit.svg' }
     ];
 
     // Search for arrow keywords in the instruction text
@@ -420,13 +482,10 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     return 'information-circle-outline';
   }
 
-  currentBreakpoint = 0.2;
-
   beginTrip() {
     this.startTrip = true;
-    this.currentBreakpoint = 0.1
-    this.myModal.setCurrentBreakpoint(0.1);
     this.centerOnStartPoint();
+    this.updateBreakpoint();
 
     if (this.userMarker) {
       this.userMarker.remove();
@@ -444,17 +503,74 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     }
 
     // Create a new marker at the user's location
-    this.userMarker = new mapboxgl.Marker({ color: '#4287f5' }) // Customize the pin color if desired
+    this.userMarker = new mapboxgl.Marker({ color: '#32cd32' }) // Customize the pin color if desired
       .setLngLat([this.longitude, this.latitude]) // Set the marker's position to the user's location
       .addTo(this.map); // Add the marker to the map
   }
 
-  screenWidth: number = 0;
-
-  @HostListener('window:resize', ['$event'])
-  onResize(event: any) {
-    this.screenWidth = event.target.innerWidth;
-    console.log("FFFFFFFFFF" + this.screenWidth);
+  onModalDismiss() {
+    this.onSearchBarClear();
   }
+
+  emitCancelDirections() {
+    this.mapSuburbsService.gettingDirections.next(false);
+    this.map.resize();
+  }
+
+  async emitGetDirections() {
+    this.mapSuburbsService.gettingDirections.next(true);
+    await this.delay(500);
+    this.map.resize();
+  }
+
+  @HostListener('window:resize')
+  onResize() {
+    this.updateBreakpoint();
+  }
+
+  updateBreakpoint() {
+    this.screenWidth = window.innerWidth;
+    this.screenHeight = window.innerHeight;
+    const isIphone = /iPhone/i.test(navigator.userAgent); // iphone screen sizing is different
+
+    if (this.startTrip == false) {
+      if (this.screenHeight > 840 && !isIphone) {
+        this.currentBreakpoint = 0.2;
+      }
+      else if ((this.screenHeight > 770 && this.screenHeight <= 840) || isIphone && this.screenHeight > 770) {
+        this.currentBreakpoint = 0.22;
+      }
+      else if (this.screenHeight > 735 && this.screenHeight <= 870 && !isIphone) {
+        this.currentBreakpoint = 0.23;
+      }
+      else if (this.screenHeight > 700 && this.screenHeight <= 770 && !isIphone) {
+        this.currentBreakpoint = 0.24;
+      }
+      else if (this.screenHeight <= 700 || isIphone) {
+        this.currentBreakpoint = 0.28;
+      }
+    }
+    else {
+      if (this.screenHeight > 800) {
+        this.currentBreakpoint = 0.1;
+      }
+      else if (this.screenHeight > 700 && this.screenHeight <= 800) {
+        this.currentBreakpoint = 0.12;
+      }
+      else if (this.screenHeight <= 700) {
+        this.currentBreakpoint = 0.14;
+      }
+    }
+    if (this.myModal) // Check if myModal is defined before calling setCurrentBreakpoint
+      this.myModal.setCurrentBreakpoint(this.currentBreakpoint);
+  }
+
+  closePopup() {
+    if (this.popup) {
+      this.popup.remove();
+    }
+  }
+
+  
 }
 

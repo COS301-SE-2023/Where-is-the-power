@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Geolocation } from '@capacitor/geolocation'
+import { Geolocation } from '@capacitor/geolocation';
 import { BehaviorSubject } from 'rxjs';
+import { AlertController } from '@ionic/angular';
 
 @Injectable({
   providedIn: 'root'
@@ -10,8 +11,8 @@ export class UserLocationService {
   longitude: number = 0;
   isLocationAvailable: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
-  constructor() {
-  }
+  constructor(private alertController: AlertController) { }
+
 
   getLatitude() {
     return this.latitude;
@@ -22,9 +23,34 @@ export class UserLocationService {
   }
 
   getUserLocation = async () => {
-    const coordinates = await Geolocation.getCurrentPosition();
-    this.isLocationAvailable.next(true);
-    this.latitude = coordinates.coords.latitude;
-    this.longitude = coordinates.coords.longitude;
+    try {
+      const coordinates = await Geolocation.getCurrentPosition();
+
+      this.isLocationAvailable.next(true);
+      this.latitude = coordinates.coords.latitude;
+      this.longitude = coordinates.coords.longitude;
+    } 
+    catch (error) 
+    {
+      console.error("Error getting user location:", error);
+      this.showLocationErrorAlert();
+    }
   };
+
+  async showLocationErrorAlert() {
+    const alert = await this.alertController.create({
+      header: 'Device Location',
+      message: 'Please enable location access to use this app.',
+      buttons: [
+        {
+          text: 'OK',
+          handler: () => {
+            // Do something when the user dismisses the alert
+          }
+        }
+      ]
+    });
+  
+    await alert.present();
+  }
 }
