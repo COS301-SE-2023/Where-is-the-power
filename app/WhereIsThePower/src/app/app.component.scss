@@ -1,10 +1,14 @@
 .active-link {
-    --ion-text-color: var(--ion-color-primary);
-    font-weight: bold;
+  --ion-text-color: var(--ion-color-primary);
+  font-weight: bold;
 }
 
 ion-split-pane {
-    --side-min-width: 100px;
-    --side-max-width: 350px;
-    --side-width: 350px;
-  }
+  --side-min-width: 100px;
+  --side-max-width: 350px;
+  --side-width: 350px;
+}
+
+.active-link ion-icon {
+  color: var(--ion-color-primary);
+}
