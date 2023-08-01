@@ -6,9 +6,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, Document};
-use chrono::{
-    format::Fixed, DateTime, Datelike, Duration, FixedOffset, Local, NaiveDateTime, Timelike, Utc,
-};
+use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, NaiveDateTime, Timelike, Utc};
 use lazy_static::__Deref;
 use log::warn;
 use macros::Entity;
@@ -127,6 +125,30 @@ pub async fn fetch_suburb_stats<'a>(
     }
 }
 
+#[utoipa::path(post, tag = "Schedule Data", path = "/api/fetchScheduleData", request_body = SuburbStatsRequest)]
+#[post("/fetchScheduleData", format = "application/json", data = "<request>")]
+pub async fn fetch_schedule<'a>(
+    db: &State<Option<Client>>,
+    request: Json<SuburbStatsRequest>,
+) -> ApiResponse<'a, PredictiveSuburbStatsResponse> {
+    let oid = &request.suburb_id;
+    let connection = db.as_ref().unwrap().database("production");
+    let query = doc! {"geometry" : {"$in" : [oid]}};
+    let suburb: SuburbEntity = match connection
+        .collection("suburbs")
+        .find_one(query, None)
+        .await
+        .unwrap()
+    {
+        Some(result) => result,
+        None => return ApiError::ServerError("Document not found").into(),
+    };
+    let db_functions = DBFunctions {};
+    match suburb.build_schedule(&connection, &db_functions).await {
+        Ok(data) => return ApiResponse::Ok(data),
+        Err(err) => return err.into(),
+    }
+}
 #[derive(Debug, Serialize, Deserialize, Clone, Entity)]
 #[serde(rename_all = "camelCase")]
 #[collection_name = "stage_log"]
@@ -381,8 +403,8 @@ pub struct PredictiveSuburbStatsResponse {
 
 #[derive(Serialize, Debug)]
 pub struct TimeSlot {
-    start: i32,
-    end: i32,
+    start: i64,
+    end: i64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -583,9 +605,11 @@ fn schedule_time_bound_validation(
     schedule: &TimeScheduleEntity,
     time_to_search: &DateTime<FixedOffset>,
 ) -> bool {
+    let mut maybe = false;
     if schedule.start_hour <= time_to_search.hour() as i32 {
         if schedule.stop_hour >= time_to_search.hour() as i32 {
-            if schedule.stop_minute >= time_to_search.minute() as i32
+            maybe = true;
+            if schedule.stop_minute <= time_to_search.minute() as i32
                 && schedule.stop_hour == time_to_search.hour() as i32
             {
                 return false;
@@ -597,7 +621,7 @@ fn schedule_time_bound_validation(
             }
         }
     }
-    return true;
+    return maybe;
 }
 // db functions end
 
@@ -725,14 +749,16 @@ impl MunicipalityEntity {
 }
 
 impl SuburbEntity {
-    pub async fn get_predictave_stats(
+    pub async fn build_schedule(
         self,
         connection: &Database,
         db_functions: &dyn DBFunctionsTrait,
     ) -> Result<PredictiveSuburbStatsResponse, ApiError<'static>> {
-        let mut time_now = get_date_time(None);
+        let time_now = get_date_time(None).with_second(0).unwrap();
+        let mut response: Vec<TimeSlot> = Vec::new();
         let day_in_future =
             get_date_time(Some((Local::now() + chrono::Duration::days(1)).timestamp()));
+
         let (group, mut all_stages, schedule) = match self
             .collect_information(&time_now.timestamp(), connection, db_functions)
             .await
@@ -740,18 +766,48 @@ impl SuburbEntity {
             Ok(data) => data,
             Err(err) => return Err(err),
         };
-        while time_now < day_in_future {
-            let day = time_now.day() as i32;
+
+        let mut time_to_search = time_now;
+        while time_to_search < day_in_future {
+            let day = time_to_search.day() as i32;
             let time_slots: Vec<TimeScheduleEntity> = schedule
                 .clone()
                 .into_iter()
                 .filter(|time| {
                     // check what time it falls under
-                    schedule_time_bound_validation(time, &time_now)
+                    schedule_time_bound_validation(time, &time_to_search)
                 })
                 .collect();
+            if all_stages.len() >= 2 {
+                if all_stages[1].start_time <= time_to_search.timestamp() {
+                    all_stages.remove(0);
+                }
+            }
+            if let Some(slot) = self.add_time_checker(&all_stages[0], &time_slots, &group, &day) {
+                let mut end_time = time_to_search
+                    .with_hour(slot.stop_hour as u32)
+                    .unwrap()
+                    .with_minute(slot.stop_minute as u32)
+                    .unwrap();
+                if end_time < time_to_search {
+                    end_time = end_time
+                        .checked_add_signed(chrono::Duration::days(1))
+                        .unwrap();
+                }
+                response.push(TimeSlot {
+                    start: time_to_search.timestamp(),
+                    end: end_time.timestamp(),
+                });
+                time_to_search = end_time;
+            } else {
+                time_to_search += chrono::Duration::minutes(30);
+                println!("{:?}",time_to_search.hour());
+                println!("{:?}",time_to_search.minute());
+            }
         }
-        todo!()
+        return Ok(PredictiveSuburbStatsResponse {
+            times_off: response,
+        });
     }
     pub async fn get_total_time_down_stats(
         self,
@@ -801,7 +857,7 @@ impl SuburbEntity {
             // check if there exists a timeslot during which we have loadshedding, if there is, add time
             let add_time = self.add_time_checker(&all_stages[0], &time_slots, &group, &day);
 
-            if add_time {
+            if let Some(_) = add_time {
                 down_time += 30;
                 let day = daily_stats
                     .entry(time_to_search.weekday().to_string())
@@ -825,14 +881,13 @@ impl SuburbEntity {
         })
     }
 
-    fn add_time_checker(
+    fn add_time_checker<'a>(
         &self,
         stage: &LoadSheddingStage,
-        time_slots: &Vec<TimeScheduleEntity>,
+        time_slots: &'a Vec<TimeScheduleEntity>,
         group: &GroupEntity,
         day: &i32,
-    ) -> bool {
-        let mut add_time = false;
+    ) -> Option<&'a TimeScheduleEntity> {
         for time_slot in time_slots {
             let mut count: usize = 0;
             while (count as i32) < stage.stage {
@@ -840,16 +895,12 @@ impl SuburbEntity {
                     == group.id.unwrap()
                 {
                     // adding time after the loop
-                    add_time = true;
-                    break;
+                    return Some(time_slot);
                 }
                 count = count + 1;
             }
-            if add_time {
-                return true;
-            }
         }
-        return false;
+        None
     }
     // returns the group accociated with this suburb,
     //  the stage_logs from and greater than a given time,
