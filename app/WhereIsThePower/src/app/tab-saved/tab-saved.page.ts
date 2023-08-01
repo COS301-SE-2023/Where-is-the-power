@@ -54,9 +54,20 @@ export class TabSavedPage {
 
   savePlace(result: any) {
     // TODO: REFACTOR
-    console.log("savePlace ",result);
+    let newPlace: Place = {
+      "address": result.place_name,
+      "latitude": result.center[1],
+      "longitude": result.center[0],
+      "mapboxId": result.properties.mapbox_id,
+      "name":  result.text
+  }
+  
+    console.log("newPlace ",newPlace);
+
     this.sucessToast('Succesfully added place');
-    //this.savedPlaceService.addSavedPlace(result);
+    this.savedPlaceService.addSavedPlace(newPlace).subscribe(data => {
+      console.log("savedPlaceService ",data);
+    });
   }
 
   removeSavedPlace(place: any) {
