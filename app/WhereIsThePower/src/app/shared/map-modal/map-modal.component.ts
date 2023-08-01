@@ -48,12 +48,15 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   public currentBreakpoint = 0.2;
   screenWidth: number = 0;
   screenHeight: number = 0;
+  popup: any = null;
 
   ngOnInit() { }
 
   ngAfterViewInit() {
     this.mapSuburbsService.getSuburbData().subscribe(async (data: any) => {
       console.log(data.result.mapPolygons[0]);
+      console.log("Data: ", data);
+
       this.dat = data.result.mapPolygons[0];
       // Render the Map
       (mapboxgl as any).accessToken = environment.MapboxApiKey;
@@ -131,8 +134,20 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         //console.log(e);
 
         if (clickedFeature) {
-          // Handle the click event here, for example, you can log the properties of the clicked feature
-          console.log(clickedFeature.properties);
+
+          // Get the properties of the clicked feature (suburb information)
+          const suburbInfo = clickedFeature.properties;
+
+          // Create a new popup and set its HTML content
+          this.popup = new mapboxgl.Popup()
+            .setLngLat(e.lngLat)
+            .setHTML(
+              `<h3 color="primary">${suburbInfo.SP_NAME}</h3>` + // Replace 'name' with the actual property name for suburb name
+              `<p>PowerStatus: ${suburbInfo.PowerStatus}</p>` // Replace 'population' with the actual property name for population
+              // Add other suburb information properties as needed
+            )
+            .addTo(this.map);
+
         }
       });
     });
