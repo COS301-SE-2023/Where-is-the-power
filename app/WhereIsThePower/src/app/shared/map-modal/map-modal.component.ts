@@ -60,8 +60,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       this.map = await new mapboxgl.Map({
         container: 'map', // container ID
         style: 'mapbox://styles/mapbox/streets-v12', // style URL
-        center: [28.261181, -25.771179], // starting position [lng, lat]
-        zoom: 12 // starting zoom
+        center: [28.2, -25.754995], // starting position [lng, lat]
+        zoom: 11 // starting zoom
       });
       this.mapLoaded = true; // map has finished rendering
 
