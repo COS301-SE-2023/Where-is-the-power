@@ -766,12 +766,16 @@ impl SuburbEntity {
                 return Err(err);
             }
         };
+        // queries are over
 
         // Time
         let mut time_to_search: DateTime<FixedOffset> = get_date_time(Some(one_week_ago));
         time_to_search = time_to_search.with_minute(0).unwrap();
         let mut down_time = 0;
         let mut daily_stats: HashMap<String, TotalTime> = HashMap::new();
+
+
+        // main logic loop
         while time_to_search <= time_now {
             let hour = time_to_search.hour() as i32;
             let minute = time_to_search.minute() as i32;
@@ -801,6 +805,8 @@ impl SuburbEntity {
             }
 
             let mut add_time = false;
+
+            // check if there exists a timeslot during which we have loadshedding, if there is, add time
             for time_slot in time_slots {
                 let mut count: usize = 0;
                 let stage = &all_stages[0];
@@ -808,6 +814,7 @@ impl SuburbEntity {
                     if time_slot.stages.get(count).unwrap().groups[(day - 1) as usize]
                         == group.id.unwrap()
                     {
+                        // adding time after the loop
                         add_time = true;
                         break;
                     }
@@ -1026,6 +1033,7 @@ impl<'de> Deserialize<'de> for SASTDateTime {
         let s = String::deserialize(deserializer)?;
         let dt = NaiveDateTime::parse_from_str(&s, FORMAT).unwrap();
         let sast = DateTime::<Utc>::from_utc(dt, Utc).with_timezone(&sast);
+        println!("{:?}",sast);
         Ok(SASTDateTime(sast))
         // DateTime::<FixedOffset>::from_str(&s).map_err(serde::de::Error::custom)
     }
