@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Geolocation, GeolocationOptions } from '@capacitor/geolocation';
+import { Geolocation } from '@capacitor/geolocation';
 import { BehaviorSubject } from 'rxjs';
 import { AlertController } from '@ionic/angular';
 
@@ -11,7 +11,7 @@ export class UserLocationService {
   longitude: number = 0;
   isLocationAvailable: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
-  constructor(private geolocation: Geolocation, private alertController: AlertController) { }
+  constructor(private alertController: AlertController) { }
 
 
   getLatitude() {
