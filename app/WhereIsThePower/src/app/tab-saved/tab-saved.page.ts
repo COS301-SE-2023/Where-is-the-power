@@ -54,8 +54,9 @@ export class TabSavedPage {
 
   savePlace(result: any) {
     // TODO: REFACTOR
-    console.log(result);
+    console.log("savePlace ",result);
     this.sucessToast('Succesfully added place');
+    //this.savedPlaceService.addSavedPlace(result);
   }
 
   removeSavedPlace(place: any) {
