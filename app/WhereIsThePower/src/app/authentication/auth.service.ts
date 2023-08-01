@@ -6,6 +6,7 @@ import { Preferences } from '@capacitor/preferences';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { HttpHeaders } from '@angular/common/http';
+import { Place } from '../tab-saved/place';
 
 @Injectable({
   providedIn: 'root'
@@ -49,7 +50,7 @@ export class AuthService {
       ));
   }
 
-  addSavedPlace() {
+  addSavedPlace(place: Place) {
     console.log("add saved place");
     console.log(this.place);
     console.log(this.headers);

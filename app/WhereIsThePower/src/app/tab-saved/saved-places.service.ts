@@ -19,8 +19,7 @@ export class SavedPlacesService {
   place = new BehaviorSubject<Place[] | null>(null);
   poool: any;
 
-  async getPlaces() {
-    this.poool = await this.httpClient.get(`${this.apiUrl}user/savedPlaces`, { headers: this.auth.headers });
-    console.log(this.poool);
+  getPlaces() {
+    return this.httpClient.get(`${this.apiUrl}user/savedPlaces`, { headers: this.auth.headers });
   }
 }

@@ -6,6 +6,8 @@ import { empty } from 'rxjs';
 import { AuthService } from '../authentication/auth.service';
 import { Router } from '@angular/router';
 import { SavedPlacesService } from './saved-places.service';
+import { Place } from './place';
+import { ToastController } from '@ionic/angular';
 
 @Component({
   selector: 'app-tab-saved',
@@ -15,7 +17,7 @@ import { SavedPlacesService } from './saved-places.service';
 export class TabSavedPage {
   latitude: any;
   places: any[] = [];
-  savedPlaces: any[] = [];
+  savedPlaces: Place[] = [];
   isLoggedIn: boolean = false;
   showResultsList: boolean = false;
   searchResults: any[] = [];
@@ -27,7 +29,10 @@ export class TabSavedPage {
     private userLocationService: UserLocationService,
     private http: HttpClient,
     private authService: AuthService,
-    private savedPlaceService: SavedPlacesService) { }
+    private savedPlaceService: SavedPlacesService,
+    private toastController: ToastController) {
+  
+    }
 
   ngOnInit() {
     this.userLocationService.getUserLocation();
@@ -47,41 +52,10 @@ export class TabSavedPage {
     this.isLoggedIn = false;
   }
 
-  input: string | undefined;
-
-  updateResults() {
-    if (this.input !== '') {
-      this.http.get('https://api.mapbox.com/search/searchbox/v1/suggest?q=' + this.input + '&access_token=' + environment.MapboxApiKey + '&session_token&country=za&origin=25,-25').subscribe((data: any) => {
-        console.log(data);
-        this.places = [];
-
-        data.suggestions.forEach((searchResult: any) => {
-          let obj = {
-            type: this.getFeatureType(searchResult.feature_type),
-            name: searchResult.name,
-            feature: searchResult.feature_type,
-            address: searchResult.full_address,
-            id: searchResult.mapbox_id
-          };
-          this.places.push(obj);
-
-          console.log(this.places);
-        });
-      })
-    } else {
-      this.places = [];
-    }
-  }
-
-  addSavedPlace(place: any) {
-    this.savedPlaces.push(place);
-    this.places = this.places.filter((sPlace: any) => {
-      if (sPlace.id !== place.id) return sPlace;
-    });
-    console.log(this.savedPlaces);
-    this.authService.addSavedPlace().subscribe((data: any) => {
-      console.log(data);
-    });
+  savePlace(result: any) {
+    // TODO: REFACTOR
+    console.log(result);
+    this.sucessToast('Succesfully added place');
   }
 
   removeSavedPlace(place: any) {
@@ -112,24 +86,13 @@ export class TabSavedPage {
     return false;
   }
 
-  c() {
-    console.log()
+  async c() {
+    // this.authService.addSavedPlace();
+    this.savedPlaceService.getPlaces().subscribe(data =>{
+      console.log(data);
+
+    });
   }
-
-
-//   export enum FeatureTypes {
-//     Country = "globe-outline",
-//     Region = "map-outline",
-//     Postcode = "map-outline", 
-//     District = "map-outline",
-//     Place = "business-outline",
-//     Neighbourhood = "location-outline",
-//     Locality = "location-outline",
-//     Address = "home-outline",
-//     City = "business-outline",
-//     Street = "car-outline",
-//     Default = "ellipse-outline"
-// }
 
   getFeatureType(instruction: string) {
     // Regular expressions to match keywords related to arrows
@@ -197,6 +160,16 @@ export class TabSavedPage {
     this.showResultsList = false;
   }
 
+
+  async sucessToast(message: string) {
+    const toast = await this.toastController.create({
+      message: message,
+      color: 'success',
+      duration: 500,
+      position: 'bottom',
+    });
+    toast.present();
+  }
 
   // TODO send Boolean to mapmodal
 
