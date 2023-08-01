@@ -66,10 +66,10 @@
               <ion-col size="4">
                 <ion-icon name="icon-name" size="large" src="assets/schedule.svg" color="primary"></ion-icon>
                 <div><ion-text color="medium"><small>ETA</small></ion-text></div>
-                <h4>{{tripETA.getHours()}}:{{tripETA.getMinutes()}}</h4>
+                <h4>{{tripETAH}}:{{tripETAM}}</h4>
               </ion-col>
             </ion-row>
-            <!-- (date.getMinutes()<10?'0':'') + date.getMinutes() -->
+            
             <ion-button expand="block" class="ion-margin-top" (click)="beginTrip()"style="text-transform: none;">
               <ion-icon slot="start" name="navigate-circle-outline"></ion-icon>
               <ion-text>Begin Trip</ion-text>

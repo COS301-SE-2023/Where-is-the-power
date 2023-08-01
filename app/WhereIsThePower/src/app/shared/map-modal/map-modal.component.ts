@@ -50,8 +50,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   screenHeight: number = 0;
   popup: any = null;
   tripETA: Date = new Date();
-  tripETAH: number = 0;
-  tripETAM: number = 0;
+  tripETAH: string = '';
+  tripETAM: string = '';
 
   ngOnInit() { }
 
@@ -455,7 +455,9 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
     this.tripETA.setHours(this.tripETA.getHours() + tripETAHours);
     this.tripETA.setMinutes(this.tripETA.getMinutes() + tripETAMinutes);
-    
+    // (date.getMinutes()<10?'0':'') + date.getMinutes()
+    this.tripETAH = (this.tripETA.getHours() < 10 ? '0' : '') + this.tripETA.getHours();
+    this.tripETAM = (this.tripETA.getMinutes() < 10 ? '0' : '') + this.tripETA.getMinutes();
   }
 
   getIconForInstruction(instruction: string) {
