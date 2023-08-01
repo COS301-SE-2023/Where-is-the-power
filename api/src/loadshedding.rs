@@ -116,7 +116,7 @@ pub async fn fetch_suburb_stats<'a>(
         None => return ApiError::ServerError("Document not found").into(),
     };
     let db_functions = DBFunctions {};
-    match suburb.get_stats(&connection, &db_functions).await {
+    match suburb.get_total_time_down_stats(&connection, &db_functions).await {
         Ok(data) => return ApiResponse::Ok(data),
         Err(err) => return err.into(),
     }
@@ -366,6 +366,18 @@ pub struct SuburbStatsResponse {
     pub total_time: TotalTime,
     pub per_day_times: HashMap<String, TotalTime>,
     pub suburb: SuburbEntity,
+}
+
+#[derive(Serialize, Debug, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct PredictiveSuburbStatsResponse {
+    times_off: Vec<TimeSlot>
+}
+
+#[derive(Serialize,Debug)]
+pub struct TimeSlot {
+    start: i32,
+    end: i32
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -701,72 +713,28 @@ impl MunicipalityEntity {
 }
 
 impl SuburbEntity {
-    pub async fn get_stats(
+    pub async fn get_predictave_stats(
+        self,
+        connection: &Database,
+        db_functions: &dyn DBFunctionsTrait,
+    ) -> Result<PredictiveSuburbStatsResponse, ApiError<'static>> {
+        let time_now = Local::now();
+        let one_week_ago = (Local::now() - chrono::Duration::weeks(1)).timestamp();
+        todo!()
+    }
+    pub async fn get_total_time_down_stats(
         self,
         connection: &Database,
         db_functions: &dyn DBFunctionsTrait,
     ) -> Result<SuburbStatsResponse, ApiError<'static>> {
         // queries
-        // get the relevant group
-        let query = doc! {
-            "suburbs" : {
-                "$in" : [self.id.unwrap()]
-            }
-        };
-        let group: GroupEntity = match db_functions.collect_one_group(query, Some(connection), None).await {
-            Ok(group) => group,
-            Err(err) => {
-                return Err(err);
-            }
-        };
-
-        // get all the stage changes from the past week
+        // get the relevant data
         let time_now = Local::now();
         let one_week_ago = (Local::now() - chrono::Duration::weeks(1)).timestamp();
-        let query = doc! {
-            "startTime": {
-                "$gte": one_week_ago
-            }
+        let (group,mut all_stages,schedule) = match self.collect_information(&one_week_ago, connection, db_functions).await {
+            Ok(data) => data,
+            Err(err) => return Err(err)
         };
-        let find_options = FindOptions::builder().sort(doc! { "startTime": 1 }).build();
-        let mut all_stages  = match db_functions.collect_stage_logs(query, Some(connection), Some(find_options)).await {
-            Ok(item) => item,
-            Err(err) => {
-                return Err(err);
-            }
-        };
-        all_stages.reverse();
-
-        // find first timestamp after one week ago
-        let query = doc! {
-            "startTime": {
-                "$lte": one_week_ago
-            }
-        };
-        let find_options = FindOptions::builder()
-            .sort(doc! { "startTime": -1 })
-            .limit(1)
-            .build();
-        let first_stage_change = match db_functions.collect_one_stage_log(query, Some(connection), Some(find_options)).await
-        {
-            Ok(cursor) => cursor,
-            Err(err) => {
-                return Err(err);
-            }
-        };
-        all_stages.push(first_stage_change);
-
-        // get the timeschedules
-        let query = doc! {
-            "municipality" : self.municipality,
-        };
-        let schedule = match db_functions.collect_schedules(query, Some(connection), None).await {
-            Ok(item) => item,
-            Err(err) => {
-                return Err(err);
-            }
-        };
-        // queries are over
 
         // Time
         let mut time_to_search: DateTime<FixedOffset> = get_date_time(Some(one_week_ago));
@@ -846,6 +814,73 @@ impl SuburbEntity {
             per_day_times: daily_stats,
             suburb: self,
         })
+    }
+    // returns the group accociated with this suburb,
+    //  the stage_logs from and greater than a given time,
+    //  and the timeschedules for the municpality of the suburb
+    async fn collect_information(
+        &self,
+        from_time: &i64,
+        connection: &Database,
+        db_functions: &dyn DBFunctionsTrait,
+    ) -> Result<(GroupEntity, Vec<LoadSheddingStage>, Vec<TimeScheduleEntity>),ApiError<'static>> {
+        let query = doc! {
+            "suburbs" : {
+                "$in" : [self.id.unwrap()]
+            }
+        };
+        let group: GroupEntity = match db_functions.collect_one_group(query, Some(connection), None).await {
+            Ok(group) => group,
+            Err(err) => {
+                return Err(err);
+            }
+        };
+
+        // get all the stage changes from the past week
+        let query = doc! {
+            "startTime": {
+                "$gte": from_time
+            }
+        };
+        let find_options = FindOptions::builder().sort(doc! { "startTime": 1 }).build();
+        let mut all_stages  = match db_functions.collect_stage_logs(query, Some(connection), Some(find_options)).await {
+            Ok(item) => item,
+            Err(err) => {
+                return Err(err);
+            }
+        };
+        all_stages.reverse();
+
+        // find first timestamp after one week ago
+        let query = doc! {
+            "startTime": {
+                "$lte": from_time
+            }
+        };
+        let find_options = FindOptions::builder()
+            .sort(doc! { "startTime": -1 })
+            .limit(1)
+            .build();
+        let first_stage_change = match db_functions.collect_one_stage_log(query, Some(connection), Some(find_options)).await
+        {
+            Ok(cursor) => cursor,
+            Err(err) => {
+                return Err(err);
+            }
+        };
+        all_stages.push(first_stage_change);
+
+        // get the timeschedules
+        let query = doc! {
+            "municipality" : self.municipality,
+        };
+        let schedule = match db_functions.collect_schedules(query, Some(connection), None).await {
+            Ok(item) => item,
+            Err(err) => {
+                return Err(err);
+            }
+        };
+        Ok((group,all_stages,schedule))
     }
 }
 
