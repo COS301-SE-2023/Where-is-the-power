@@ -142,12 +142,13 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           }
 
           const popupContent = `
-          <ion-card>
-            <ion-card-header>
+          <ion-card class="popup-ion-card">
+            <ion-card-header class="popup-ion-card-header">
               <ion-card-title color="primary">${suburbInfo?.SP_NAME}</ion-card-title>
             </ion-card-header>
             <ion-card-content>
-              <h4>Power Status: <strong>${suburbInfo?.PowerStatus}</strong></h4>
+              <h4><ion-icon src="assets/lightbulb.svg" class="ion-padding-right"></ion-icon> Power Status: <strong>${suburbInfo?.PowerStatus}</strong></h4>
+              <h4><ion-icon src="assets/schedule.svg" class="ion-padding-right"></ion-icon> Schedule: <strong>12:00 - 14:00</strong></h4>
             </ion-card-content>
           </ion-card>
           `;

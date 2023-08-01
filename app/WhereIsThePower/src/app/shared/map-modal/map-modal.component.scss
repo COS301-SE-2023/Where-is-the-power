@@ -17,14 +17,13 @@ ion-searchbar {
   padding-bottom: 0.6px;
 }
 
+h4{
+  margin: 0px;
+}
+
 ion-list {
   margin-left: 8px;
   margin-right: 8px;
-}
-
-h4 {
-  margin: 0;
-  padding: 0;
 }
 
 /* sizeMd */
@@ -44,7 +43,7 @@ h4 {
 :host ::ng-deep .mapboxgl-popup-content {
   font-family: Arial, sans-serif;
   background-color: #fff;
-  border-radius: 4px;
+  border-radius: 16px;
   padding: 0px;
   margin: 0px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
@@ -52,13 +51,13 @@ h4 {
 
 :host ::ng-deep .mapboxgl-popup-content h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 24px;
   font-weight: bold;
 }
 
 :host ::ng-deep .mapboxgl-popup-content p {
   margin: 0;
-  font-size: 14px;
+  font-size: 16px;
   color: #555;
 }
 
@@ -72,11 +71,12 @@ h4 {
   color: #000;
 }
 
-:host ::ng-deep ion-card {
-  margin: 1px;
+:host ::ng-deep .popup-ion-card {
+  border-radius: 16px;
+  margin: 0px;
   box-shadow: none;
 }
 
-:host ::ng-deep ion-card-header {
+:host ::ng-deep .popup-ion-card-header {
   padding-bottom: 8px;
 }
