@@ -1,5 +1,6 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Chart, registerables } from 'chart.js';
+import { StatisticsService } from './statistics.service';
 Chart.register(...registerables)
 
 @Component({
@@ -13,22 +14,16 @@ export class TabStatisticsPage implements OnInit {
 
   doughnutChart: any = null;
   barChart: any = null;
-  constructor() { }
+  constructor(private statisticsService: StatisticsService) { }
   ngOnInit() {
-    // Data for Doughnut Chart (Uptime/Downtime for Today)
-    const doughnutData = {
-      labels: ['Uptime', 'Downtime'],
-      datasets: [{
-        label: 'Loadshedding',
-        data: [20, 4], // Uptime vs Downtime
-        borderWidth: 0,
-        backgroundColor: [
-          '#007A4D',
-          '#DE3831',
-        ],
-      }]
-    };
-    this.populateDoughnutChart(doughnutData);
+    const suburbId = 17959;
+    this.statisticsService.getSuburbData(suburbId).subscribe((data) => {
+      console.log("statisticsService: ",data);
+      this. processDoughnutChart(data);
+    }, 
+    (error) => {
+        console.error(error);
+    });
 
 
     // Data for Bar Chart (Uptime/Downtime for the week)
@@ -52,6 +47,35 @@ export class TabStatisticsPage implements OnInit {
     };
 
     this.populateBarChart(barData);
+  }
+
+  processDoughnutChart(data: any)
+  {
+     // Get today's day name (e.g., "Mon", "Tue", etc.)
+     const today = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+
+      // Get the on and off values for today's day from the data
+      const todayOnValue = data.result.perDayTimes[today]?.on || 0;
+      const todayOffValue = data.result.perDayTimes[today]?.off || 0;
+  
+      // Convert total uptime and downtime to hours
+        const uptimeToday = Math.floor(todayOnValue / 60);
+        const downtimeToday = Math.floor(todayOffValue / 60);
+
+      // Data for Doughnut Chart (Uptime/Downtime for Today)
+      const doughnutData = {
+        labels: ['Uptime', 'Downtime'],
+        datasets: [{
+          label: 'Loadshedding',
+          data: [uptimeToday, downtimeToday], // Uptime vs Downtime
+          borderWidth: 0,
+          backgroundColor: [
+            '#007A4D',
+            '#DE3831',
+          ],
+        }]
+      };
+      this.populateDoughnutChart(doughnutData);
   }
 
   populateDoughnutChart(doughnutData: any) {
@@ -116,6 +140,5 @@ export class TabStatisticsPage implements OnInit {
     this.clearBarChart();
     this.clearDoughnutChart();
   }
-
 }
 
