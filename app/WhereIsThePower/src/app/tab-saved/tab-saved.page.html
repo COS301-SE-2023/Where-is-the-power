@@ -33,7 +33,7 @@
       <ion-row class="justify-content-center">
         <ion-col class="searchbar-container">
           <ion-searchbar animated="true" placeholder="Search for a place..." (ionInput)="onSearchInput($event)" (keyup.enter)="onSearchInput($event)" (ionClear)="onSearchBarClear()" (ionFocus)="onSearchBarFocus()" #searchBar></ion-searchbar>
-          <ion-list *ngIf="queryLength > 0 && showResultsList">
+          <ion-list *ngIf="showResultsList; else elseBlock">
             <ion-item *ngFor="let result of searchResults" (click)="savePlace(result)"  button>
               <ion-icon slot="start" name="{{ getFeatureType(result.place_type[0]) }}"></ion-icon>
               <ion-label>
@@ -58,16 +58,16 @@
         </ion-col>
       </ion-row>
       <!-- Display saved places -->
-      <ion-row>
+      <ng-template #elseBlock>
         <ion-col>
           <ion-row>
             <ion-toolbar class="ion-text-wrap">
               <!-- Saved Places is empty -->
-              <ion-title *ngIf="savedPlaces.length === 0">
+              <ion-title *ngIf="places.length === 0">
                 You have no saved places
               </ion-title>
               <!-- Show Saved places -->
-              <ion-list #elseBlock *ngFor="let savedPlace of savedPlaces">
+              <ion-list *ngFor="let savedPlace of places">
                 <ion-item>
                   <!-- <ion-icon slot="start" name="{{ savedPlace.type }}"></ion-icon> -->
                   <ion-label class="ion-text-wrap">
@@ -90,7 +90,7 @@
             <app-map-modal></app-map-modal>
           </ion-row> -->
         </ion-col>
-      </ion-row>
+      </ng-template>
     </ion-grid>
   </ng-template>  
 </ion-content>

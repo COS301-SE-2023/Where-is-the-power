@@ -16,7 +16,7 @@ import { ToastController } from '@ionic/angular';
 })
 export class TabSavedPage {
   latitude: any;
-  places: any[] = [];
+  places: Place[] = [];
   savedPlaces: Place[] = [];
   isLoggedIn: boolean = false;
   showResultsList: boolean = false;
@@ -30,13 +30,9 @@ export class TabSavedPage {
     private http: HttpClient,
     private authService: AuthService,
     private savedPlaceService: SavedPlacesService,
-    private toastController: ToastController) {
-  
-    }
+    private toastController: ToastController) {}
 
-  ngOnInit() {
-    this.userLocationService.getUserLocation();
-  }
+  ngOnInit() {}
 
   gotoProfileRoute() {
     this.router.navigate(['tabs/tab-profile']);
@@ -46,6 +42,14 @@ export class TabSavedPage {
     this.latitude = this.userLocationService.getLatitude();
     this.isLoggedIn = await this.authService.isUserLoggedIn();
     console.log(this.isLoggedIn)
+
+    if(this.isLoggedIn)
+    {
+      this.authService.getPlaces().subscribe((data:any) => {
+        console.log("getPlaces", data);
+        this.places = data.result;
+      });
+    }
   }
 
   ionViewDidLeave() {
@@ -53,7 +57,8 @@ export class TabSavedPage {
   }
 
   savePlace(result: any) {
-    // TODO: REFACTOR
+    this.showResultsList = false;
+
     let newPlace: Place = {
       "address": result.place_name,
       "latitude": result.center[1],
@@ -67,6 +72,7 @@ export class TabSavedPage {
     this.sucessToast('Succesfully added place');
     this.authService.addSavedPlace(newPlace).subscribe(data => {
       console.log("savedPlaceService ",data);
+      //this.savedPlaces = data;
     });
   }
 
@@ -96,14 +102,6 @@ export class TabSavedPage {
       feature === 'neighbourhood' ||
       feature === 'address') return true;
     return false;
-  }
-
-  async c() {
-    // this.authService.addSavedPlace();
-    this.savedPlaceService.getPlaces().subscribe(data =>{
-      console.log(data);
-
-    });
   }
 
   getFeatureType(instruction: string) {

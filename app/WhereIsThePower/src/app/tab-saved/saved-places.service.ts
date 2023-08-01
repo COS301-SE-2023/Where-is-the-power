@@ -26,12 +26,12 @@ headers = new HttpHeaders();
   apiUrl = 'https://witpa.codelog.co.za/api/';
   place = new BehaviorSubject<Place[] | null>(null);
   poool: any;
-
+  /*
   getPlaces() {
     return this.httpClient.get(`${this.apiUrl}user/savedPlaces`, { headers: this.auth.headers });
   }
 
-  /*
+
   addSavedPlace(place: Place) {
     console.log("add saved place");
     console.log("place",this.place);
