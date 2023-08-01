@@ -17,7 +17,7 @@ ion-searchbar {
   padding-bottom: 0.6px;
 }
 
-h4{
+h4 {
   margin: 0px;
 }
 
@@ -69,8 +69,8 @@ ion-list {
 }
 
 :host ::ng-deep .mapboxgl-popup-close-button:hover {
-  color: red;
-  background-color: transparent; 
+  color: #DE3831;
+  background-color: transparent;
 }
 
 :host ::ng-deep .popup-ion-card {
@@ -91,5 +91,6 @@ ion-list {
 }
 
 :host ::ng-deep .mapboxgl-popup-content h4 ion-icon {
-  padding-right: 8px; /* Adjust the margin as needed */
+  padding-right: 8px;
+  /* Adjust the margin as needed */
 }
