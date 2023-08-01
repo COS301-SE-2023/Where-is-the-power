@@ -97,7 +97,7 @@ pub async fn fetch_map_data<'a>(
     }
 }
 
-#[utoipa::path(post, tag = "Suburb Statistics", path = "/api/fetchSuburbStats", request_body = Stats)]
+#[utoipa::path(post, tag = "Suburb Statistics", path = "/api/fetchSuburbStats", request_body = SuburbStatsRequest)]
 #[post("/fetchSuburbStats", format = "application/json", data = "<request>")]
 pub async fn fetch_suburb_stats<'a>(
     db: &State<Option<Client>>,
@@ -560,7 +560,6 @@ impl DBFunctionsTrait for DBFunctions {
         };
         Ok(result.deref().clone())
     }
-
 }
 // db functions end
 
@@ -580,11 +579,13 @@ impl MunicipalityEntity {
         let query = doc! {
             "municipality": self.id.unwrap()
         };
-        let unfiltered_schedules: Vec<TimeScheduleEntity> =
-            match db_functions.collect_schedules(query, connection, None).await {
-                Ok(data) => data,
-                Err(err) => return Err(err),
-            };
+        let unfiltered_schedules: Vec<TimeScheduleEntity> = match db_functions
+            .collect_schedules(query, connection, None)
+            .await
+        {
+            Ok(data) => data,
+            Err(err) => return Err(err),
+        };
         let mut schedules: Vec<TimeScheduleEntity> = Vec::new();
         // filter schedules to relevant ones
         for schedule in unfiltered_schedules {
@@ -713,7 +714,10 @@ impl SuburbEntity {
                 "$in" : [self.id.unwrap()]
             }
         };
-        let group: GroupEntity = match db_functions.collect_one_group(query, Some(connection), None).await {
+        let group: GroupEntity = match db_functions
+            .collect_one_group(query, Some(connection), None)
+            .await
+        {
             Ok(group) => group,
             Err(err) => {
                 return Err(err);
@@ -729,7 +733,10 @@ impl SuburbEntity {
             }
         };
         let find_options = FindOptions::builder().sort(doc! { "startTime": 1 }).build();
-        let mut all_stages  = match db_functions.collect_stage_logs(query, Some(connection), Some(find_options)).await {
+        let mut all_stages = match db_functions
+            .collect_stage_logs(query, Some(connection), Some(find_options))
+            .await
+        {
             Ok(item) => item,
             Err(err) => {
                 return Err(err);
@@ -747,7 +754,9 @@ impl SuburbEntity {
             .sort(doc! { "startTime": -1 })
             .limit(1)
             .build();
-        let first_stage_change = match db_functions.collect_one_stage_log(query, Some(connection), Some(find_options)).await
+        let first_stage_change = match db_functions
+            .collect_one_stage_log(query, Some(connection), Some(find_options))
+            .await
         {
             Ok(cursor) => cursor,
             Err(err) => {
@@ -760,7 +769,10 @@ impl SuburbEntity {
         let query = doc! {
             "municipality" : self.municipality,
         };
-        let schedule = match db_functions.collect_schedules(query, Some(connection), None).await {
+        let schedule = match db_functions
+            .collect_schedules(query, Some(connection), None)
+            .await
+        {
             Ok(item) => item,
             Err(err) => {
                 return Err(err);
@@ -773,7 +785,6 @@ impl SuburbEntity {
         time_to_search = time_to_search.with_minute(0).unwrap();
         let mut down_time = 0;
         let mut daily_stats: HashMap<String, TotalTime> = HashMap::new();
-
 
         // main logic loop
         while time_to_search <= time_now {
@@ -1033,7 +1044,7 @@ impl<'de> Deserialize<'de> for SASTDateTime {
         let s = String::deserialize(deserializer)?;
         let dt = NaiveDateTime::parse_from_str(&s, FORMAT).unwrap();
         let sast = DateTime::<Utc>::from_utc(dt, Utc).with_timezone(&sast);
-        println!("{:?}",sast);
+        println!("{:?}", sast);
         Ok(SASTDateTime(sast))
         // DateTime::<FixedOffset>::from_str(&s).map_err(serde::de::Error::custom)
     }
