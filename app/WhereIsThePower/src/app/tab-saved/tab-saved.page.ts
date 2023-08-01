@@ -46,7 +46,7 @@ export class TabSavedPage {
     if(this.isLoggedIn)
     {
       this.authService.getPlaces().subscribe((data:any) => {
-        console.log("getPlaces", data);
+       // console.log("getPlaces", data);
         this.places = data.result;
       });
     }
@@ -57,6 +57,10 @@ export class TabSavedPage {
   }
 
   savePlace(result: any) {
+    this.authService.getPlaces().subscribe((data:any) => {
+      // console.log("getPlaces", data);
+       this.places = data.result;
+     });
     this.showResultsList = false;
 
     let newPlace: Place = {
