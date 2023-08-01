@@ -24,7 +24,7 @@ use rocket::fs::FileServer;
 
 use rocket::http::Method;
 use rocket::serde::json::Json;
-use rocket::{get, post, routes, Build, Rocket, State};
+use rocket::{post, routes, Build, Rocket, State};
 use rocket_cors::{AllowedHeaders, CorsOptions};
 use std::env;
 use std::net::IpAddr;
@@ -40,6 +40,7 @@ const DB_NAME: &'static str = "wip";
     paths(
         user::create_user,
         loadshedding::fetch_map_data,
+        loadshedding::fetch_suburb_stats,
         auth::authenticate,
         ai::get_ai_info,
         user::get_saved_places,
@@ -53,6 +54,7 @@ const DB_NAME: &'static str = "wip";
         user::UserLocation,
         loadshedding::MapDataRequest,
         loadshedding::MapDataDefaultResponse,
+        loadshedding::SuburbStatsRequest,
         api::ResponseString,
         api::ApiError,
         ai::AiInfoRequest,
@@ -99,17 +101,6 @@ async fn upload_data(
         Ok(()) => return Ok("Data Successfully added to staging database and ready for review"),
         Err(e) => return Err(e),
     }
-}
-
-#[get("/mock")]
-#[allow(dead_code)]
-async fn mock_data() -> Result<(), Json<ApiError<'static>>> {
-    todo!("Implement")
-}
-
-#[get("/world")]
-async fn hi() -> &'static str {
-    "Hello World!"
 }
 
 #[cfg(debug_assertions)]
@@ -214,7 +205,6 @@ async fn build_rocket() -> Rocket<Build> {
                 SwaggerUi::new("/swagger-ui/<_..>")
                     .url("/api-docs/openapi.json", ApiDoc::openapi()),
             )
-            .mount("/hello", routes![hi])
             .mount(
                 "/api",
                 routes!(
@@ -246,7 +236,6 @@ async fn build_rocket() -> Rocket<Build> {
                     SwaggerUi::new("/swagger-ui/<_..>")
                         .url("/api-docs/openapi.json", ApiDoc::openapi()),
                 )
-                .mount("/hello", routes![hi])
                 .mount(
                     "/api",
                     routes!(
