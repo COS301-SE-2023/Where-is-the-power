@@ -103,7 +103,7 @@ async fn polygon_request_test() {
     let test_groups: Vec<GroupEntity> = serde_json::from_str(data).unwrap();
     let data = r#"[ { "_id": { "$oid": "64b6b9b30d09aa7756061b30" }, "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, "name": "MUCKLENEUK", "geometry": [ 1 ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061b7d" }, "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, "name": "NEWLANDS", "geometry": [ 2 ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061a63" }, "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, "name": "SOSHANGUVE EAST", "geometry": [ ] }, { "_id": { "$oid": "64b6b9b30d09aa7756061a7b" }, "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, "name": "MAGALIESKRUIN", "geometry": [ 4 ] }]"#;
     let test_suburbs: Vec<SuburbEntity> = serde_json::from_str(data).unwrap();
-    mock.expect_collect_schedule()
+    mock.expect_collect_schedules()
         .returning(move |_,_,_| {
             Ok(test_schedule.clone())
         });

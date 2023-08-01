@@ -6,7 +6,8 @@ use crate::{
 };
 use async_trait::async_trait;
 use bson::{doc, oid::ObjectId, Document};
-use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, NaiveDateTime, Timelike, TimeZone, Utc};
+use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, NaiveDateTime, Timelike, Utc};
+use lazy_static::__Deref;
 use log::warn;
 use macros::Entity;
 use mockall::automock;
@@ -75,7 +76,12 @@ pub async fn fetch_map_data<'a>(
         .stage;
     let db_functions = DBFunctions {};
     let future_data = municipalities.iter().map(|municipality| {
-        municipality.get_regions_at_time(stage.to_owned(), request.time, Some(connection), &db_functions)
+        municipality.get_regions_at_time(
+            stage.to_owned(),
+            request.time,
+            Some(connection),
+            &db_functions,
+        )
     });
     let response = try_join_all(future_data).await;
     if let Ok(data) = response {
@@ -109,9 +115,10 @@ pub async fn fetch_suburb_stats<'a>(
         Some(result) => result,
         None => return ApiError::ServerError("Document not found").into(),
     };
-    match suburb.get_stats(&connection).await {
+    let db_functions = DBFunctions {};
+    match suburb.get_stats(&connection, &db_functions).await {
         Ok(data) => return ApiResponse::Ok(data),
-        Err(_) => return ApiError::ServerError("server side error :<").into(),
+        Err(err) => return err.into(),
     }
 }
 
@@ -395,7 +402,10 @@ fn get_date_time(time: Option<i64>) -> DateTime<FixedOffset> {
     let sast = FixedOffset::east_opt(2 * 3600).unwrap();
     // get search time
     match time {
-        Some(time) => DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp_opt(time, 0).unwrap(), Utc).with_timezone(&sast),
+        Some(time) => {
+            DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp_opt(time, 0).unwrap(), Utc)
+                .with_timezone(&sast)
+        }
         None => Local::now().with_timezone(&sast),
     }
 }
@@ -404,60 +414,56 @@ fn get_date_time(time: Option<i64>) -> DateTime<FixedOffset> {
 #[automock]
 #[async_trait]
 pub trait DBFunctionsTrait: Sync {
-    async fn collect_schedule<'a>(
+    async fn collect_schedules<'a>(
         &self,
         query: Document,
         connection: Option<&'a Database>,
-        options: Option<FindOptions>
-    ) -> Result<Vec<TimeScheduleEntity>,ApiError<'static>>;
+        options: Option<FindOptions>,
+    ) -> Result<Vec<TimeScheduleEntity>, ApiError<'static>>;
     async fn collect_groups<'a>(
         &self,
         query: Document,
         connection: Option<&'a Database>,
-        options: Option<FindOptions>
-    ) -> Result<Vec<GroupEntity>,ApiError<'static>>;
+        options: Option<FindOptions>,
+    ) -> Result<Vec<GroupEntity>, ApiError<'static>>;
     async fn collect_suburbs<'a>(
         &self,
         query: Document,
         connection: Option<&'a Database>,
-        options: Option<FindOptions>
-    ) -> Result<Vec<SuburbEntity>,ApiError<'static>>;
+        options: Option<FindOptions>,
+    ) -> Result<Vec<SuburbEntity>, ApiError<'static>>;
+    async fn collect_one_group<'a>(
+        &self,
+        query: Document,
+        connection: Option<&'a Database>,
+        options: Option<FindOptions>,
+    ) -> Result<GroupEntity, ApiError<'static>>;
+    async fn collect_stage_logs<'a>(
+        &self,
+        query: Document,
+        connection: Option<&'a Database>,
+        options: Option<FindOptions>,
+    ) -> Result<Vec<LoadSheddingStage>, ApiError<'static>>;
+    async fn collect_one_stage_log<'a>(
+        &self,
+        query: Document,
+        connection: Option<&'a Database>,
+        options: Option<FindOptions>,
+    ) -> Result<LoadSheddingStage, ApiError<'static>>;
 }
-
 
 pub struct DBFunctions {}
 
 #[async_trait]
-impl DBFunctionsTrait for  DBFunctions {
-    async fn collect_schedule<'a>(
+impl DBFunctionsTrait for DBFunctions {
+    async fn collect_schedules<'a>(
         &self,
         query: Document,
         connection: Option<&'a Database>,
-        options: Option<FindOptions>
-    ) -> Result<Vec<TimeScheduleEntity>,ApiError<'static>> {
-        let query_options: FindOptions;
-        if let None = options {
-            query_options = FindOptions::default();
-        } else {
-            query_options = options.unwrap();
-        }
-
-        let schedule_cursor: Cursor<TimeScheduleEntity> = match connection.unwrap()
-            .collection("timeschedule")
-            .find(query, query_options)
-            .await
-        {
-            Ok(cursor) => cursor,
-            Err(err) => {
-                log::error!("Database error occured when querying timeschedules: {err}");
-                return Err(ApiError::ServerError(
-                    "Error occured on the server, sorry :<",
-                ));
-            }
-        };
-
-        let unfiltered_schedules: Vec<TimeScheduleEntity> = match schedule_cursor.try_collect().await {
-            Ok(item) => item,
+        options: Option<FindOptions>,
+    ) -> Result<Vec<TimeScheduleEntity>, ApiError<'static>> {
+        let result = match TimeScheduleEntity::find(query, connection.unwrap(), options).await {
+            Ok(groups) => groups.into_iter().map(|b| *b).collect(),
             Err(err) => {
                 log::error!("Unable to Collect suburbs from cursor {err}");
                 return Err(ApiError::ServerError(
@@ -465,37 +471,17 @@ impl DBFunctionsTrait for  DBFunctions {
                 ));
             }
         };
-        return Ok(unfiltered_schedules)
+        Ok(result)
     }
 
     async fn collect_suburbs<'a>(
         &self,
         query: Document,
         connection: Option<&'a Database>,
-        options: Option<FindOptions>
-    ) -> Result<Vec<SuburbEntity>,ApiError<'static>> {
-        let query_options: FindOptions;
-        if let None = options {
-            query_options = FindOptions::default();
-        } else {
-            query_options = options.unwrap();
-        }
-
-        let suburbs_cursor: Cursor<SuburbEntity> = match connection.unwrap()
-            .collection("suburbs")
-            .find(query, query_options)
-            .await
-        {
-            Ok(cursor) => cursor,
-            Err(err) => {
-                log::error!("Database error occured when querying suburbs: {err}");
-                return Err(ApiError::ServerError(
-                    "Error occured on the server, sorry :<",
-                ));
-            }
-        };
-        let suburbs: Vec<SuburbEntity> = match suburbs_cursor.try_collect().await {
-            Ok(item) => item,
+        options: Option<FindOptions>,
+    ) -> Result<Vec<SuburbEntity>, ApiError<'static>> {
+        let result = match SuburbEntity::find(query, connection.unwrap(), options).await {
+            Ok(groups) => groups.into_iter().map(|b| *b).collect(),
             Err(err) => {
                 log::error!("Unable to Collect suburbs from cursor {err}");
                 return Err(ApiError::ServerError(
@@ -503,37 +489,17 @@ impl DBFunctionsTrait for  DBFunctions {
                 ));
             }
         };
-        Ok(suburbs)
+        Ok(result)
     }
 
     async fn collect_groups<'a>(
         &self,
         query: Document,
         connection: Option<&'a Database>,
-        options: Option<FindOptions>
-    ) -> Result<Vec<GroupEntity>,ApiError<'static>> {
-        let query_options: FindOptions;
-        if let None = options {
-            query_options = FindOptions::default();
-        } else {
-            query_options = options.unwrap();
-        }
-
-        let group_cursor: Cursor<GroupEntity> = match connection.unwrap()
-            .collection("groups")
-            .find(query, query_options)
-            .await
-        {
-            Ok(cursor) => cursor,
-            Err(err) => {
-                log::error!("Database error occured when querying suburbs: {err}");
-                return Err(ApiError::ServerError(
-                    "Error occured on the server, sorry :<",
-                ));
-            }
-        };
-        let groups: Vec<GroupEntity> = match group_cursor.try_collect().await {
-            Ok(item) => item,
+        options: Option<FindOptions>,
+    ) -> Result<Vec<GroupEntity>, ApiError<'static>> {
+        let result = match GroupEntity::find(query, connection.unwrap(), options).await {
+            Ok(groups) => groups.into_iter().map(|b| *b).collect(),
             Err(err) => {
                 log::error!("Unable to Collect suburbs from cursor {err}");
                 return Err(ApiError::ServerError(
@@ -541,11 +507,62 @@ impl DBFunctionsTrait for  DBFunctions {
                 ));
             }
         };
-        Ok(groups)
+        Ok(result)
     }
+    async fn collect_one_group<'a>(
+        &self,
+        query: Document,
+        connection: Option<&'a Database>,
+        options: Option<FindOptions>,
+    ) -> Result<GroupEntity, ApiError<'static>> {
+        let result = match GroupEntity::find_one(query, connection.unwrap(), options).await {
+            Some(group) => group,
+            None => {
+                warn!("Error, a suburb is not associated with a group");
+                return Err(ApiError::ServerError(
+                    "Group cannot be identified for specified suburb",
+                ));
+            }
+        };
+        Ok(result.deref().clone())
+    }
+    async fn collect_stage_logs<'a>(
+        &self,
+        query: Document,
+        connection: Option<&'a Database>,
+        options: Option<FindOptions>,
+    ) -> Result<Vec<LoadSheddingStage>, ApiError<'static>> {
+        let result = match LoadSheddingStage::find(query, connection.unwrap(), options).await {
+            Ok(groups) => groups.into_iter().map(|b| *b).collect(),
+            Err(err) => {
+                log::error!("Unable to Collect suburbs from cursor {err}");
+                return Err(ApiError::ServerError(
+                    "Error occured on the server, sorry :<",
+                ));
+            }
+        };
+        Ok(result)
+    }
+    async fn collect_one_stage_log<'a>(
+        &self,
+        query: Document,
+        connection: Option<&'a Database>,
+        options: Option<FindOptions>,
+    ) -> Result<LoadSheddingStage, ApiError<'static>> {
+        let result = match LoadSheddingStage::find_one(query, connection.unwrap(), options).await {
+            Some(group) => group,
+            None => {
+                warn!("Error, a suburb is not associated with a group");
+                return Err(ApiError::ServerError(
+                    "Group cannot be identified for specified suburb",
+                ));
+            }
+        };
+        Ok(result.deref().clone())
+    }
+
 }
 // db functions end
-
 
 impl MunicipalityEntity {
     pub async fn get_regions_at_time(
@@ -553,29 +570,26 @@ impl MunicipalityEntity {
         stage: i32,
         time: Option<i64>,
         connection: Option<&Database>,
-        db_functions: &dyn DBFunctionsTrait
+        db_functions: &dyn DBFunctionsTrait,
     ) -> Result<MapDataDefaultResponse, ApiError<'static>> {
         let mut suburbs_off = Vec::<SuburbEntity>::new();
         let time_to_search: DateTime<FixedOffset> = get_date_time(time);
-        println!("Time to search is: {:?}", time_to_search.to_string());
-        println!("is secs: {:?}", time_to_search.timestamp());
         let mut geography = self.geometry.clone();
 
         // schedule query: all that fit the search time
         let query = doc! {
             "municipality": self.id.unwrap()
         };
-        let unfiltered_schedules: Vec<TimeScheduleEntity> = match db_functions.collect_schedule(query, connection, None).await {
-            Ok(data) => data,
-            Err(err) => {
-                return Err(err)
-            }
-        };
+        let unfiltered_schedules: Vec<TimeScheduleEntity> =
+            match db_functions.collect_schedules(query, connection, None).await {
+                Ok(data) => data,
+                Err(err) => return Err(err),
+            };
         let mut schedules: Vec<TimeScheduleEntity> = Vec::new();
         // filter schedules to relevant ones
         for schedule in unfiltered_schedules {
             let mut keep = false;
-            println!("{:?}",time_to_search.hour());
+            println!("{:?}", time_to_search.hour());
             if schedule.start_hour <= time_to_search.hour() as i32 {
                 if schedule.stop_hour >= time_to_search.hour() as i32 {
                     keep = true;
@@ -595,7 +609,6 @@ impl MunicipalityEntity {
                 schedules.push(schedule);
             }
         }
-        println!("schedules: {:?}", schedules);
         // schedule query end
 
         // suburbs query: all suburbs
@@ -603,12 +616,11 @@ impl MunicipalityEntity {
             "municipality" : self.id
         };
 
-        let suburbs: Vec<SuburbEntity> = match db_functions.collect_suburbs(query, connection, None).await {
-            Ok(data) => data,
-            Err(err) => {
-                return Err(err)
-            }
-        };
+        let suburbs: Vec<SuburbEntity> =
+            match db_functions.collect_suburbs(query, connection, None).await {
+                Ok(data) => data,
+                Err(err) => return Err(err),
+            };
         // end of suburbs query
 
         // collect suburbs into a map for quick lookup and moving
@@ -643,12 +655,11 @@ impl MunicipalityEntity {
             let query = doc! {
                 "_id" : {"$in": groups}
             };
-            let group_entities: Vec<GroupEntity> = match db_functions.collect_groups(query, connection, None).await {
-                Ok(data) => data,
-                Err(err) => {
-                    return Err(err)
-                }
-            };
+            let group_entities: Vec<GroupEntity> =
+                match db_functions.collect_groups(query, connection, None).await {
+                    Ok(data) => data,
+                    Err(err) => return Err(err),
+                };
             // groups query end
 
             // go through the relevant groups and place the affected suburbs into
@@ -672,7 +683,7 @@ impl MunicipalityEntity {
             }
 
             if let None = feature.properties.power_status {
-                for (_,suburb) in &suburbs {
+                for (_, suburb) in &suburbs {
                     if suburb.geometry.contains(&feature.id) {
                         feature.properties.power_status = Some("on".to_string());
                         break;
@@ -690,7 +701,11 @@ impl MunicipalityEntity {
 }
 
 impl SuburbEntity {
-    pub async fn get_stats(self, connection: &Database) -> Result<SuburbStatsResponse, ApiError> {
+    pub async fn get_stats(
+        self,
+        connection: &Database,
+        db_functions: &dyn DBFunctionsTrait,
+    ) -> Result<SuburbStatsResponse, ApiError<'static>> {
         // queries
         // get the relevant group
         let query = doc! {
@@ -698,18 +713,10 @@ impl SuburbEntity {
                 "$in" : [self.id.unwrap()]
             }
         };
-        let group: GroupEntity = match connection
-            .collection("groups")
-            .find_one(query, None)
-            .await
-            .unwrap()
-        {
-            Some(group) => group,
-            None => {
-                warn!("Error, a suburb is not associated with a group: {:?}", self);
-                return Err(ApiError::ServerError(
-                    "Group cannot be identified for specified suburb",
-                ));
+        let group: GroupEntity = match db_functions.collect_one_group(query, Some(connection), None).await {
+            Ok(group) => group,
+            Err(err) => {
+                return Err(err);
             }
         };
 
@@ -717,94 +724,58 @@ impl SuburbEntity {
         let time_now = Local::now();
         let one_week_ago = (Local::now() - chrono::Duration::weeks(1)).timestamp();
         let query = doc! {
-            "time": {
+            "startTime": {
                 "$gte": one_week_ago
             }
         };
-        let find_options = FindOptions::builder().sort(doc! { "timestamp": 1 }).build();
-        let stage_change_cursor: Cursor<LoadSheddingStage> = match connection
-            .collection("stage_log")
-            .find(query, find_options)
-            .await
-        {
-            Ok(cursor) => cursor,
-            Err(err) => {
-                log::error!("Database error occured when querying suburbs: {err}");
-                return Err(ApiError::ServerError(
-                    "Error occured on the server, sorry :<",
-                ));
-            }
-        };
-        let mut all_stages: Vec<LoadSheddingStage> = match stage_change_cursor.try_collect().await {
+        let find_options = FindOptions::builder().sort(doc! { "startTime": 1 }).build();
+        let mut all_stages  = match db_functions.collect_stage_logs(query, Some(connection), Some(find_options)).await {
             Ok(item) => item,
             Err(err) => {
-                log::error!("Unable to Collect suburbs from cursor {err}");
-                return Err(ApiError::ServerError(
-                    "Error occured on the server, sorry :<",
-                ));
+                return Err(err);
             }
         };
         all_stages.reverse();
 
         // find first timestamp after one week ago
         let query = doc! {
-            "time": {
+            "startTime": {
                 "$lte": one_week_ago
             }
         };
-        let find_options = FindOneOptions::builder()
-            .sort(doc! { "timestamp": -1 })
+        let find_options = FindOptions::builder()
+            .sort(doc! { "startTime": -1 })
+            .limit(1)
             .build();
-        let first_stage_change: Option<LoadSheddingStage> = match connection
-            .collection("stage_log")
-            .find_one(query, find_options)
-            .await
+        let first_stage_change = match db_functions.collect_one_stage_log(query, Some(connection), Some(find_options)).await
         {
             Ok(cursor) => cursor,
             Err(err) => {
-                log::error!("Database error occured when querying suburbs: {err}");
-                return Err(ApiError::ServerError(
-                    "Error occured on the server, sorry :<",
-                ));
+                return Err(err);
             }
         };
-        match first_stage_change {
-            Some(item) => all_stages.push(item),
-            None => (),
-        };
+        all_stages.push(first_stage_change);
 
         // get the timeschedules
         let query = doc! {
             "municipality" : self.municipality,
         };
-        let timeschedule_cursor: Cursor<TimeScheduleEntity> = match connection
-            .collection("timeschedule")
-            .find(query, None)
-            .await
-        {
-            Ok(cursor) => cursor,
-            Err(err) => {
-                log::error!("Database error occured when querying suburbs: {err}");
-                return Err(ApiError::ServerError(
-                    "Error occured on the server, sorry :<",
-                ));
-            }
-        };
-        let schedule: Vec<TimeScheduleEntity> = match timeschedule_cursor.try_collect().await {
+        let schedule = match db_functions.collect_schedules(query, Some(connection), None).await {
             Ok(item) => item,
             Err(err) => {
-                log::error!("Unable to Collect suburbs from cursor {err}");
-                return Err(ApiError::ServerError(
-                    "Error occured on the server, sorry :<",
-                ));
+                return Err(err);
             }
         };
+        // queries are over
 
         // Time
         let mut time_to_search: DateTime<FixedOffset> = get_date_time(Some(one_week_ago));
         time_to_search = time_to_search.with_minute(0).unwrap();
         let mut down_time = 0;
         let mut daily_stats: HashMap<String, TotalTime> = HashMap::new();
+
+
+        // main logic loop
         while time_to_search <= time_now {
             let hour = time_to_search.hour() as i32;
             let minute = time_to_search.minute() as i32;
@@ -834,6 +805,8 @@ impl SuburbEntity {
             }
 
             let mut add_time = false;
+
+            // check if there exists a timeslot during which we have loadshedding, if there is, add time
             for time_slot in time_slots {
                 let mut count: usize = 0;
                 let stage = &all_stages[0];
@@ -841,6 +814,7 @@ impl SuburbEntity {
                     if time_slot.stages.get(count).unwrap().groups[(day - 1) as usize]
                         == group.id.unwrap()
                     {
+                        // adding time after the loop
                         add_time = true;
                         break;
                     }
@@ -949,7 +923,7 @@ impl LoadSheddingStage {
                 },
             };
             let latest_info = times.last().unwrap().start.0.naive_local();
-            let latest_in_db = NaiveDateTime::from_timestamp_opt(result.start_time,0).unwrap();
+            let latest_in_db = NaiveDateTime::from_timestamp_opt(result.start_time, 0).unwrap();
             if latest_info > latest_in_db {
                 // find point where we must update and update the rest
                 loop {
@@ -1059,6 +1033,7 @@ impl<'de> Deserialize<'de> for SASTDateTime {
         let s = String::deserialize(deserializer)?;
         let dt = NaiveDateTime::parse_from_str(&s, FORMAT).unwrap();
         let sast = DateTime::<Utc>::from_utc(dt, Utc).with_timezone(&sast);
+        println!("{:?}",sast);
         Ok(SASTDateTime(sast))
         // DateTime::<FixedOffset>::from_str(&s).map_err(serde::de::Error::custom)
     }
