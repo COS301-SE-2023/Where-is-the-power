@@ -44,8 +44,11 @@ pub fn insertable(input: TokenStream) -> TokenStream {
     // This code tests that the struct we are dering for
     // has an id field with a type of Option<u32>
     let mut has_id: bool = false;
+    let mut id_field_ident = None;
     for field in fields.into_iter() {
-        if field.ident.unwrap().to_string() == "id" {
+        if field.ident.clone().unwrap().to_string() == "_id"
+            || field.ident.clone().unwrap().to_string() == "id"
+        {
             if let Type::Path(TypePath {
                 path: Path { segments, .. },
                 ..
@@ -63,7 +66,9 @@ pub fn insertable(input: TokenStream) -> TokenStream {
                             ..
                         })) = args.first().unwrap()
                         {
-                            has_id = segments.last().unwrap().ident.to_string() == "u32";
+                            let last_segment = segments.last().unwrap().ident.to_string();
+                            has_id = last_segment == "ObjectId" || last_segment == "u32";
+                            id_field_ident = field.ident;
                         }
                     }
                 }
@@ -93,13 +98,64 @@ pub fn insertable(input: TokenStream) -> TokenStream {
         }
     };
 
+    let query = quote! {
+        async fn query(
+            filter: bson::document::Document,
+            db: &mongodb::Database
+        ) -> std::result::Result<mongodb::Cursor<Self>, mongodb::error::Error> {
+            db.collection::<#ident>(#collection_name).find(filter, None).await
+        }
+    };
+
+    let find = quote! {
+        async fn find(
+            filter: bson::document::Document,
+            db: &mongodb::Database,
+            options: std::option::Option<mongodb::options::FindOptions>
+        ) -> std::result::Result<std::vec::Vec<Box<Self>>, mongodb::error::Error> {
+            let mut cursor = db.collection::<#ident>(#collection_name).find(filter, options).await?;
+            let mut result = Vec::new();
+            while cursor.advance().await? {
+                result.push(std::boxed::Box::new(cursor.deserialize_current()?));
+            }
+            Ok(result)
+        }
+    };
+
+    let find_one = quote! {
+        async fn find_one(
+            filter: bson::document::Document,
+            db: &mongodb::Database,
+            options: std::option::Option<mongodb::options::FindOptions>
+        ) -> std::option::Option<std::boxed::Box<Self>> {
+            let mut cursor = db.collection::<#ident>(#collection_name).find(filter, options).await.ok()?;
+            cursor.advance().await.ok()?;
+            cursor.deserialize_current().ok().map(|x| std::boxed::Box::new(x))
+        }
+    };
+
+    let update = quote! {
+        async fn update(
+            &mut self,
+            update: mongodb::options::UpdateModifications,
+            db: &mongodb::Database
+        ) -> std::result::Result<mongodb::results::UpdateResult, mongodb::error::Error> {
+            let doc = mongodb::bson::doc! {
+                "_id": self.#id_field_ident.unwrap()
+            };
+            db.collection::<#ident>(#collection_name).update_one(doc, update, None).await
+        }
+    };
+
     quote! {
         #[async_trait::async_trait]
-        impl Entity for #ident {
-            type Output = Self;
-
+       impl Entity for #ident {
             #insert
             #delete
+            #query
+            #update
+            #find
+            #find_one
         }
     }
     .into()

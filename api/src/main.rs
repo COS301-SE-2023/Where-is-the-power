@@ -1,34 +1,88 @@
+mod ai;
 mod api;
 mod auth;
 mod db;
+mod dns;
+mod loadshedding;
+mod scraper;
 #[cfg(test)]
 mod tests;
 mod user;
-mod scraper;
-mod loadshedding; 
 
 use crate::scraper::UploadRequest;
 use api::ApiError;
-use auth::{AuthRequest, AuthResponder, AuthType, JWTAuthToken};
-use db::Entity;
-use log::{warn, LevelFilter};
+
+use bson::doc;
+use loadshedding::StageUpdater;
+use log::{info, warn, LevelFilter};
 use mongodb::options::ClientOptions;
 use mongodb::Client;
+use rocket::config::TlsConfig;
+use rocket::data::{Limits, ToByteUnit};
+use rocket::figment::Figment;
+use rocket::fs::FileServer;
+
+use rocket::http::Method;
 use rocket::serde::json::Json;
 use rocket::{get, post, routes, Build, Rocket, State};
+use rocket_cors::{AllowedHeaders, CorsOptions};
 use std::env;
 use std::net::IpAddr;
 use std::time::SystemTime;
-use user::User;
+use utoipa::openapi::security::{Http, HttpAuthScheme, SecurityScheme};
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
+
+const DB_NAME: &'static str = "wip";
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        user::create_user,
+        loadshedding::fetch_map_data,
+        auth::authenticate,
+        ai::get_ai_info,
+        user::get_saved_places,
+        user::add_saved_place,
+        user::delete_saved_place
+    ),
+    components(schemas(
+        auth::AuthRequest,
+        auth::AuthType,
+        user::NewUser,
+        user::UserLocation,
+        loadshedding::MapDataRequest,
+        loadshedding::MapDataDefaultResponse,
+        api::ResponseString,
+        api::ApiError,
+        ai::AiInfoRequest,
+        user::SavedPlace
+    )),
+    info(title = "Where Is The Power API Specification"),
+    modifiers(&SecurityAddon)
+)]
+pub struct ApiDoc;
+
+struct SecurityAddon;
+
+impl utoipa::Modify for SecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        let components = openapi.components.as_mut().unwrap();
+        components.add_security_scheme(
+            "jwt",
+            SecurityScheme::Http(Http::new(HttpAuthScheme::Bearer)),
+        )
+    }
+}
 
 #[post("/uploadData", format = "application/json", data = "<upload_data>")]
 async fn upload_data(
     state: &State<Option<Client>>,
     upload_data: Json<UploadRequest>,
-    ip: IpAddr
+    ip: IpAddr,
 ) -> Result<&'static str, Json<ApiError<'static>>> {
     if !ip.is_loopback() {
-        return Ok("304 you do not have access to this resource")
+        return Ok("304 you do not have access to this resource");
     }
     if state.is_none() {
         return Err(Json(ApiError::ServerError(
@@ -38,59 +92,19 @@ async fn upload_data(
     let data = upload_data.into_inner();
     // Process the data and return an appropriate response
     // validate
-    let add_data = data.add_data(&state.inner().as_ref().unwrap(),"staging").await;
+    let add_data = data
+        .add_data(&state.inner().as_ref().unwrap(), "staging")
+        .await;
     match add_data {
         Ok(()) => return Ok("Data Successfully added to staging database and ready for review"),
-        Err(e) => return Err(e)
+        Err(e) => return Err(e),
     }
-}
-
-#[post("/auth", format = "application/json", data = "<auth_request>")]
-async fn authenticate(
-    auth_request: Json<AuthRequest>,
-) -> Result<AuthResponder, Json<ApiError<'static>>> {
-    match auth_request.auth_type {
-        AuthType::Anonymous => Ok(AuthResponder {
-            inner: Json(JWTAuthToken::new(auth_request.auth_type).unwrap()),
-            header: rocket::http::Header::new(
-                "Set-Cookie",
-                "cookie=some_cookie;expires=0;path=/;SameSite=Strict".to_string(),
-            ),
-        }),
-        AuthType::User => unimplemented!(),
-    }
-}
-
-#[post("/user", format = "application/json", data = "<new_user>")]
-async fn create_user(
-    state: &State<Option<Client>>,
-    new_user: Json<User>,
-) -> Result<&'static str, Json<ApiError<'static>>> {
-    if state.is_none() {
-        return Err(Json(ApiError::ServerError(
-            "Database is unavailable. Please try again later!",
-        )));
-    }
-
-    let state = state.inner().as_ref().unwrap();
-
-    new_user
-        .insert(&state.database("wip"))
-        .await
-        .expect("Couldn't inser new user!");
-
-    Ok("User created")
-}
-
-#[get("/world")]
-async fn hi() -> &'static str {
-    "Hello World!"
 }
 
 #[cfg(debug_assertions)]
 const LOG_LEVEL: LevelFilter = LevelFilter::Debug;
 #[cfg(not(debug_assertions))]
-const LOG_LEVEL: LevelFilter = LevelFilter::Warn;
+const LOG_LEVEL: LevelFilter = LevelFilter::Info;
 
 fn setup_logger() -> Result<(), fern::InitError> {
     fern::Dispatch::new()
@@ -109,29 +123,133 @@ fn setup_logger() -> Result<(), fern::InitError> {
     Ok(())
 }
 
-async fn build_rocket() -> Rocket<Build> {
-    let figment = rocket::Config::figment();
+async fn get_config() -> Figment {
+    let mut figment =
+        rocket::Config::figment().merge(("limits", Limits::new().limit("json", 7.megabytes())));
 
-    if let Err(err) = dotenvy::dotenv() {
-        warn!("Couldn't read .env file! {err:?}");
+    let ssl_cert = if !tokio::fs::try_exists("ssl/ssl_cert.pem")
+        .await
+        .unwrap_or(false)
+    {
+        warn!("Didn't find TLS certificate, checking environment vars");
+        if let Ok(ssl_cert) = env::var("TLS_CERT") {
+            Some(ssl_cert)
+        } else {
+            None
+        }
+    } else {
+        info!("Found TLS cert, reading...");
+        tokio::fs::read_to_string("ssl/ssl_cert.pem").await.ok()
+    };
+
+    let ssl_key = if !tokio::fs::try_exists("ssl/ssl_private_key.pem")
+        .await
+        .unwrap_or(false)
+    {
+        warn!("Didn't find TLS private key, checking environment vars");
+        if let Ok(ssl_key) = env::var("TLS_KEY") {
+            Some(ssl_key)
+        } else {
+            warn!("Couldn't find TLS private key");
+            None
+        }
+    } else {
+        info!("Found TLS private key, reading...");
+        tokio::fs::read_to_string("ssl/ssl_private_key.pem")
+            .await
+            .ok()
+    };
+
+    if ssl_cert.is_some() && ssl_key.is_some() {
+        let tls_cfg =
+            TlsConfig::from_bytes(ssl_cert.unwrap().as_bytes(), ssl_key.unwrap().as_bytes());
+        figment = figment.merge(("tls", tls_cfg));
+    } else {
+        warn!("Couldn't find TLS keys, not setting up TLS");
     }
 
+    figment
+}
+
+async fn build_rocket() -> Rocket<Build> {
+    let figment = get_config().await;
     let db_uri = env::var("DATABASE_URI").unwrap_or(String::from(""));
+    // Cors Options, we should modify to our needs but leave as default for now.
+    let cors = CorsOptions {
+        allowed_origins: rocket_cors::AllOrSome::All,
+        allowed_methods: vec![
+            Method::Get,
+            Method::Post,
+            Method::Put,
+            Method::Delete,
+            Method::Patch,
+            Method::Options,
+            Method::Head,
+        ]
+        .into_iter()
+        .map(From::from)
+        .collect(),
+        allowed_headers: AllowedHeaders::some(&["Authorization", "Accept", "Content-Type"]),
+        allow_credentials: true,
+        ..Default::default()
+    }
+    .to_cors()
+    .unwrap();
 
     let rocket_no_state = || {
         rocket::custom(figment.clone())
-            .mount("/hello", routes![hi])
-            .mount("/api", routes!(authenticate, create_user))
+            .mount(
+                "/",
+                SwaggerUi::new("/swagger-ui/<_..>")
+                    .url("/api-docs/openapi.json", ApiDoc::openapi()),
+            )
+            .mount(
+                "/api",
+                routes!(
+                    auth::authenticate,
+                    user::create_user,
+                    loadshedding::fetch_map_data,
+                    loadshedding::fetch_suburb_stats,
+                    user::add_saved_place,
+                    user::get_saved_places,
+                    ai::get_ai_info,
+                    user::delete_saved_place
+                ),
+            )
             .mount("/upload", routes![upload_data])
+            .mount(
+                "/api-docs",
+                FileServer::new("api-docs", rocket::fs::Options::IndexFile),
+            )
+            .attach(StageUpdater)
+            .attach(cors.clone())
             .manage::<Option<Client>>(None)
     };
 
     match ClientOptions::parse(&db_uri).await {
         Ok(client_options) => match Client::with_options(client_options) {
             Ok(client) => rocket::custom(figment.clone())
-                .mount("/hello", routes![hi])
-                .mount("/api", routes![authenticate, create_user])
+                .mount(
+                    "/",
+                    SwaggerUi::new("/swagger-ui/<_..>")
+                        .url("/api-docs/openapi.json", ApiDoc::openapi()),
+                )
+                .mount(
+                    "/api",
+                    routes!(
+                        auth::authenticate,
+                        user::create_user,
+                        loadshedding::fetch_map_data,
+                        loadshedding::fetch_suburb_stats,
+                        user::add_saved_place,
+                        user::get_saved_places,
+                        ai::get_ai_info,
+                        user::delete_saved_place
+                    ),
+                )
                 .mount("/upload", routes![upload_data])
+                .attach(StageUpdater)
+                .attach(cors)
                 .manage(Some(client)),
             Err(err) => {
                 warn!("Couldn't create database client! {err:?}");
@@ -149,7 +267,13 @@ async fn build_rocket() -> Rocket<Build> {
 async fn main() -> Result<(), rocket::Error> {
     setup_logger().expect("Couldn't setup logger!");
 
-    build_rocket().await.launch().await?;
+    if let Err(err) = dotenvy::dotenv() {
+        warn!("Couldn't read .env file! {err:?}");
+    }
+    if let Err(err) = dns::update_dns().await {
+        warn!("Couldn't setup DNS: {err:?}");
+    }
 
+    build_rocket().await.launch().await?;
     Ok(())
 }
