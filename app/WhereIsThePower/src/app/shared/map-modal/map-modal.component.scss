@@ -17,21 +17,80 @@ ion-searchbar {
   padding-bottom: 0.6px;
 }
 
+h4 {
+  margin: 0px;
+}
+
 ion-list {
   margin-left: 8px;
   margin-right: 8px;
-}
-
-h4 {
-  margin: 0;
-  padding: 0;
 }
 
 /* sizeMd */
 @media (min-width: 768px) {
   ion-fab-button {
     --background-hover: #a3e681;
-    --border-radius: 16px; 
+    --border-radius: 16px;
     --box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
   }
+}
+
+.scroll {
+  overflow: scroll;
+}
+
+/* CSS for the Mapbox GL JS Popup */
+:host ::ng-deep .mapboxgl-popup-content {
+  font-family: Arial, sans-serif;
+  background-color: #fff;
+  border-radius: 15px;
+  padding: 0px;
+  margin: 0px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+:host ::ng-deep .mapboxgl-popup-content h3 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+:host ::ng-deep .mapboxgl-popup-content p {
+  margin: 0;
+  font-size: 16px;
+  color: #555;
+}
+
+:host ::ng-deep .mapboxgl-popup-close-button {
+  font-size: 28px;
+  color: #555;
+  padding: 4px;
+  padding-right: 8px;
+}
+
+:host ::ng-deep .mapboxgl-popup-close-button:hover {
+  color: #DE3831;
+  background-color: transparent;
+}
+
+:host ::ng-deep .popup-ion-card {
+  border-radius: 16px;
+  margin: 0px;
+  box-shadow: none;
+}
+
+:host ::ng-deep .popup-ion-card-header {
+  padding-bottom: 8px;
+}
+
+:host ::ng-deep .mapboxgl-popup-content h4 {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  margin: 1px;
+}
+
+:host ::ng-deep .mapboxgl-popup-content h4 ion-icon {
+  padding-right: 8px;
+  /* Adjust the margin as needed */
 }

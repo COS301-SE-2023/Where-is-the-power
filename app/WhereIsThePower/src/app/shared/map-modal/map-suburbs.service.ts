@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -11,6 +12,8 @@ export class MapSuburbsService {
     "bottomLeft": [-90, -180],
     "topRight": [90, 180]
   }
+
+  gettingDirections = new BehaviorSubject<boolean>(false);
 
   constructor(private httpClient: HttpClient) { }
 

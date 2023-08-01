@@ -40,6 +40,7 @@ const DB_NAME: &'static str = "wip";
     paths(
         user::create_user,
         loadshedding::fetch_map_data,
+        loadshedding::fetch_suburb_stats,
         auth::authenticate,
         ai::get_ai_info,
         user::get_saved_places,
@@ -53,6 +54,7 @@ const DB_NAME: &'static str = "wip";
         user::UserLocation,
         loadshedding::MapDataRequest,
         loadshedding::MapDataDefaultResponse,
+        loadshedding::SuburbStatsRequest,
         api::ResponseString,
         api::ApiError,
         ai::AiInfoRequest,
