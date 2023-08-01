@@ -171,6 +171,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   }
 
   onSearchInput(event: any) {
+    this.closePopup();
+
     if (event.target.value.length > 0) {
       this.showResultsList = true;
       const query = event.target.value;
@@ -207,9 +209,10 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
   async getRoute(selectedResult: any) {
     this.updateBreakpoint();
-
     this.emitGetDirections();
     this.gettingRoute = true;
+    this.closePopup();
+
     this.searchBar.value = `${selectedResult.place_name}`;
 
     this.showResultsList = false;
@@ -420,6 +423,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       zoom: 15, // Adjust the zoom level
       speed: 1.2, // Adjust the speed of the animation
     });
+    this.closePopup();
   }
   @ViewChild('myModal') myModal: any; // Reference to the ion-modal element
   modalResult: any; // To store the selected result data
@@ -457,7 +461,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     this.startTrip = true;
     this.centerOnStartPoint();
     this.updateBreakpoint();
-
 
     if (this.userMarker) {
       this.userMarker.remove();
@@ -535,6 +538,12 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     }
     if (this.myModal) // Check if myModal is defined before calling setCurrentBreakpoint
       this.myModal.setCurrentBreakpoint(this.currentBreakpoint);
+  }
+
+  closePopup() {
+    if (this.popup) {
+      this.popup.remove();
+    }
   }
 }
 
