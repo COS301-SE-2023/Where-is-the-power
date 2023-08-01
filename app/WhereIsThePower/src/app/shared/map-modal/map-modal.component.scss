@@ -43,9 +43,10 @@ h4 {
 /* CSS for the Mapbox GL JS Popup */
 :host ::ng-deep .mapboxgl-popup-content {
   font-family: Arial, sans-serif;
-  background-color: #fff0ff;
+  background-color: #fff;
   border-radius: 4px;
-  padding: 10px;
+  padding: 0px;
+  margin: 0px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
@@ -64,8 +65,18 @@ h4 {
 :host ::ng-deep .mapboxgl-popup-close-button {
   font-size: 20px;
   color: #555;
+  padding: 8px;
 }
 
 :host ::ng-deep .mapboxgl-popup-close-button:hover {
   color: #000;
+}
+
+:host ::ng-deep ion-card {
+  margin: 1px;
+  box-shadow: none;
+}
+
+:host ::ng-deep ion-card-header {
+  padding-bottom: 8px;
 }

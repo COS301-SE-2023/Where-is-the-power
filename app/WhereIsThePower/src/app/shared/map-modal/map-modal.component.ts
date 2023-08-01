@@ -137,15 +137,24 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
           // Get the properties of the clicked feature (suburb information)
           const suburbInfo = clickedFeature.properties;
+          if (suburbInfo.PowerStatus == "undefined") {
+            suburbInfo.PowerStatus = "unavailable"
+          }
 
+          const popupContent = `
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title color="primary">${suburbInfo?.SP_NAME}</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <h4>Power Status: <strong>${suburbInfo?.PowerStatus}</strong></h4>
+            </ion-card-content>
+          </ion-card>
+          `;
           // Create a new popup and set its HTML content
           this.popup = new mapboxgl.Popup()
             .setLngLat(e.lngLat)
-            .setHTML(
-              `<h3 color="primary">${suburbInfo.SP_NAME}</h3>` + // Replace 'name' with the actual property name for suburb name
-              `<p>PowerStatus: ${suburbInfo.PowerStatus}</p>` // Replace 'population' with the actual property name for population
-              // Add other suburb information properties as needed
-            )
+            .setHTML(popupContent)
             .addTo(this.map);
 
         }
