@@ -43,7 +43,7 @@ ion-list {
 :host ::ng-deep .mapboxgl-popup-content {
   font-family: Arial, sans-serif;
   background-color: #fff;
-  border-radius: 16px;
+  border-radius: 15px;
   padding: 0px;
   margin: 0px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
@@ -62,13 +62,15 @@ ion-list {
 }
 
 :host ::ng-deep .mapboxgl-popup-close-button {
-  font-size: 20px;
+  font-size: 28px;
   color: #555;
-  padding: 8px;
+  padding: 4px;
+  padding-right: 8px;
 }
 
 :host ::ng-deep .mapboxgl-popup-close-button:hover {
-  color: #000;
+  color: red;
+  background-color: transparent; 
 }
 
 :host ::ng-deep .popup-ion-card {
@@ -79,4 +81,15 @@ ion-list {
 
 :host ::ng-deep .popup-ion-card-header {
   padding-bottom: 8px;
+}
+
+:host ::ng-deep .mapboxgl-popup-content h4 {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  margin: 1px;
+}
+
+:host ::ng-deep .mapboxgl-popup-content h4 ion-icon {
+  padding-right: 8px; /* Adjust the margin as needed */
 }

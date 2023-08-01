@@ -147,8 +147,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
               <ion-card-title color="primary">${suburbInfo?.SP_NAME}</ion-card-title>
             </ion-card-header>
             <ion-card-content>
-              <h4><ion-icon src="assets/lightbulb.svg" class="ion-padding-right"></ion-icon> Power Status: <strong>${suburbInfo?.PowerStatus}</strong></h4>
-              <h4><ion-icon src="assets/schedule.svg" class="ion-padding-right"></ion-icon> Schedule: <strong>12:00 - 14:00</strong></h4>
+              <h4><ion-icon src="assets/lightbulb.svg"></ion-icon><ion-text>Power Status: <strong>${suburbInfo?.PowerStatus}</strong></ion-text></h4>
+              <h4><ion-icon src="assets/schedule.svg"></ion-icon><ion-text> Schedule: <strong>12:00 - 14:00</strong></ion-text></h4>
             </ion-card-content>
           </ion-card>
           `;
