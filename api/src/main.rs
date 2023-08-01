@@ -24,7 +24,7 @@ use rocket::fs::FileServer;
 
 use rocket::http::Method;
 use rocket::serde::json::Json;
-use rocket::{get, post, routes, Build, Rocket, State};
+use rocket::{post, routes, Build, Rocket, State};
 use rocket_cors::{AllowedHeaders, CorsOptions};
 use std::env;
 use std::net::IpAddr;
