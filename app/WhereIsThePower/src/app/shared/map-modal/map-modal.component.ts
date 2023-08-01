@@ -105,12 +105,12 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           'fill-color': [
             'match',
             ['get', 'PowerStatus'], // Property to evaluate
-            'on', '#12960e',       // Fill color when 'Powerstatus' is 'on'
-            'off', '#ff0000',      // Fill color when 'Powerstatus' is 'off'
+            'on', 'green',       // Fill color when 'Powerstatus' is 'on'
+            'off', 'red',      // Fill color when 'Powerstatus' is 'off'
             /* Add more cases if needed */
-            '#cccccc'              // Default fill color when 'Powerstatus' doesn't match any case
+            '#9a9ba1'              // Default fill color when 'Powerstatus' doesn't match any case
           ],
-          'fill-opacity': 0.5
+          'fill-opacity': 0.3
         }
       });
 
