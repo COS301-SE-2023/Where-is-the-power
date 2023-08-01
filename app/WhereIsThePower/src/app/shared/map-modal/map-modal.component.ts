@@ -49,6 +49,9 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   screenWidth: number = 0;
   screenHeight: number = 0;
   popup: any = null;
+  tripETA: Date = new Date();
+  tripETAH: number = 0;
+  tripETAM: number = 0;
 
   ngOnInit() { }
 
@@ -335,6 +338,11 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
     this.tripDuration = Math.floor(data.duration / 60);
     this.tripDistance = Math.floor(data.distance / 1000);
+    
+    //CALCULATE ETA 
+    this.tripETA = new Date();
+    this.calculateETA();
+    
 
     // if the route already exists on the map, we'll reset it using setData
     if (this.map.getSource('route')) {
@@ -432,7 +440,22 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     // if (!this.myModal) {
     this.modalResult = result;
     this.myModal.present();
-    //  }
+  }
+
+  calculateETA() {
+    let tripETAHours: number = 0;
+    let tripETAMinutes: number = 0;
+
+    if(this.tripDuration >= 60) {
+      tripETAHours = Math.floor(this.tripDuration / 60);
+      tripETAMinutes = this.tripDuration - (tripETAHours * 60);
+    } else {
+      tripETAMinutes = this.tripDuration;
+    }
+
+    this.tripETA.setHours(this.tripETA.getHours() + tripETAHours);
+    this.tripETA.setMinutes(this.tripETA.getMinutes() + tripETAMinutes);
+    
   }
 
   getIconForInstruction(instruction: string) {
@@ -545,5 +568,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       this.popup.remove();
     }
   }
+
+  
 }
 

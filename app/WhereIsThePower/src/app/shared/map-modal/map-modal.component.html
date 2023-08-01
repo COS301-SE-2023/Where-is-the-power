@@ -50,20 +50,26 @@
               </ion-col>
 
               <!-- DURATION -->
-              <ion-col size="4">
+              <ion-col size="4" *ngIf="tripDuration >= 60">
                 <ion-icon name="icon-name" size="large" src="assets/timer.svg" color="primary"></ion-icon>
                 <div><ion-text color="medium"><small>DURATION</small></ion-text></div>
-                <h4>{{ tripDuration }} min</h4>
+                <h4>{{ tripDuration * 1000 * 60 | date:'H':'UTC'}}h {{ tripDuration * 1000 * 60 | date:'mm':'UTC'}}m</h4>
+              </ion-col>
+              <!-- DURATION ONLY IN MINUTES -->
+              <ion-col size="4" *ngIf="tripDuration < 60">
+                <ion-icon name="icon-name" size="large" src="assets/timer.svg" color="primary"></ion-icon>
+                <div><ion-text color="medium"><small>DURATION</small></ion-text></div>
+                <h4>{{ tripDuration * 1000 * 60 | date:'m':'UTC'}}m</h4>
               </ion-col>
 
               <!-- ETA -->
               <ion-col size="4">
                 <ion-icon name="icon-name" size="large" src="assets/schedule.svg" color="primary"></ion-icon>
                 <div><ion-text color="medium"><small>ETA</small></ion-text></div>
-                <h4>13:00</h4>
+                <h4>{{tripETA.getHours()}}:{{tripETA.getMinutes()}}</h4>
               </ion-col>
             </ion-row>
-
+            <!-- (date.getMinutes()<10?'0':'') + date.getMinutes() -->
             <ion-button expand="block" class="ion-margin-top" (click)="beginTrip()"style="text-transform: none;">
               <ion-icon slot="start" name="navigate-circle-outline"></ion-icon>
               <ion-text>Begin Trip</ion-text>
