@@ -45,6 +45,10 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   startTrip: boolean = false; // Only displayed when "Begin trip" button is clicked
   gettingRoute: boolean = false;
   mapLoaded: boolean = false; // Check if map rendered
+  public currentBreakpoint = 0.2;
+  screenWidth: number = 0;
+  screenHeight: number = 0;
+
   ngOnInit() { }
 
   ngAfterViewInit() {
@@ -177,6 +181,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
 
   async getRoute(selectedResult: any) {
+    this.updateBreakpoint();
+
     this.emitGetDirections();
     this.gettingRoute = true;
     console.log(this.searchBar);
@@ -360,11 +366,11 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     this.myModal.dismiss();
     this.startTrip = false;
     this.showResultsList = false;
-    this.myModal.setCurrentBreakpoint(0.2);
     this.tripDuration = 0;
     this.tripDistance = 0;
     this.gettingRoute = false;
     this.emitCancelDirections();
+    this.updateBreakpoint();
 
     if (this.map.getSource('route')) {
       this.map.removeLayer('route');
@@ -395,8 +401,10 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   modalResult: any; // To store the selected result data
 
   openModal(result: any) {
+    // if (!this.myModal) {
     this.modalResult = result;
     this.myModal.present();
+    //  }
   }
 
   getIconForInstruction(instruction: string) {
@@ -421,13 +429,11 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     return 'information-circle-outline';
   }
 
-  currentBreakpoint = 0.2;
-
   beginTrip() {
     this.startTrip = true;
-    this.currentBreakpoint = 0.1
-    this.myModal.setCurrentBreakpoint(0.1);
     this.centerOnStartPoint();
+    this.updateBreakpoint();
+
 
     if (this.userMarker) {
       this.userMarker.remove();
@@ -450,13 +456,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       .addTo(this.map); // Add the marker to the map
   }
 
-  screenWidth: number = 0;
-
-  @HostListener('window:resize', ['$event'])
-  onResize(event: any) {
-    this.screenWidth = event.target.innerWidth;
-  }
-
   onModalDismiss() {
     this.onSearchBarClear();
   }
@@ -470,6 +469,52 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     this.mapSuburbsService.gettingDirections.next(true);
     await this.delay(500);
     this.map.resize();
+  }
+
+  @HostListener('window:resize')
+  onResize() {
+    this.updateBreakpoint();
+
+    console.log("currentBreakpointcurrentBreakpoint" + this.currentBreakpoint);
+
+    console.log("FFFFFFFFFF" + /iPhone/i.test(navigator.userAgent));
+  }
+
+  updateBreakpoint() {
+    this.screenWidth = window.innerWidth;
+    this.screenHeight = window.innerHeight;
+    const isIphone = /iPhone/i.test(navigator.userAgent); // iphone screen sizing is different
+
+    if (this.startTrip == false) {
+      if (this.screenHeight > 840 && !isIphone) {
+        this.currentBreakpoint = 0.2;
+      }
+      else if ((this.screenHeight > 770 && this.screenHeight <= 840) || isIphone && this.screenHeight > 770) {
+        this.currentBreakpoint = 0.22;
+      }
+      else if (this.screenHeight > 735 && this.screenHeight <= 870 && !isIphone) {
+        this.currentBreakpoint = 0.23;
+      }
+      else if (this.screenHeight > 700 && this.screenHeight <= 770 && !isIphone) {
+        this.currentBreakpoint = 0.24;
+      }
+      else if (this.screenHeight <= 700 || isIphone) {
+        this.currentBreakpoint = 0.28;
+      }
+    }
+    else {
+      if (this.screenHeight > 800) {
+        this.currentBreakpoint = 0.1;
+      }
+      else if (this.screenHeight > 700 && this.screenHeight <= 800) {
+        this.currentBreakpoint = 0.12;
+      }
+      else if (this.screenHeight <= 700) {
+        this.currentBreakpoint = 0.14;
+      }
+    }
+    if (this.myModal) // Check if myModal is defined before calling setCurrentBreakpoint
+      this.myModal.setCurrentBreakpoint(this.currentBreakpoint);
   }
 }
 
