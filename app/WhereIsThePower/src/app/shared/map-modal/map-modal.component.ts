@@ -173,7 +173,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
               ...feature,
             };
           });
-          console.log(this.searchResults);
+          //console.log("searchResults: ",this.searchResults);
         })
         .catch(error => console.error(error));
     }
@@ -185,7 +185,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
     this.emitGetDirections();
     this.gettingRoute = true;
-    console.log(this.searchBar);
     this.searchBar.value = `${selectedResult.place_name}`;
 
     this.showResultsList = false;
@@ -474,10 +473,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   @HostListener('window:resize')
   onResize() {
     this.updateBreakpoint();
-
-    console.log("currentBreakpointcurrentBreakpoint" + this.currentBreakpoint);
-
-    console.log("FFFFFFFFFF" + /iPhone/i.test(navigator.userAgent));
   }
 
   updateBreakpoint() {
