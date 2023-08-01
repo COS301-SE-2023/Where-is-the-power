@@ -33,7 +33,8 @@ to help assist users navigate their routes through these dark times.
     - [Architectural Requirements Document](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Architectural-Requirements-Document)    
 - ## Demo 3
   [**All documentation can be found on the Wiki!**](https://github.com/COS301-SE-2023/Where-is-the-power/wiki)
-  ***PDFs listed below:***
+
+  *** However PDFs are listed below:***
    - [Project Management](https://github.com/orgs/COS301-SE-2023/projects/7)
    - [User Manual](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/User_Manual.pdf)
    - [Technical Installation Manual](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Technical%20Installation%20Manual.pdf)
