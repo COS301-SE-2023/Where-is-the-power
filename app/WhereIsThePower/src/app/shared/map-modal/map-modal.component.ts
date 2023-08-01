@@ -409,12 +409,12 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   getIconForInstruction(instruction: string) {
     // Regular expressions to match keywords related to arrows
     const arrowKeywords = [
-      { keyword: /(north|toward|straight|south)/i, icon: 'assets/arrow_upwards.svg' },
+      { keyword: /(north|toward|straight|south|continue)/i, icon: 'assets/arrow_upwards.svg' },
       { keyword: /(west|left)/i, icon: 'assets/turn_left.svg' },
       { keyword: /(east|right)/i, icon: 'assets/turn_right.svg' },
       { keyword: /(back| u-turn)/i, icon: 'assets/u_turn.svg' },
       { keyword: /(roundabout)/i, icon: 'assets/roundabout.svg' },
-      { keyword: /(exit)/i, icon: 'assets/exit.svg' }
+      { keyword: /(exit | ramp)/i, icon: 'assets/exit.svg' }
     ];
 
     // Search for arrow keywords in the instruction text

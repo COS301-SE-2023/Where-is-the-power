@@ -30,8 +30,8 @@
   <ion-modal #myModal *ngIf="searchResults.length > 0"
     class="ion-hide-md-up"
     [initialBreakpoint]="currentBreakpoint"
-    [breakpoints]="[currentBreakpoint, 0.5 , 0.75]"
-    [backdropBreakpoint]="0.1"
+    [breakpoints]="[0.12, currentBreakpoint, 0.5 , 0.75, 1]"
+    [backdropBreakpoint]="0.12"
     [backdropDismiss]="true"
     (ionModalDidDismiss)="onModalDismiss()"
     > <!--  Modal can be dismissed before the trip starts -->
@@ -105,8 +105,8 @@
             </ion-col>
           </ion-row>
         </ng-template>
-        <ion-content class="ion-padding">
-          <ion-list *ngIf="instructions.length > 0; else loadInstructions">
+        <ion-content class="ion-padding scroll">
+          <ion-list *ngIf="instructions.length > 0; else loadInstructions" class="scroll">
             <ion-item *ngFor="let instruction of instructions">
               <ion-icon [src]="getIconForInstruction(instruction)" class="ion-padding-end"></ion-icon>
               <ion-label>
