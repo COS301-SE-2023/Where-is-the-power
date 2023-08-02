@@ -9,11 +9,14 @@ import {
 import { environment } from 'src/environments/environment';
 import { UserLocationService } from '../../user-location.service';
 import { IonContent, ModalController } from '@ionic/angular';
+import { SavedPlacesService } from '../../tab-saved/saved-places.service';
+import { Subscription } from 'rxjs';
 
 //import * as mapboxgl from 'mapbox-gl';
 //import * as MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 import { MapSuburbsService } from './map-suburbs.service';
 import { EventEmitter, Output } from '@angular/core';
+import { Subscribable } from 'rxjs';
 declare let MapboxDirections: any;
 declare let mapboxgl: any;
 declare let MapboxGeocoder: any;
@@ -30,7 +33,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     private mapSuburbsService: MapSuburbsService,
     private userLocationService: UserLocationService,
     private modalCtrl: ModalController,
-    private changeDetectorRef: ChangeDetectorRef
+    private changeDetectorRef: ChangeDetectorRef,
+    private savedPlacesService: SavedPlacesService,
   ) { }
   map: any;
   dat: any;
@@ -52,8 +56,22 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   tripETA: Date = new Date();
   tripETAH: string = '';
   tripETAM: string = '';
+  navigateToPlaceSubscription: Subscription = new Subscription();
+  goToPlace: any;
 
-  ngOnInit() { }
+  ngOnInit() {
+    this.navigateToPlaceSubscription = this.savedPlacesService.navigateToPlace.subscribe((isNavigate) => {
+      if (isNavigate == true) {
+        this.goToPlace = this.savedPlacesService.selectedPlace;
+        console.log("savedPlacesServicegoToPlace", this.goToPlace);
+        this.map.flyTo({
+          center: [this.goToPlace.center[0], this.goToPlace.center[1]], // Center on place
+          zoom: 15, // Adjust the zoom level
+          speed: 1.2, // Adjust the speed of the animation
+        });
+      }
+    });
+  }
 
   ngAfterViewInit() {
     this.mapSuburbsService.getSuburbData().subscribe(async (data: any) => {
@@ -338,11 +356,11 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
     this.tripDuration = Math.floor(data.duration / 60);
     this.tripDistance = Math.floor(data.distance / 1000);
-    
-    //CALCULATE ETA 
+
+    //CALCULATE ETA
     this.tripETA = new Date();
     this.calculateETA();
-    
+
 
     // if the route already exists on the map, we'll reset it using setData
     if (this.map.getSource('route')) {
@@ -446,7 +464,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     let tripETAHours: number = 0;
     let tripETAMinutes: number = 0;
 
-    if(this.tripDuration >= 60) {
+    if (this.tripDuration >= 60) {
       tripETAHours = Math.floor(this.tripDuration / 60);
       tripETAMinutes = this.tripDuration - (tripETAHours * 60);
     } else {
@@ -571,6 +589,11 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     }
   }
 
-  
+  ngOnDestroy() {
+    if (this.navigateToPlaceSubscription) {
+      this.navigateToPlaceSubscription.unsubscribe();
+      this.savedPlacesService.navigateToPlace.next(false);
+    }
+  }
 }
 

@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { AuthService } from '../authentication/auth.service';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { Router } from '@angular/router';
 import { Place } from './place';
 
 @Injectable({
@@ -19,9 +20,15 @@ export class SavedPlacesService {
   }
 */
   apiUrl = 'https://witpa.codelog.co.za/api/';
+  selectedPlace: any;
+  navigateToPlace: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+
   poool: any;
   private headers: HttpHeaders = new HttpHeaders();
-  constructor(private httpClient: HttpClient, private authService: AuthService) { }
+  constructor(private httpClient: HttpClient,
+    private authService: AuthService,
+    private router: Router
+  ) { }
 
   place = new BehaviorSubject<Place[] | null>(null);
 
@@ -35,5 +42,12 @@ export class SavedPlacesService {
 
   addSavedPlace(newPlace: Place) {
     return this.httpClient.put(`${this.apiUrl}user/savedPlaces`, newPlace, { headers: this.headers })
+  }
+
+  goToPlace(place: Place) {
+    console.log("goToPlace: ", place);
+    this.selectedPlace = place;
+    this.navigateToPlace.next(true);
+    this.router.navigate(['tabs/tab-navigate']);
   }
 }

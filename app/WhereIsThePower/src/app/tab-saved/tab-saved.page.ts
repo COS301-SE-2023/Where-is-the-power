@@ -42,7 +42,6 @@ export class TabSavedPage {
   }
 
   async ionViewDidEnter() {
-    this.latitude = this.userLocationService.getLatitude();
     this.isLoggedIn = await this.authService.isUserLoggedIn();
 
     if (this.isLoggedIn) {
@@ -60,6 +59,7 @@ export class TabSavedPage {
     this.showResultsList = false;
     console.log("result: ", result);
 
+    // Assign the result to a new object
     let newPlace: Place = {
       "mapboxId": result.id,
       "name": result.text,
@@ -68,18 +68,23 @@ export class TabSavedPage {
       "longitude": result.center[0],
     }
 
-    this.savedPlaceService.addSavedPlace(newPlace)
-      .pipe(take(1)) //subscription will automatically unsubscribe after the first emission
-      .subscribe(data => {
-        console.log("addSavedPlace: ", data);
 
-        if (this.places.length > 0) {
-          this.savedPlaceService.place.next([...this.places, newPlace]);
-        } else {
-          this.savedPlaceService.place.next([newPlace]);
-        }
-        this.sucessToast('Succesfully added place');
-      });
+    if (!this.isPlaceSaved(newPlace)) {
+      this.savedPlaceService.addSavedPlace(newPlace)
+        .pipe(take(1)) //subscription will automatically unsubscribe after the first emission
+        .subscribe(data => {
+          console.log("addSavedPlace: ", data);
+
+          if (this.places.length > 0) {
+            this.savedPlaceService.place.next([...this.places, newPlace]);
+          } else {
+            this.savedPlaceService.place.next([newPlace]);
+          }
+          this.sucessToast('Succesfully added place');
+
+          this.savedPlaceService.goToPlace(result);
+        });
+    }
   }
 
   removeSavedPlace(place: any) {

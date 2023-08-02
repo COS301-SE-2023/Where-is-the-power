@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { UserLocationService } from '../user-location.service';
+import { SavedPlacesService } from '../tab-saved/saved-places.service';
 
 @Component({
   selector: 'app-tab-navigate',
@@ -8,7 +9,7 @@ import { UserLocationService } from '../user-location.service';
 })
 export class TabNavigatePage {
 
-  constructor(private UserLocationService: UserLocationService) { }
+  constructor(private UserLocationService: UserLocationService, private savedPlacesService: SavedPlacesService) { }
   isLocationProvide = false;
 
   async ionViewDidEnter() {
@@ -24,5 +25,9 @@ export class TabNavigatePage {
 
   onLocateUser() {
     this.UserLocationService.getUserLocation();
+  }
+
+  ionViewDidLeave() {
+    this.savedPlacesService.navigateToPlace.next(false);
   }
 }
