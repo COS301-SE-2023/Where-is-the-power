@@ -20,25 +20,20 @@ export class SavedPlacesService {
 */
   apiUrl = 'https://witpa.codelog.co.za/api/';
   poool: any;
-  private headers: HttpHeaders;
-  constructor(private httpClient: HttpClient, private authService: AuthService) {
-    this.headers = this.authService.getAuthHeaders();
-  }
+  private headers: HttpHeaders = new HttpHeaders();
+  constructor(private httpClient: HttpClient, private authService: AuthService) { }
 
   place = new BehaviorSubject<Place[] | null>(null);
 
   getPlaces() {
-    return this.httpClient.get<Place[]>(`${this.apiUrl}user/savedPlaces`, { headers: this.authService.getAuthHeaders() }).pipe(tap((places: Place[]) => {
+    this.headers = this.authService.getAuthHeaders(); // get the auth headers
+
+    return this.httpClient.get<Place[]>(`${this.apiUrl}user/savedPlaces`, { headers: this.headers }).pipe(tap((places: Place[]) => {
       this.place.next(places);
     }));
   }
 
   addSavedPlace(newPlace: Place) {
-    console.log("add saved place");
-    console.log("place", newPlace);
-    console.log("HEADER", this.headers);
-    console.log("HEADER", this.authService.getAuthHeaders());
-
-    return this.httpClient.put(`${this.apiUrl}user/savedPlaces`, newPlace, { headers: this.authService.getAuthHeaders() })
+    return this.httpClient.put(`${this.apiUrl}user/savedPlaces`, newPlace, { headers: this.headers })
   }
 }
