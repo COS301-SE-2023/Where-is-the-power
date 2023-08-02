@@ -24,7 +24,7 @@ export class TabSavedPage {
   searchResults: any[] = [];
   queryLength = 0;
   private placesSubscription: Subscription;
-
+  private savePlaceSubscription: Subscription;
   @ViewChild('searchBar', { static: false }) searchBar: any;
 
   constructor(private router: Router,
@@ -33,7 +33,11 @@ export class TabSavedPage {
     private authService: AuthService,
     private savedPlaceService: SavedPlacesService,
     private toastController: ToastController
-  ) { this.placesSubscription = new Subscription(); }
+  ) 
+  { 
+    this.placesSubscription = new Subscription();
+    this.savePlaceSubscription = new Subscription();
+  }
 
   ngOnInit() { }
 
@@ -48,6 +52,15 @@ export class TabSavedPage {
       this.placesSubscription = this.savedPlaceService.getPlaces().subscribe((data: any) => {
         this.places = data.result;
       });
+
+      this.savePlaceSubscription = this.savedPlaceService.savePlace.subscribe((savePlace: any) =>
+      {
+        if(savePlace === true)
+        {
+          this.savePlace(this.savedPlaceService.savedPlace);
+          this.router.navigate(['tabs/tab-saved']);
+        }
+      });
     }
   }
 
@@ -55,9 +68,17 @@ export class TabSavedPage {
     this.isLoggedIn = false;
   }
 
+  goToPlace(result: any)
+  {
+    this.savedPlaceService.goToPlace(result);
+  }
+
   savePlace(result: any) {
     this.showResultsList = false;
     console.log("result: ", result);
+    console.log("WHYYYYYYYYYYYYYY ");
+
+    this.goToPlace(result);
 
     // Assign the result to a new object
     let newPlace: Place = {
@@ -67,7 +88,6 @@ export class TabSavedPage {
       "latitude": result.center[1],
       "longitude": result.center[0],
     }
-
 
     if (!this.isPlaceSaved(newPlace)) {
       this.savedPlaceService.addSavedPlace(newPlace)
@@ -80,9 +100,8 @@ export class TabSavedPage {
           } else {
             this.savedPlaceService.place.next([newPlace]);
           }
-          this.sucessToast('Succesfully added place');
+         // this.sucessToast('Succesfully added place');
 
-          this.savedPlaceService.goToPlace(result);
         });
     }
   }

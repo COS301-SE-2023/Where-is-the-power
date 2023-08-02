@@ -58,10 +58,15 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   tripETAM: string = '';
   navigateToPlaceSubscription: Subscription = new Subscription();
   MapSubscription: Subscription = new Subscription();
-  goToPlace: any;
+  goToPlace: any; // Physical place
+  navigateToPlace = false;
+  @ViewChild('myModal') myModal: any; // Reference to the ion-modal element
+  modalResult: any; // To store the selected result data
 
   ngOnInit() {
-    this.navigateToPlaceSubscription = this.savedPlacesService.navigateToPlace.subscribe((isNavigate) => {
+    this.navigateToPlaceSubscription = this.savedPlacesService.navigateToPlace.subscribe((isNavigate: any) => {
+      this.navigateToPlace = isNavigate;
+      console.log(" this.navigateToPlace", this.navigateToPlace)
       if (isNavigate == true) {
         this.goToPlace = this.savedPlacesService.selectedPlace;
         console.log("savedPlacesServicegoToPlace", this.goToPlace);
@@ -70,6 +75,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           zoom: 15, // Adjust the zoom level
           speed: 1.2, // Adjust the speed of the animation
         });
+        console.log("WTFFFFFFFFFF", isNavigate);
+        this.openNavigateModal();
       }
     });
   }
@@ -234,6 +241,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     this.emitGetDirections();
     this.gettingRoute = true;
     this.closePopup();
+    await this.cancelNavigateModal();
+    this.openModal(selectedResult);
 
     this.searchBar.value = `${selectedResult.place_name}`;
 
@@ -452,14 +461,22 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     });
     this.closePopup();
   }
-  @ViewChild('myModal') myModal: any; // Reference to the ion-modal element
-  modalResult: any; // To store the selected result data
 
   openModal(result: any) {
     // if (!this.myModal) {
     this.modalResult = result;
+    console.log("FGGR",this.navigateToPlace)
+
     this.myModal.present();
   }
+
+  @ViewChild('navigateModal') navigateModal: any; // Reference to the ion-modal element
+
+  openNavigateModal() {
+    this.navigateModal.present();
+    this.updateBreakpoint();
+  }
+
 
   calculateETA() {
     let tripETAHours: number = 0;
@@ -588,6 +605,18 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     if (this.popup) {
       this.popup.remove();
     }
+  }
+
+  savePlace(result: any) 
+  {
+    this.cancelNavigateModal();
+    this.navigateToPlace = false;
+    this.savedPlacesService.savedPlace = this.goToPlace;
+    this.savedPlacesService.savePlace.next(true);
+  }
+
+  cancelNavigateModal(){
+    this.navigateModal.dismiss();
   }
 
   ngOnDestroy() {

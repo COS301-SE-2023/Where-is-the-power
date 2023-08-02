@@ -12,7 +12,7 @@
         #searchBar>
       </ion-searchbar>
       <ion-list *ngIf="searchResults.length > 0 && showResultsList">
-        <ion-item *ngFor="let result of searchResults" (click)="getRoute(result)" (click)="openModal(result)" button>
+        <ion-item *ngFor="let result of searchResults" (click)="getRoute(result)" button>
           <ion-label>
             <h3><strong>{{ result.text }}</strong></h3>
             <ion-note>{{ result.place_name }}</ion-note>
@@ -27,7 +27,39 @@
     </ion-fab-button>
   </ion-fab>
   <ion-row id="map"></ion-row>
-  <ion-modal #myModal *ngIf="searchResults.length > 0"
+  
+  <ion-modal #navigateModal
+    [initialBreakpoint]="currentBreakpoint"
+    [breakpoints]="[0, currentBreakpoint]"
+    [backdropDismiss]="true"
+    >
+    <ng-template>
+      <ion-content class="ion-padding">
+        <h3><ion-text color="primary">{{ goToPlace.text }}</ion-text></h3>
+        <ion-text *ngIf ="goToPlace.properties.category; else elseType" color="medium">{{ goToPlace.properties.category }}</ion-text>
+        <ng-template #elseType>
+          <ion-text>
+            {{ goToPlace.place_type }}
+          </ion-text>
+        </ng-template>
+        <ion-grid>
+          <ion-row>
+            <ion-col>
+              <ion-button shape="round" (click)="savePlace(goToPlace)">
+                <ion-icon slot="start" src="assets/bookmarks.svg"></ion-icon>
+                Save
+              </ion-button>
+              <ion-button shape="round" fill="outline" (click)="getRoute(goToPlace)" (click)="cancelNavigateModal()">
+                <ion-icon slot="start" name="navigate-outline"></ion-icon>
+                Directions
+              </ion-button>
+            </ion-col>
+          </ion-row>
+      </ion-grid>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+  <ion-modal #myModal
     class="ion-hide-md-up"
     [initialBreakpoint]="currentBreakpoint"
     [breakpoints]="[0.12, currentBreakpoint, 0.5 , 0.75, 1]"
@@ -69,7 +101,7 @@
                 <h4>{{tripETAH}}:{{tripETAM}}</h4>
               </ion-col>
             </ion-row>
-            
+
             <ion-button expand="block" class="ion-margin-top" (click)="beginTrip()"style="text-transform: none;">
               <ion-icon slot="start" name="navigate-circle-outline"></ion-icon>
               <ion-text>Begin Trip</ion-text>
