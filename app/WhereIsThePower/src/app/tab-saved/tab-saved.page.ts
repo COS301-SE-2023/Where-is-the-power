@@ -190,7 +190,7 @@ export class TabSavedPage {
   // TODO send Boolean to mapmodal
   ngOnDestroy() {
     if (this.placesSubscription) {
-      this.placesSubscription.unsubscribe();
+      this.placesSubscription.unsubscribe(); // unsubscribe from the observable
     }
   }
 }
