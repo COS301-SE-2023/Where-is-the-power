@@ -45,7 +45,6 @@ export class SavedPlacesService {
   }
 
   goToPlace(place: Place) {
-    console.log("goToPlace: ", place);
     this.selectedPlace = place;
     this.navigateToPlace.next(true);
     this.router.navigate(['tabs/tab-navigate']);
