@@ -24,7 +24,6 @@ headers = new HttpHeaders();
     ) { }
 
   apiUrl = 'https://witpa.codelog.co.za/api/';
-  place = new BehaviorSubject<Place[] | null>(null);
   poool: any;
   /*
   getPlaces() {

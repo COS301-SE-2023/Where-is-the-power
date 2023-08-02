@@ -30,9 +30,15 @@ export class TabSavedPage {
     private http: HttpClient,
     private authService: AuthService,
     private savedPlaceService: SavedPlacesService,
-    private toastController: ToastController) {}
+    private toastController: ToastController) { }
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.authService.place.subscribe((data: any) => {
+      if (data) {
+        this.places = data;
+      }
+    });
+  }
 
   gotoProfileRoute() {
     this.router.navigate(['tabs/tab-profile']);
@@ -41,12 +47,9 @@ export class TabSavedPage {
   async ionViewDidEnter() {
     this.latitude = this.userLocationService.getLatitude();
     this.isLoggedIn = await this.authService.isUserLoggedIn();
-    console.log(this.isLoggedIn)
 
-    if(this.isLoggedIn)
-    {
-      this.authService.getPlaces().subscribe((data:any) => {
-       // console.log("getPlaces", data);
+    if (this.isLoggedIn) {
+      this.authService.getPlaces().subscribe((data: any) => {
         this.places = data.result;
       });
     }
@@ -57,26 +60,26 @@ export class TabSavedPage {
   }
 
   savePlace(result: any) {
-    this.authService.getPlaces().subscribe((data:any) => {
-      // console.log("getPlaces", data);
-       this.places = data.result;
-     });
     this.showResultsList = false;
+    console.log("result: ", result);
 
     let newPlace: Place = {
+      "mapboxId": result.id,
+      "name": result.text,
       "address": result.place_name,
       "latitude": result.center[1],
       "longitude": result.center[0],
-      "mapboxId": result.properties.mapbox_id,
-      "name":  result.text
-  }
-  
-    console.log("newPlace ",newPlace);
+    }
 
-    this.sucessToast('Succesfully added place');
     this.authService.addSavedPlace(newPlace).subscribe(data => {
-      console.log("savedPlaceService ",data);
-      //this.savedPlaces = data;
+      console.log("addSavedPlace: ", data);
+
+      if (this.places.length > 0) {
+        this.authService.place.next([...this.places, newPlace]);
+      } else {
+        this.authService.place.next([newPlace]);
+      }
+      this.sucessToast('Succesfully added place');
     });
   }
 
@@ -84,7 +87,7 @@ export class TabSavedPage {
     this.savedPlaces = this.savedPlaces.filter((sPlace: any) => {
       if (sPlace.id !== place.id) return sPlace;
     });
-    console.log(this.savedPlaces);
+    console.log("removeSavedPlace: ", this.savedPlaces);
   }
 
   isPlaceSaved(place: any) {
@@ -92,7 +95,7 @@ export class TabSavedPage {
     this.savedPlaces.forEach((sPlace: any) => {
       if (sPlace.id === place.id) isSaved = true;
     });
-    console.log(isSaved)
+    //console.log(isSaved)
     return isSaved;
   }
 
