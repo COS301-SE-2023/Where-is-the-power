@@ -2,6 +2,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { AuthService } from '../authentication/auth.service';
 import { BehaviorSubject, Subscription } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { Place } from './place';
 
 @Injectable({
@@ -17,25 +18,27 @@ export class SavedPlacesService {
     "name": "Home"
   }
 */
-headers = new HttpHeaders();
-  constructor(
-    private httpClient: HttpClient,
-    private auth: AuthService
-    ) { }
-
   apiUrl = 'https://witpa.codelog.co.za/api/';
   poool: any;
-  /*
-  getPlaces() {
-    return this.httpClient.get(`${this.apiUrl}user/savedPlaces`, { headers: this.auth.headers });
+  private headers: HttpHeaders;
+  constructor(private httpClient: HttpClient, private authService: AuthService) {
+    this.headers = this.authService.getAuthHeaders();
   }
 
+  place = new BehaviorSubject<Place[] | null>(null);
 
-  addSavedPlace(place: Place) {
+  getPlaces() {
+    return this.httpClient.get<Place[]>(`${this.apiUrl}user/savedPlaces`, { headers: this.authService.getAuthHeaders() }).pipe(tap((places: Place[]) => {
+      this.place.next(places);
+    }));
+  }
+
+  addSavedPlace(newPlace: Place) {
     console.log("add saved place");
-    console.log("place",this.place);
+    console.log("place", newPlace);
     console.log("HEADER", this.headers);
+    console.log("HEADER", this.authService.getAuthHeaders());
 
-    return this.httpClient.put(`${this.apiUrl}user/savedPlaces`, this.place, { headers: this.headers })
-  }*/
+    return this.httpClient.put(`${this.apiUrl}user/savedPlaces`, newPlace, { headers: this.authService.getAuthHeaders() })
+  }
 }

@@ -2,12 +2,13 @@ import { Component, ViewChild } from '@angular/core';
 import { UserLocationService } from '../user-location.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
-import { empty } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../authentication/auth.service';
 import { Router } from '@angular/router';
 import { SavedPlacesService } from './saved-places.service';
 import { Place } from './place';
 import { ToastController } from '@ionic/angular';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-tab-saved',
@@ -22,6 +23,7 @@ export class TabSavedPage {
   showResultsList: boolean = false;
   searchResults: any[] = [];
   queryLength = 0;
+  private placesSubscription: Subscription;
 
   @ViewChild('searchBar', { static: false }) searchBar: any;
 
@@ -30,15 +32,10 @@ export class TabSavedPage {
     private http: HttpClient,
     private authService: AuthService,
     private savedPlaceService: SavedPlacesService,
-    private toastController: ToastController) { }
+    private toastController: ToastController
+  ) { this.placesSubscription = new Subscription(); }
 
-  ngOnInit() {
-    this.authService.place.subscribe((data: any) => {
-      if (data) {
-        this.places = data;
-      }
-    });
-  }
+  ngOnInit() { }
 
   gotoProfileRoute() {
     this.router.navigate(['tabs/tab-profile']);
@@ -49,7 +46,7 @@ export class TabSavedPage {
     this.isLoggedIn = await this.authService.isUserLoggedIn();
 
     if (this.isLoggedIn) {
-      this.authService.getPlaces().subscribe((data: any) => {
+      this.placesSubscription = this.savedPlaceService.getPlaces().subscribe((data: any) => {
         this.places = data.result;
       });
     }
@@ -71,16 +68,18 @@ export class TabSavedPage {
       "longitude": result.center[0],
     }
 
-    this.authService.addSavedPlace(newPlace).subscribe(data => {
-      console.log("addSavedPlace: ", data);
+    this.savedPlaceService.addSavedPlace(newPlace)
+      .pipe(take(1)) //subscription will automatically unsubscribe after the first emission
+      .subscribe(data => {
+        console.log("addSavedPlace: ", data);
 
-      if (this.places.length > 0) {
-        this.authService.place.next([...this.places, newPlace]);
-      } else {
-        this.authService.place.next([newPlace]);
-      }
-      this.sucessToast('Succesfully added place');
-    });
+        if (this.places.length > 0) {
+          this.savedPlaceService.place.next([...this.places, newPlace]);
+        } else {
+          this.savedPlaceService.place.next([newPlace]);
+        }
+        this.sucessToast('Succesfully added place');
+      });
   }
 
   removeSavedPlace(place: any) {
@@ -189,5 +188,9 @@ export class TabSavedPage {
   }
 
   // TODO send Boolean to mapmodal
-
+  ngOnDestroy() {
+    if (this.placesSubscription) {
+      this.placesSubscription.unsubscribe();
+    }
+  }
 }
