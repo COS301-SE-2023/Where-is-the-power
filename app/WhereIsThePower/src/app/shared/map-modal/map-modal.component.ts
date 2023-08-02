@@ -57,6 +57,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   tripETAH: string = '';
   tripETAM: string = '';
   navigateToPlaceSubscription: Subscription = new Subscription();
+  MapSubscription: Subscription = new Subscription();
   goToPlace: any;
 
   ngOnInit() {
@@ -74,7 +75,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.mapSuburbsService.getSuburbData().subscribe(async (data: any) => {
+    this.MapSubscription = this.mapSuburbsService.getSuburbData().subscribe(async (data: any) => {
       console.log(data.result.mapPolygons[0]);
       console.log("Data: ", data);
 
@@ -593,6 +594,10 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     if (this.navigateToPlaceSubscription) {
       this.navigateToPlaceSubscription.unsubscribe();
       this.savedPlacesService.navigateToPlace.next(false);
+    }
+
+    if (this.MapSubscription) {
+      this.MapSubscription.unsubscribe();
     }
   }
 }
