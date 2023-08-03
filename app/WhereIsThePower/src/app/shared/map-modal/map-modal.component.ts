@@ -17,6 +17,7 @@ import { Subscription } from 'rxjs';
 import { MapSuburbsService } from './map-suburbs.service';
 import { EventEmitter, Output } from '@angular/core';
 import { Subscribable } from 'rxjs';
+import { Place } from '../../tab-saved/place';
 declare let MapboxDirections: any;
 declare let mapboxgl: any;
 declare let MapboxGeocoder: any;
@@ -70,8 +71,22 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       if (isNavigate == true) {
         this.goToPlace = this.savedPlacesService.selectedPlace;
         console.log("savedPlacesServicegoToPlace", this.goToPlace);
+        let placeCenter: any;
+
+        // TODO
+        if (!this.goToPlace.hasOwnProperty('center')) {  // Place object
+          console.log("goToPlacegoToPlace", this.goToPlace);
+
+          placeCenter = [this.goToPlace.longitude, this.goToPlace.latitude];
+          console.log("bbbbb,,bbbbb", placeCenter);
+
+        }
+        else { // Mapbox object
+          placeCenter = [this.goToPlace.center[0], this.goToPlace.center[1]]
+        }
+
         this.map.flyTo({
-          center: [this.goToPlace.center[0], this.goToPlace.center[1]], // Center on place
+          center: placeCenter, // Center on place
           zoom: 15, // Adjust the zoom level
           speed: 1.2, // Adjust the speed of the animation
         });
@@ -465,7 +480,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   openModal(result: any) {
     // if (!this.myModal) {
     this.modalResult = result;
-    console.log("FGGR",this.navigateToPlace)
+    console.log("FGGR", this.navigateToPlace)
 
     this.myModal.present();
   }
@@ -607,15 +622,16 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     }
   }
 
-  savePlace(result: any) 
-  {
+  savePlace(result: any) {
     this.cancelNavigateModal();
     this.navigateToPlace = false;
     this.savedPlacesService.savedPlace = this.goToPlace;
+    //this.savedPlacesService.addSavedPlace(this.goToPlace);
+
     this.savedPlacesService.savePlace.next(true);
   }
 
-  cancelNavigateModal(){
+  cancelNavigateModal() {
     this.navigateModal.dismiss();
   }
 
