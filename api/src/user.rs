@@ -29,25 +29,31 @@ pub async fn create_user(
         return ApiError::ServerError("Database is unavailable. Please try again later!").into();
     }
 
-    let state = state.inner().as_ref().unwrap();
-
     let mut query = Document::new();
     query.insert("email", new_user.email.clone());
-    let mut result = User::query(query, &state.database(DB_NAME))
-        .await
-        .expect("Couldn't query users");
-
-    while result.advance().await.expect("Couldn't advance cursor") {
-        let user = result
-            .deserialize_current()
-            .expect("Couldn't deserialize database user");
-        if user.email == new_user.email {
-            return ApiError::UserCreationError("A user with that email already exists").into();
+    let email_collisions = match User::find(
+        bson::doc! {
+            "email": &new_user.email
+        },
+        &state.as_ref().unwrap().database(DB_NAME),
+        None,
+    )
+    .await
+    {
+        Ok(user) => user,
+        Err(err) => {
+            log::error!("Couldn't query the database! {err:?}");
+            return ApiError::ServerError("Couldn't query the database to validate user request")
+                .into();
         }
+    };
+
+    if email_collisions.len() > 0 {
+        return ApiError::UserCreationError("A user with that email already exists!").into();
     }
 
     User::from(new_user.into_inner())
-        .insert(&state.database(DB_NAME))
+        .insert(&state.as_ref().unwrap().database(DB_NAME))
         .await
         .expect("Couldn't insert new user!");
 
@@ -69,14 +75,12 @@ pub async fn add_saved_place(
         return ApiError::AuthError("Authenticated user required").into();
     }
 
-    let email = token.email.unwrap();
     let db = state.as_ref().unwrap().database(DB_NAME);
-    let mut doc = Document::new();
-    doc.insert("email", email);
 
-    let mut user = dbg!(if let Ok(mut user) = User::query(doc, &db).await {
-        user.advance().await.expect("Couldn't fetch user!");
-        user.deserialize_current().unwrap()
+    let mut user = dbg!(if let Some(user) =
+        User::find_one(bson::doc! { "email": &token.email }, &db, None).await
+    {
+        user
     } else {
         return ApiError::ServerError("The requested user could not be found").into();
     });
@@ -114,26 +118,20 @@ pub async fn get_saved_places(
         return ApiError::AuthError("Only authenticated users can use this endpoint").into();
     }
 
-    let email = token.email.unwrap();
-    let doc = bson::doc! {
-        "email": email
-    };
-
-    let db = state.as_ref().unwrap().database(DB_NAME);
-    if let Ok(mut cursor) = User::query(doc, &db).await {
-        if let Ok(true) = cursor.advance().await {
-            let user = cursor.deserialize_current().unwrap();
-            ApiResponse::Ok(
-                user.saved_places
-                    .into_iter()
-                    .map(|(_, v)| v)
-                    .collect::<Vec<_>>(),
-            )
-        } else {
-            ApiError::ServerError("Couldn't find your user").into()
-        }
-    } else {
-        ApiError::ServerError("Couldn't query the database for your user").into()
+    match User::find_one(
+        bson::doc! {
+            "email": &token.email
+        },
+        &state
+            .as_ref()
+            .expect("This rocket instance has not attached database!")
+            .database(DB_NAME),
+        None,
+    )
+    .await
+    {
+        Some(user) => ApiResponse::Ok(user.saved_places.into_iter().map(|x| x.1).collect()),
+        None => ApiError::AuthError("We couldn't find the user associated with that token").into(),
     }
 }
 
@@ -149,24 +147,21 @@ pub async fn delete_saved_place(
     }
 
     let email = token.email.unwrap();
-    let doc = bson::doc! {
-        "email":  email
-    };
-
     let db = state.as_ref().unwrap().database(DB_NAME);
-    let mut user = dbg!(match User::query(doc, &db).await {
-        Ok(mut cursor) => {
-            if let Ok(true) = cursor.advance().await {
-                cursor.deserialize_current().unwrap()
-            } else {
-                return ApiError::AuthError("Couldn't find your user").into();
-            }
-        }
-        Err(err) => {
-            log::error!("Couldn't fetch user from database: {err:?}");
-            return ApiError::ServerError("Couldn't query the database to find your user").into();
-        }
-    });
+    let mut user = if let Some(user) = User::find_one(
+        bson::doc! { "email": email },
+        &state
+            .as_ref()
+            .expect("This rocket instance has no database!")
+            .database(DB_NAME),
+        None,
+    )
+    .await
+    {
+        user
+    } else {
+        return ApiError::AuthError("Couldn't find user associated with token").into();
+    };
 
     if !user.saved_places.contains_key(id) {
         ApiError::SavedPlacesError("The provided id doesn't exist").into()

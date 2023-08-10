@@ -51,6 +51,7 @@ pub async fn authenticate(
             let mut doc = Document::new();
             doc.insert("email", email);
 
+            #[allow(deprecated)]
             match User::query(doc, &db.database(DB_NAME)).await {
                 Ok(mut result) => match result.try_next().await {
                     Ok(user) => {
@@ -111,6 +112,7 @@ pub async fn authenticate(
             let db = state.inner().as_ref().unwrap();
             if let Some(cookie) = cookies.get("cookie").map(Cookie::value) {
                 log::info!("User trying to authenticate with cookie ({cookie})");
+                #[allow(deprecated)]
                 match AuthCookie::query(
                     bson::doc! {
                         "cookie": cookie
@@ -281,12 +283,23 @@ impl<'r> FromRequest<'r> for JWTAuthToken {
                         if let Some(client) = request.rocket().state::<Option<mongodb::Client>>() {
                             let mut doc = Document::new();
                             doc.insert("email", email.unwrap());
-                            let user =
-                                User::query(doc, &client.to_owned().unwrap().database(DB_NAME))
-                                    .await
-                                    .unwrap()
-                                    .deserialize_current()
-                                    .unwrap();
+                            let user = if let Some(user) = User::find_one(
+                                doc,
+                                &client
+                                    .as_ref()
+                                    .expect("Couldn't connect to database")
+                                    .database(DB_NAME),
+                                None,
+                            )
+                            .await
+                            {
+                                user
+                            } else {
+                                return Outcome::Failure((
+                                    Status::Unauthorized,
+                                    ApiError::AuthError("Couldn't find the requested user"),
+                                ));
+                            };
 
                             Outcome::Success(JWTAuthToken {
                                 token: auth_header[1].to_string(),
