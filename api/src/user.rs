@@ -211,7 +211,7 @@ pub struct UserLocation {
         address: "1 Average Str, Joeville".to_string(),
         latitude: 0.0,
         longitude: 0.0,
-        category: "average".to_string(),
+        category: Some("average".to_string()),
         place_type: "unkown".to_string(),
     }
 })]
@@ -221,7 +221,7 @@ pub struct SavedPlace {
     pub address: String,
     pub latitude: f64,
     pub longitude: f64,
-    pub category: String,
+    pub category: Option<String>,
     pub place_type: String,
 }
 
