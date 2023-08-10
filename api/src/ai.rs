@@ -9,7 +9,7 @@ use utoipa::ToSchema;
 #[utoipa::path(post, tag = "AI", path = "/api/ai/info", request_body = AiInfoRequest)]
 #[post("/ai/info", format = "application/json", data = "<request>")]
 pub async fn get_ai_info<'a>(request: Json<AiInfoRequest>) -> ApiResponse<'a, AiInfoResponse> {
-    let mapbox_api_key = if let Ok(key) = env::var("MAPBOX_API_KEY") {
+    let mapbox_api_key = if let Ok(key) = dbg!(env::var("MAPBOX_API_KEY")) {
         key
     } else {
         log::error!("We couldn't get the mapbox api key. The environment variable was not set!");

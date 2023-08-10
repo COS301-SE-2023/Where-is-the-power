@@ -174,6 +174,10 @@ async fn get_config() -> Figment {
 }
 
 async fn build_rocket() -> Rocket<Build> {
+    if let Err(err) = dotenvy::dotenv() {
+        warn!("Couldn't read .env file! {err:?}");
+    }
+
     let figment = get_config().await;
     let db_uri = env::var("DATABASE_URI").unwrap_or(String::from(""));
     // Cors Options, we should modify to our needs but leave as default for now.
@@ -269,9 +273,6 @@ async fn build_rocket() -> Rocket<Build> {
 async fn main() -> Result<(), rocket::Error> {
     setup_logger().expect("Couldn't setup logger!");
 
-    if let Err(err) = dotenvy::dotenv() {
-        warn!("Couldn't read .env file! {err:?}");
-    }
     if let Err(err) = dns::update_dns().await {
         warn!("Couldn't setup DNS: {err:?}");
     }
