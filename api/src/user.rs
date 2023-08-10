@@ -202,14 +202,27 @@ pub struct UserLocation {
     pub city: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
+#[derive(Debug, Serialize, Default, Deserialize, Clone, ToSchema)]
 #[serde(rename_all = "camelCase")]
+#[schema(example = json! {
+    SavedPlace {
+        mapbox_id: "abcdefg".to_string(),
+        name: "Home".to_string(),
+        address: "1 Average Str, Joeville".to_string(),
+        latitude: 0.0,
+        longitude: 0.0,
+        category: "average".to_string(),
+        place_type: "unkown".to_string(),
+    }
+})]
 pub struct SavedPlace {
     pub mapbox_id: String,
     pub name: String,
     pub address: String,
     pub latitude: f64,
     pub longitude: f64,
+    pub category: String,
+    pub place_type: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Entity)]
