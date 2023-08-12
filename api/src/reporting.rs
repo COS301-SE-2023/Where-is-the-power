@@ -82,6 +82,7 @@ pub enum ReportType {
     BlownSubstation,
     PowerOutage,
     DamagedCables,
+    HeavyTraffic,
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
