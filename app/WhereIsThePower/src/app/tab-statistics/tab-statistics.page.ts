@@ -1,5 +1,6 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Chart, registerables } from 'chart.js';
+import { StatisticsService } from './statistics.service';
 Chart.register(...registerables)
 
 @Component({
@@ -13,45 +14,47 @@ export class TabStatisticsPage implements OnInit {
 
   doughnutChart: any = null;
   barChart: any = null;
-  constructor() { }
+  constructor(private statisticsService: StatisticsService) { }
   ngOnInit() {
-    // Data for Doughnut Chart (Uptime/Downtime for Today)
-    const doughnutData = {
-      labels: ['Uptime', 'Downtime'],
-      datasets: [{
-        label: 'Loadshedding',
-        data: [20, 4], // Uptime vs Downtime
-        borderWidth: 0,
-        backgroundColor: [
-          '#007A4D',
-          '#DE3831',
-        ],
-      }]
-    };
-    this.populateDoughnutChart(doughnutData);
+    const suburbId = 17959;
+    this.statisticsService.getSuburbData(suburbId).subscribe((data) => {
+      console.log("statisticsService: ",data);
 
+      this.processDoughnutChart(data);
+      this.processBarChart(data);
+    }, 
+    (error) => {
+        console.error(error);
+    });
+  }
 
-    // Data for Bar Chart (Uptime/Downtime for the week)
-    const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    const barData = {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Uptime',
-          data: [20, 16, 20, 20, 12, 20, 24], // Uptime(No. of hours without Loadshedding)
-          borderColor: '#007A4D',
-          backgroundColor: '#007A4D',
-        },
-        {
-          label: 'Downtime',
-          data: [-4, -8, -4, -4, -12, -4, 0], // Downtime(Loadshedding hours)
-          borderColor: '#DE3831',
-          backgroundColor: '#DE3831',
-        }
-      ]
-    };
+  processDoughnutChart(data: any)
+  {
+     // Get today's day name (e.g., "Mon", "Tue", etc.)
+     const today = new Date().toLocaleDateString('en-US', { weekday: 'short' });
 
-    this.populateBarChart(barData);
+      // Get the on and off values for today's day from the data
+      const todayOnValue = data.result.perDayTimes[today]?.on || 0;
+      const todayOffValue = data.result.perDayTimes[today]?.off || 0;
+  
+      // Convert total uptime and downtime to hours
+      const uptimeToday = Math.floor(todayOnValue / 60);
+      const downtimeToday = Math.floor(todayOffValue / 60);
+
+      // Data for Doughnut Chart (Uptime/Downtime for Today)
+      const doughnutData = {
+        labels: ['Uptime', 'Downtime'],
+        datasets: [{
+          label: 'Loadshedding',
+          data: [uptimeToday, downtimeToday], // Uptime vs Downtime
+          borderWidth: 0,
+          backgroundColor: [
+            '#007A4D',
+            '#DE3831',
+          ],
+        }]
+      };
+      this.populateDoughnutChart(doughnutData);
   }
 
   populateDoughnutChart(doughnutData: any) {
@@ -67,6 +70,33 @@ export class TabStatisticsPage implements OnInit {
         }
       }
     });
+  }
+
+  processBarChart(data: any)
+  {
+    const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const todayIndex = new Date().getDay(); // 0 for Sunday, 1 for Monday, etc.
+    const orderedDaysOfWeek = [...daysOfWeek.slice(todayIndex+1), ...daysOfWeek.slice(0, todayIndex+1)];
+
+    const barData = {
+      labels: orderedDaysOfWeek,
+      datasets: [
+        {
+          label: 'Uptime',
+          data: orderedDaysOfWeek.map(day => data.result.perDayTimes[day]?.on / 60 || 0), // Uptime(No. of hours without Loadshedding)
+          borderColor: '#007A4D',
+          backgroundColor: '#007A4D',
+        },
+        {
+          label: 'Downtime',
+          data: orderedDaysOfWeek.map(day => data.result.perDayTimes[day]?.off / 60 || 0), // Downtime(Loadshedding hours)
+          borderColor: '#DE3831',
+          backgroundColor: '#DE3831',
+        }
+      ]
+    };
+
+    this.populateBarChart(barData);
   }
 
   populateBarChart(barData: any) {
@@ -116,6 +146,5 @@ export class TabStatisticsPage implements OnInit {
     this.clearBarChart();
     this.clearDoughnutChart();
   }
-
 }
 

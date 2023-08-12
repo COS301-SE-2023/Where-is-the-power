@@ -31,7 +31,16 @@ to help assist users navigate their routes through these dark times.
     - [User Manual](https://github.com/COS301-SE-2023/Where-is-the-power/files/11878231/User_Manual.pdf)
     - [System Requirements Specifications](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Software-Requirements-Specification-(SRS))
     - [Architectural Requirements Document](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Architectural-Requirements-Document)    
-   
+- ## Demo 3
+  [**All documentation can be found on the Wiki!**](https://github.com/COS301-SE-2023/Where-is-the-power/wiki)
+
+  ***However PDFs are listed below:***
+   - [Project Management](https://github.com/orgs/COS301-SE-2023/projects/7)
+   - [User Manual](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/User_Manual.pdf)
+   - [Technical Installation Manual](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Technical%20Installation%20Manual.pdf)
+   - [Coding Standards/Quality](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Coding%20Standards.pdf)
+   - [SRS PDF](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Software-Requirements-Specification-(SRS).pdf)
+   - [Architectural Requirements Document](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Architectural-Requirements-Document.pdf)
 
 
 # About the repo ℹ️

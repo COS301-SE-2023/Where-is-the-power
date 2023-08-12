@@ -97,7 +97,7 @@ pub async fn fetch_map_data<'a>(
     }
 }
 
-#[utoipa::path(post, tag = "Suburb Statistics", path = "/api/fetchSuburbStats", request_body = Stats)]
+#[utoipa::path(post, tag = "Suburb Statistics", path = "/api/fetchSuburbStats", request_body = SuburbStatsRequest)]
 #[post("/fetchSuburbStats", format = "application/json", data = "<request>")]
 pub async fn fetch_suburb_stats<'a>(
     db: &State<Option<Client>>,
@@ -814,6 +814,51 @@ impl SuburbEntity {
         connection: &Database,
         db_functions: &dyn DBFunctionsTrait,
     ) -> Result<SuburbStatsResponse, ApiError<'static>> {
+        // queries
+        // get the relevant group
+        // get all the stage changes from the past week
+        let one_week_ago = (Local::now() - chrono::Duration::weeks(1)).timestamp();
+        let query = doc! {
+            "startTime": {
+                "$gte": one_week_ago
+            }
+        };
+        let find_options = FindOptions::builder().sort(doc! { "startTime": 1 }).build();
+        let mut all_stages = match db_functions
+            .collect_stage_logs(query, Some(connection), Some(find_options))
+            .await
+        {
+            Ok(item) => item,
+            Err(err) => {
+                return Err(err);
+            }
+        };
+        all_stages.reverse();
+
+        // find first timestamp after one week ago
+        let query = doc! {
+            "startTime": {
+                "$lte": one_week_ago
+            }
+        };
+        let find_options = FindOptions::builder()
+            .sort(doc! { "startTime": -1 })
+            .limit(1)
+            .build();
+        let first_stage_change = match db_functions
+            .collect_one_stage_log(query, Some(connection), Some(find_options))
+            .await
+        {
+            Ok(cursor) => cursor,
+            Err(err) => {
+                return Err(err);
+            }
+        };
+        all_stages.push(first_stage_change);
+
+        // queries are over
+
+        // Time
         let mut down_time = 0;
         let mut daily_stats: HashMap<String, TotalTime> = HashMap::new();
 
@@ -1016,7 +1061,7 @@ impl LoadSheddingStage {
     pub async fn request_stage_data_update(&mut self) -> Result<i32, reqwest::Error> {
         loop {
             let stage = reqwest::get(
-                "https://d42sspn7yra3u.cloudfront.net/coct-load-shedding-extended-status.json",
+                "https://d42sspn7yra3u.cloudfront.net/eskom-load-shedding-extended-status.json",
             )
             .await?;
             if stage.status().is_success() {
@@ -1025,7 +1070,7 @@ impl LoadSheddingStage {
                 self.log_stage_data(times).await;
                 break;
             } else {
-                warn!("Connection to https://d42sspn7yra3u.cloudfront.net/coct-load-shedding-extended-status.json Dropped before any operations could take place. Check that url is still up {:?}", stage);
+                warn!("Connection to https://d42sspn7yra3u.cloudfront.net/eskom-load-shedding-extended-status.json Dropped before any operations could take place. Check that url is still up {:?}", stage);
             }
             thread::sleep(std::time::Duration::from_secs(10));
         }

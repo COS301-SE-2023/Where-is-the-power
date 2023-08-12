@@ -24,7 +24,7 @@ use rocket::fs::FileServer;
 
 use rocket::http::Method;
 use rocket::serde::json::Json;
-use rocket::{get, post, routes, Build, Rocket, State};
+use rocket::{post, routes, Build, Rocket, State};
 use rocket_cors::{AllowedHeaders, CorsOptions};
 use std::env;
 use std::net::IpAddr;
@@ -41,6 +41,7 @@ const DB_NAME: &'static str = "wip";
         user::create_user,
         loadshedding::fetch_map_data,
         loadshedding::fetch_schedule,
+        loadshedding::fetch_suburb_stats,
         auth::authenticate,
         ai::get_ai_info,
         user::get_saved_places,
@@ -55,6 +56,7 @@ const DB_NAME: &'static str = "wip";
         loadshedding::MapDataRequest,
         loadshedding::MapDataDefaultResponse,
         loadshedding::PredictiveSuburbStatsResponse,
+        loadshedding::SuburbStatsRequest,
         api::ResponseString,
         api::ApiError,
         ai::AiInfoRequest,
