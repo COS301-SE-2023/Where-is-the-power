@@ -157,7 +157,7 @@ export class TabStatisticsPage implements OnInit {
 
   onSearch(event: any) {
     const searchTerm = event.srcElement.value;
-
+    console.log(searchTerm);
     // Reset items back to all of the items
     this.filteredItems = [...this.searchItems];
 
