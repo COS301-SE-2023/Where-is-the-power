@@ -1,6 +1,7 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Chart, registerables } from 'chart.js';
 import { StatisticsService } from './statistics.service';
+import { HttpClient } from '@angular/common/http';
 Chart.register(...registerables)
 
 @Component({
@@ -14,47 +15,55 @@ export class TabStatisticsPage implements OnInit {
 
   doughnutChart: any = null;
   barChart: any = null;
-  constructor(private statisticsService: StatisticsService) { }
+  searchItems: string[] = [];
+  filteredItems: string[] = [];
+  geojsonData: any;
+  constructor(private statisticsService: StatisticsService, private http: HttpClient) { }
   ngOnInit() {
     const suburbId = 17959;
+    this.http.get('assets/suburbs.json').subscribe(data => {
+      this.geojsonData = data;
+      this.searchItems = this.geojsonData.features.map((feature: any) => feature.properties.SP_NAME);
+      this.filteredItems = [...this.searchItems];
+    });
+
     this.statisticsService.getSuburbData(suburbId).subscribe((data) => {
-      console.log("statisticsService: ",data);
+      console.log("statisticsService: ", data);
 
       this.processDoughnutChart(data);
       this.processBarChart(data);
-    }, 
-    (error) => {
+    },
+      (error) => {
         console.error(error);
-    });
+      });
   }
 
-  processDoughnutChart(data: any)
-  {
-     // Get today's day name (e.g., "Mon", "Tue", etc.)
-     const today = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+  processDoughnutChart(data: any) {
+    // Get today's day name (e.g., "Mon", "Tue", etc.)
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'short' });
 
-      // Get the on and off values for today's day from the data
-      const todayOnValue = data.result.perDayTimes[today]?.on || 0;
-      const todayOffValue = data.result.perDayTimes[today]?.off || 0;
-  
-      // Convert total uptime and downtime to hours
-      const uptimeToday = Math.floor(todayOnValue / 60);
-      const downtimeToday = Math.floor(todayOffValue / 60);
+    // Get the on and off values for today's day from the data
+    const todayOnValue = data.result.perDayTimes[today]?.on || 0;
+    const todayOffValue = data.result.perDayTimes[today]?.off || 0;
 
-      // Data for Doughnut Chart (Uptime/Downtime for Today)
-      const doughnutData = {
-        labels: ['Uptime', 'Downtime'],
-        datasets: [{
-          label: 'Loadshedding',
-          data: [uptimeToday, downtimeToday], // Uptime vs Downtime
-          borderWidth: 0,
-          backgroundColor: [
-            '#007A4D',
-            '#DE3831',
-          ],
-        }]
-      };
-      this.populateDoughnutChart(doughnutData);
+    // Convert total uptime and downtime to hours
+    const uptimeToday = Math.floor(todayOnValue / 60);
+    const downtimeToday = Math.floor(todayOffValue / 60);
+
+    // Data for Doughnut Chart (Uptime/Downtime for Today)
+    const doughnutData = {
+      labels: ['Uptime', 'Downtime'],
+      datasets: [{
+        label: 'Loadshedding',
+        data: [uptimeToday, downtimeToday], // Uptime vs Downtime
+        borderWidth: 0,
+        backgroundColor: [
+          '#007A4D',
+          '#DE3831',
+        ],
+      }]
+    };
+    this.populateDoughnutChart(doughnutData);
   }
 
   populateDoughnutChart(doughnutData: any) {
@@ -72,11 +81,10 @@ export class TabStatisticsPage implements OnInit {
     });
   }
 
-  processBarChart(data: any)
-  {
+  processBarChart(data: any) {
     const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const todayIndex = new Date().getDay(); // 0 for Sunday, 1 for Monday, etc.
-    const orderedDaysOfWeek = [...daysOfWeek.slice(todayIndex+1), ...daysOfWeek.slice(0, todayIndex+1)];
+    const orderedDaysOfWeek = [...daysOfWeek.slice(todayIndex + 1), ...daysOfWeek.slice(0, todayIndex + 1)];
 
     const barData = {
       labels: orderedDaysOfWeek,
@@ -145,6 +153,25 @@ export class TabStatisticsPage implements OnInit {
   clearAllCharts() {
     this.clearBarChart();
     this.clearDoughnutChart();
+  }
+
+  onSearch(event: any) {
+    const searchTerm = event.srcElement.value;
+
+    // Reset items back to all of the items
+    this.filteredItems = [...this.searchItems];
+
+    // if the value is an empty string, don't filter the items
+    if (!searchTerm) return;
+
+    this.filteredItems = this.filteredItems.filter(item => {
+      if (item && searchTerm) {
+        return item.toLowerCase().includes(searchTerm.toLowerCase());
+      }
+      return false;  // Ensure all paths have a return value
+
+    });
+    console.log(this.filteredItems);
   }
 }
 
