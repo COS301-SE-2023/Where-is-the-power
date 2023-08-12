@@ -9,6 +9,12 @@
 <ion-content [fullscreen]="true">
   <ion-content>
     <ion-grid>
+      <ion-searchbar
+      animated="true"
+      placeholder="Search for a place..."
+      (ionInput)="onSearch($event)"
+      (keyup.enter)="onSearch($event)">
+    </ion-searchbar>
       <ion-row class="ion-justify-content-center ion-padding-bottom">
         <ion-col size="10" offset="1" size-md="4" offset-md="0" class="ion-text-center">
           <ion-text><h2>Loadshedding for Today</h2></ion-text>
