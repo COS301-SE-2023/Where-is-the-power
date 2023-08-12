@@ -18,9 +18,9 @@
           (keyup.enter)="onSearch($event)">
           </ion-searchbar>
           <ion-list *ngIf="filteredItems.length > 0 && showResultsList" class="search-results">
-            <ion-item *ngFor="let result of filteredItems" button>
+            <ion-item *ngFor="let result of filteredItems" (click)="selectSuburb(result)" button>
               <ion-label>
-                <h3><strong>{{ result }}</strong></h3>
+                <h3><strong>{{ result.name }}</strong></h3>
               </ion-label>
             </ion-item>
           </ion-list>
@@ -36,7 +36,7 @@
         <ion-col size="12" size-md="7" offset-md="1" class="ion-text-center ion-padding-vertical ion-justify-content-center ion-padding-vertical">
           <ion-text><h2>Loadshedding for this Week</h2></ion-text>
           <div class="chart-container">
-            <canvas #barChartRef id="barChart"></canvas>
+            <canvas #barChart id="barChart"></canvas>
           </div>
         </ion-col>
       </ion-row>

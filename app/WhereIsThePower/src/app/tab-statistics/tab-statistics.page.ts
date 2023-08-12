@@ -1,7 +1,10 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { Chart, registerables } from 'chart.js';
+import { registerables } from 'chart.js';
 import { StatisticsService } from './statistics.service';
 import { HttpClient } from '@angular/common/http';
+import { Chart } from 'chart.js/auto'
+import { Renderer2 } from '@angular/core';
+
 Chart.register(...registerables)
 
 @Component({
@@ -15,29 +18,22 @@ export class TabStatisticsPage implements OnInit {
 
   doughnutChart: any = null;
   barChart: any = null;
-  searchItems: string[] = [];
-  filteredItems: string[] = [];
+  searchItems: any[] = [];
+  filteredItems: any[] = [];
   geojsonData: any;
   showResultsList = false;
 
-  constructor(private statisticsService: StatisticsService, private http: HttpClient) { }
+  constructor(private statisticsService: StatisticsService, private http: HttpClient, private renderer: Renderer2) { }
   ngOnInit() {
-    const suburbId = 17959;
     this.http.get('assets/suburbs.json').subscribe(data => {
       this.geojsonData = data;
-      this.searchItems = this.geojsonData.features.map((feature: any) => feature.properties.SP_NAME);
+      this.searchItems = this.geojsonData.features.map((feature: any) => ({
+        name: feature.properties.SP_NAME,
+        id: feature.id
+      }));
       this.filteredItems = [...this.searchItems];
     });
-
-    this.statisticsService.getSuburbData(suburbId).subscribe((data) => {
-      console.log("statisticsService: ", data);
-
-      this.processDoughnutChart(data);
-      this.processBarChart(data);
-    },
-      (error) => {
-        console.error(error);
-      });
+    const suburbId = 17959;
   }
 
   processDoughnutChart(data: any) {
@@ -69,6 +65,11 @@ export class TabStatisticsPage implements OnInit {
   }
 
   populateDoughnutChart(doughnutData: any) {
+    if (this.doughnutChart) {
+      this.doughnutChart.clear();
+      this.doughnutChart.destroy();
+    }
+
     this.doughnutChart = new Chart("doughnutChart", {
       type: 'doughnut',
       data: doughnutData,
@@ -110,7 +111,12 @@ export class TabStatisticsPage implements OnInit {
   }
 
   populateBarChart(barData: any) {
-    this.barChart = new Chart("barChart", {
+    if (this.barChart) {
+      this.barChart.clear();
+      this.barChart.destroy();
+    }
+
+    this.barChart = new Chart(this.barChartRef.nativeElement, {
       type: 'bar',
       data: barData,
       options: {
@@ -141,7 +147,14 @@ export class TabStatisticsPage implements OnInit {
           }
         },
       },
-    });
+    });/*
+    console.log("????: ", this.barChart);
+
+    if (this.barChart) {
+      this.barChart.clear();
+
+      this.barChart.destroy();
+    }*/
   }
 
   clearDoughnutChart() {
@@ -173,14 +186,31 @@ export class TabStatisticsPage implements OnInit {
     // if the value is an empty string, don't filter the items
     if (!searchTerm) return;
 
-    this.filteredItems = this.filteredItems.filter(item => {
-      if (item && searchTerm) {
-        return item.toLowerCase().includes(searchTerm.toLowerCase());
+    this.filteredItems = this.searchItems.filter(item => {
+      if (item.name && searchTerm) {
+        return item.name.toLowerCase().includes(searchTerm.toLowerCase());
       }
-      return false;  // Ensure all paths have a return value
-
+      return false;
     });
     console.log(this.filteredItems);
+  }
+
+  selectSuburb(selectedSuburb: any) {
+    //this.clearAllCharts();
+    console.log(selectedSuburb.name); // Logs the suburb name
+    console.log(selectedSuburb.id); // Logs the suburb id
+    this.showResultsList = false;
+
+
+    this.statisticsService.getSuburbData(selectedSuburb.id).subscribe((data) => {
+      console.log("statisticsService: ", data);
+
+      this.processDoughnutChart(data);
+      this.processBarChart(data);
+    },
+      (error) => {
+        console.error(error);
+      });
   }
 }
 
