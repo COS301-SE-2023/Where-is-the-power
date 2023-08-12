@@ -18,6 +18,8 @@ export class TabStatisticsPage implements OnInit {
   searchItems: string[] = [];
   filteredItems: string[] = [];
   geojsonData: any;
+  showResultsList = false;
+
   constructor(private statisticsService: StatisticsService, private http: HttpClient) { }
   ngOnInit() {
     const suburbId = 17959;
@@ -157,6 +159,13 @@ export class TabStatisticsPage implements OnInit {
 
   onSearch(event: any) {
     const searchTerm = event.srcElement.value;
+
+    if (event.target.value.length > 0) {
+      this.showResultsList = true;
+    }
+    else {
+      this.showResultsList = false;
+    }
     console.log(searchTerm);
     // Reset items back to all of the items
     this.filteredItems = [...this.searchItems];

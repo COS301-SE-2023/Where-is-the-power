@@ -17,7 +17,7 @@
           (ionInput)="onSearch($event)"
           (keyup.enter)="onSearch($event)">
           </ion-searchbar>
-          <ion-list *ngIf="filteredItems.length > 0">
+          <ion-list *ngIf="filteredItems.length > 0 && showResultsList" class="search-results">
             <ion-item *ngFor="let result of filteredItems" button>
               <ion-label>
                 <h3><strong>{{ result }}</strong></h3>
