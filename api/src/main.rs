@@ -4,6 +4,7 @@ mod auth;
 mod db;
 mod dns;
 mod loadshedding;
+mod reporting;
 mod scraper;
 #[cfg(test)]
 mod tests;
@@ -46,7 +47,9 @@ const DB_NAME: &'static str = "wip";
         ai::get_ai_info,
         user::get_saved_places,
         user::add_saved_place,
-        user::delete_saved_place
+        user::delete_saved_place,
+        reporting::create_report,
+        reporting::get_reports
     ),
     components(schemas(
         auth::AuthRequest,
@@ -60,7 +63,9 @@ const DB_NAME: &'static str = "wip";
         api::ResponseString,
         api::ApiError,
         ai::AiInfoRequest,
-        user::SavedPlace
+        user::SavedPlace,
+        reporting::NewUserReport,
+        reporting::ReportType
     )),
     info(title = "Where Is The Power API Specification"),
     modifiers(&SecurityAddon)
@@ -218,7 +223,9 @@ async fn build_rocket() -> Rocket<Build> {
                     user::add_saved_place,
                     user::get_saved_places,
                     ai::get_ai_info,
-                    user::delete_saved_place
+                    user::delete_saved_place,
+                    reporting::create_report,
+                    reporting::get_reports
                 ),
             )
             .mount("/upload", routes![upload_data])
@@ -250,7 +257,9 @@ async fn build_rocket() -> Rocket<Build> {
                         user::add_saved_place,
                         user::get_saved_places,
                         ai::get_ai_info,
-                        user::delete_saved_place
+                        user::delete_saved_place,
+                        reporting::create_report,
+                        reporting::get_reports
                     ),
                 )
                 .mount("/upload", routes![upload_data])
