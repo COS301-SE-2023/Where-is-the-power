@@ -2,12 +2,13 @@ import { Component, ViewChild } from '@angular/core';
 import { UserLocationService } from '../user-location.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
-import { empty } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../authentication/auth.service';
 import { Router } from '@angular/router';
 import { SavedPlacesService } from './saved-places.service';
 import { Place } from './place';
 import { ToastController } from '@ionic/angular';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-tab-saved',
@@ -22,7 +23,8 @@ export class TabSavedPage {
   showResultsList: boolean = false;
   searchResults: any[] = [];
   queryLength = 0;
-
+  private placesSubscription: Subscription;
+  private savePlaceSubscription: Subscription;
   @ViewChild('searchBar', { static: false }) searchBar: any;
 
   constructor(private router: Router,
@@ -30,24 +32,34 @@ export class TabSavedPage {
     private http: HttpClient,
     private authService: AuthService,
     private savedPlaceService: SavedPlacesService,
-    private toastController: ToastController) {}
+    private toastController: ToastController
+  ) 
+  { 
+    this.placesSubscription = new Subscription();
+    this.savePlaceSubscription = new Subscription();
+  }
 
-  ngOnInit() {}
+  ngOnInit() { }
 
   gotoProfileRoute() {
     this.router.navigate(['tabs/tab-profile']);
   }
 
   async ionViewDidEnter() {
-    this.latitude = this.userLocationService.getLatitude();
     this.isLoggedIn = await this.authService.isUserLoggedIn();
-    console.log(this.isLoggedIn)
 
-    if(this.isLoggedIn)
-    {
-      this.authService.getPlaces().subscribe((data:any) => {
-       // console.log("getPlaces", data);
+    if (this.isLoggedIn) {
+      this.placesSubscription = this.savedPlaceService.getPlaces().subscribe((data: any) => {
         this.places = data.result;
+      });
+
+      this.savePlaceSubscription = this.savedPlaceService.savePlace.subscribe((savePlace: any) =>
+      {
+        if(savePlace === true)
+        {
+          this.savePlace(this.savedPlaceService.savedPlace);
+          this.router.navigate(['tabs/tab-saved']);
+        }
       });
     }
   }
@@ -56,35 +68,49 @@ export class TabSavedPage {
     this.isLoggedIn = false;
   }
 
-  savePlace(result: any) {
-    this.authService.getPlaces().subscribe((data:any) => {
-      // console.log("getPlaces", data);
-       this.places = data.result;
-     });
-    this.showResultsList = false;
+  goToPlace(result: any)
+  {
+    this.savedPlaceService.goToPlace(result);
+  }
 
+  savePlace(result: any) {
+    this.showResultsList = false;
+    console.log("result: ", result);
+    console.log("WHYYYYYYYYYYYYYY ");
+
+    this.goToPlace(result);
+
+    // Assign the result to a new object
     let newPlace: Place = {
+      "mapboxId": result.id,
+      "name": result.text,
       "address": result.place_name,
       "latitude": result.center[1],
       "longitude": result.center[0],
-      "mapboxId": result.properties.mapbox_id,
-      "name":  result.text
-  }
-  
-    console.log("newPlace ",newPlace);
+    }
 
-    this.sucessToast('Succesfully added place');
-    this.authService.addSavedPlace(newPlace).subscribe(data => {
-      console.log("savedPlaceService ",data);
-      //this.savedPlaces = data;
-    });
+    if (!this.isPlaceSaved(newPlace)) {
+      this.savedPlaceService.addSavedPlace(newPlace)
+        .pipe(take(1)) //subscription will automatically unsubscribe after the first emission
+        .subscribe(data => {
+          console.log("addSavedPlace: ", data);
+
+          if (this.places.length > 0) {
+            this.savedPlaceService.place.next([...this.places, newPlace]);
+          } else {
+            this.savedPlaceService.place.next([newPlace]);
+          }
+         // this.sucessToast('Succesfully added place');
+
+        });
+    }
   }
 
   removeSavedPlace(place: any) {
     this.savedPlaces = this.savedPlaces.filter((sPlace: any) => {
       if (sPlace.id !== place.id) return sPlace;
     });
-    console.log(this.savedPlaces);
+    console.log("removeSavedPlace: ", this.savedPlaces);
   }
 
   isPlaceSaved(place: any) {
@@ -92,7 +118,7 @@ export class TabSavedPage {
     this.savedPlaces.forEach((sPlace: any) => {
       if (sPlace.id === place.id) isSaved = true;
     });
-    console.log(isSaved)
+    //console.log(isSaved)
     return isSaved;
   }
 
@@ -186,5 +212,9 @@ export class TabSavedPage {
   }
 
   // TODO send Boolean to mapmodal
-
+  ngOnDestroy() {
+    if (this.placesSubscription) {
+      this.placesSubscription.unsubscribe(); // unsubscribe from the observable
+    }
+  }
 }

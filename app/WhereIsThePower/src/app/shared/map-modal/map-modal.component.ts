@@ -9,11 +9,15 @@ import {
 import { environment } from 'src/environments/environment';
 import { UserLocationService } from '../../user-location.service';
 import { IonContent, ModalController } from '@ionic/angular';
+import { SavedPlacesService } from '../../tab-saved/saved-places.service';
+import { Subscription } from 'rxjs';
 
 //import * as mapboxgl from 'mapbox-gl';
 //import * as MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 import { MapSuburbsService } from './map-suburbs.service';
 import { EventEmitter, Output } from '@angular/core';
+import { Subscribable } from 'rxjs';
+import { Place } from '../../tab-saved/place';
 declare let MapboxDirections: any;
 declare let mapboxgl: any;
 declare let MapboxGeocoder: any;
@@ -30,7 +34,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     private mapSuburbsService: MapSuburbsService,
     private userLocationService: UserLocationService,
     private modalCtrl: ModalController,
-    private changeDetectorRef: ChangeDetectorRef
+    private changeDetectorRef: ChangeDetectorRef,
+    private savedPlacesService: SavedPlacesService,
   ) { }
   map: any;
   dat: any;
@@ -52,11 +57,47 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   tripETA: Date = new Date();
   tripETAH: string = '';
   tripETAM: string = '';
+  navigateToPlaceSubscription: Subscription = new Subscription();
+  MapSubscription: Subscription = new Subscription();
+  goToPlace: any; // Physical place
+  navigateToPlace = false;
+  @ViewChild('myModal') myModal: any; // Reference to the ion-modal element
+  modalResult: any; // To store the selected result data
 
-  ngOnInit() { }
+  ngOnInit() {
+    this.navigateToPlaceSubscription = this.savedPlacesService.navigateToPlace.subscribe((isNavigate: any) => {
+      this.navigateToPlace = isNavigate;
+      console.log(" this.navigateToPlace", this.navigateToPlace)
+      if (isNavigate == true) {
+        this.goToPlace = this.savedPlacesService.selectedPlace;
+        console.log("savedPlacesServicegoToPlace", this.goToPlace);
+        let placeCenter: any;
+
+        // TODO
+        if (!this.goToPlace.hasOwnProperty('center')) {  // Place object
+          console.log("goToPlacegoToPlace", this.goToPlace);
+
+          placeCenter = [this.goToPlace.longitude, this.goToPlace.latitude];
+          console.log("bbbbb,,bbbbb", placeCenter);
+
+        }
+        else { // Mapbox object
+          placeCenter = [this.goToPlace.center[0], this.goToPlace.center[1]]
+        }
+
+        this.map.flyTo({
+          center: placeCenter, // Center on place
+          zoom: 15, // Adjust the zoom level
+          speed: 1.2, // Adjust the speed of the animation
+        });
+        console.log("WTFFFFFFFFFF", isNavigate);
+        this.openNavigateModal();
+      }
+    });
+  }
 
   ngAfterViewInit() {
-    this.mapSuburbsService.getSuburbData().subscribe(async (data: any) => {
+    this.MapSubscription = this.mapSuburbsService.getSuburbData().subscribe(async (data: any) => {
       console.log(data.result.mapPolygons[0]);
       console.log("Data: ", data);
 
@@ -215,6 +256,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     this.emitGetDirections();
     this.gettingRoute = true;
     this.closePopup();
+    await this.cancelNavigateModal();
+    this.openModal(selectedResult);
 
     this.searchBar.value = `${selectedResult.place_name}`;
 
@@ -338,11 +381,11 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
     this.tripDuration = Math.floor(data.duration / 60);
     this.tripDistance = Math.floor(data.distance / 1000);
-    
-    //CALCULATE ETA 
+
+    //CALCULATE ETA
     this.tripETA = new Date();
     this.calculateETA();
-    
+
 
     // if the route already exists on the map, we'll reset it using setData
     if (this.map.getSource('route')) {
@@ -433,20 +476,28 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     });
     this.closePopup();
   }
-  @ViewChild('myModal') myModal: any; // Reference to the ion-modal element
-  modalResult: any; // To store the selected result data
 
   openModal(result: any) {
     // if (!this.myModal) {
     this.modalResult = result;
+    console.log("FGGR", this.navigateToPlace)
+
     this.myModal.present();
   }
+
+  @ViewChild('navigateModal') navigateModal: any; // Reference to the ion-modal element
+
+  openNavigateModal() {
+    this.navigateModal.present();
+    this.updateBreakpoint();
+  }
+
 
   calculateETA() {
     let tripETAHours: number = 0;
     let tripETAMinutes: number = 0;
 
-    if(this.tripDuration >= 60) {
+    if (this.tripDuration >= 60) {
       tripETAHours = Math.floor(this.tripDuration / 60);
       tripETAMinutes = this.tripDuration - (tripETAHours * 60);
     } else {
@@ -571,6 +622,28 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     }
   }
 
-  
+  savePlace(result: any) {
+    this.cancelNavigateModal();
+    this.navigateToPlace = false;
+    this.savedPlacesService.savedPlace = this.goToPlace;
+    //this.savedPlacesService.addSavedPlace(this.goToPlace);
+
+    this.savedPlacesService.savePlace.next(true);
+  }
+
+  cancelNavigateModal() {
+    this.navigateModal.dismiss();
+  }
+
+  ngOnDestroy() {
+    if (this.navigateToPlaceSubscription) {
+      this.navigateToPlaceSubscription.unsubscribe();
+      this.savedPlacesService.navigateToPlace.next(false);
+    }
+
+    if (this.MapSubscription) {
+      this.MapSubscription.unsubscribe();
+    }
+  }
 }
 
