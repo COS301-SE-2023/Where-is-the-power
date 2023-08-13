@@ -21,11 +21,18 @@
       </ion-list>
     </ion-col>
   </ion-row>
+
+
+
   <ion-fab slot="fixed" *ngIf="!gettingRoute || screenWidth > 768" vertical="bottom" horizontal="end" >
-    <ion-fab-button (click) = "pin()" [disabled]="!mapLoaded">
+    <ion-fab-button class="ion-margin-bottom reportFab" [disabled]="!mapLoaded">
+      <ion-icon name="megaphone-outline" size="large"></ion-icon>
+    </ion-fab-button>
+    <ion-fab-button (click) = "pin()" [disabled]="!mapLoaded" class="locateFab">
       <ion-icon name="locate-outline" size="large"></ion-icon>
     </ion-fab-button>
   </ion-fab>
+
   <ion-row id="map"></ion-row>
 
   <ion-modal #navigateModal
