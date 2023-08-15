@@ -5,13 +5,16 @@ ion-card {
     display: flex;
     align-items: center;
     justify-content: center;
-
+    margin-bottom: 8px;
   }
 
   ion-icon {
     font-size: 164px;
   }
 
+  ion-text{
+    color: var(--ion-color-primary-shade);
+  }
 
   @media screen and (max-width: 500px) {
     ion-icon {
