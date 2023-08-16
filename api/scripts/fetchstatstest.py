@@ -2,8 +2,9 @@ import sys
 import json
 import requests
 
-testing_endpoint = "http://127.0.0.1:8000/api/fetchSuburbStats"
 testing_endpoint = "https://witpa.codelog.co.za/api/fetchSuburbStats"
+testing_endpoint = "http://127.0.0.1:8000/api/fetchSuburbStats"
+schedule_endpoint = "https://witpa.codelog.co.za/api/fetchScheduleData"
 schedule_endpoint = "http://127.0.0.1:8000/api/fetchScheduleData"
 def sendRequest():
     body = {
@@ -18,7 +19,7 @@ def sendRequest():
 
 def sendScheduleRequest():
     body = {
-      "suburbId" : 17959
+      "suburbId" :18124 
     }
     request = json.dumps(body)
     headers = {
@@ -34,3 +35,4 @@ if (__name__ == "__main__"):
     print("=================================================================================")
     print("=================================================================================")
     sendScheduleRequest()
+
