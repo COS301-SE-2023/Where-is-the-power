@@ -754,7 +754,12 @@ impl SuburbEntity {
         connection: &Database,
         db_functions: &dyn DBFunctionsTrait,
     ) -> Result<PredictiveSuburbStatsResponse, ApiError<'static>> {
-        let time_now = get_date_time(None).with_second(0).unwrap();
+        let time_now = get_date_time(None)
+            .with_second(0)
+            .unwrap()
+            .with_minute(0)
+            .unwrap();
+        println!("{:?}", time_now.timestamp());
         let mut response: Vec<TimeSlot> = Vec::new();
         let day_in_future =
             get_date_time(Some((Local::now() + chrono::Duration::days(1)).timestamp()));
@@ -768,6 +773,7 @@ impl SuburbEntity {
         };
 
         let mut time_to_search = time_now;
+        println!("{:?}", time_to_search.timestamp());
         while time_to_search < day_in_future {
             let day = time_to_search.day() as i32;
             let time_slots: Vec<TimeScheduleEntity> = schedule
@@ -789,11 +795,15 @@ impl SuburbEntity {
                     .unwrap()
                     .with_minute(slot.stop_minute as u32)
                     .unwrap();
+                println!("{:?}", end_time.timestamp());
+                println!("{:?}", time_to_search.timestamp());
                 if end_time < time_to_search {
                     end_time = end_time
                         .checked_add_signed(chrono::Duration::days(1))
                         .unwrap();
                 }
+                println!("{:?}", end_time.timestamp());
+                println!("{:?}", time_to_search.timestamp());
                 response.push(TimeSlot {
                     start: time_to_search.timestamp(),
                     end: end_time.timestamp(),
@@ -801,8 +811,8 @@ impl SuburbEntity {
                 time_to_search = end_time;
             } else {
                 time_to_search += chrono::Duration::minutes(30);
-                println!("{:?}",time_to_search.hour());
-                println!("{:?}",time_to_search.minute());
+                println!("{:?}", time_to_search.hour());
+                println!("{:?}", time_to_search.minute());
             }
         }
         return Ok(PredictiveSuburbStatsResponse {
@@ -815,7 +825,6 @@ impl SuburbEntity {
         db_functions: &dyn DBFunctionsTrait,
     ) -> Result<SuburbStatsResponse, ApiError<'static>> {
         // queries
-        // get the relevant group
         // get all the stage changes from the past week
         let one_week_ago = (Local::now() - chrono::Duration::weeks(1)).timestamp();
         let query = doc! {
@@ -934,15 +943,15 @@ impl SuburbEntity {
         day: &i32,
     ) -> Option<&'a TimeScheduleEntity> {
         for time_slot in time_slots {
-            let mut count: usize = 0;
-            while (count as i32) < stage.stage {
-                if time_slot.stages.get(count).unwrap().groups[(day - 1) as usize]
-                    == group.id.unwrap()
-                {
-                    // adding time after the loop
+            let stages: Vec<&StageTimes> = time_slot
+                .stages
+                .iter()
+                .filter(|x| x.stage < stage.stage)
+                .collect();
+            for stage in stages {
+                if stage.groups.get((day - 1) as usize).unwrap().to_owned() == group.id.unwrap() {
                     return Some(time_slot);
                 }
-                count = count + 1;
             }
         }
         None
