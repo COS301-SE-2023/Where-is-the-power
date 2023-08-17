@@ -12,4 +12,8 @@ export class ReportPage implements OnInit {
   ngOnInit() {
   }
 
+  report(reportType: string)
+  {
+    console.log(reportType); 
+  }
 }
