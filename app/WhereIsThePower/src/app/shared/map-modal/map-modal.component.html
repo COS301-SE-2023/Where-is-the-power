@@ -25,7 +25,7 @@
 
 
   <ion-fab slot="fixed" *ngIf="!gettingRoute || screenWidth > 768" vertical="bottom" horizontal="end" >
-    <ion-fab-button class="ion-margin-bottom reportFab" [disabled]="!mapLoaded">
+    <ion-fab-button class="ion-margin-bottom reportFab" [disabled]="!mapLoaded" (click)="goToReport()" button>
       <ion-icon name="megaphone-outline" size="large"></ion-icon>
     </ion-fab-button>
     <ion-fab-button (click) = "pin()" [disabled]="!mapLoaded" class="locateFab">

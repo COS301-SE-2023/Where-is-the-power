@@ -18,6 +18,7 @@ import { MapSuburbsService } from './map-suburbs.service';
 import { EventEmitter, Output } from '@angular/core';
 import { Subscribable } from 'rxjs';
 import { Place } from '../../tab-saved/place';
+import { Router } from '@angular/router';
 declare let MapboxDirections: any;
 declare let mapboxgl: any;
 declare let MapboxGeocoder: any;
@@ -36,6 +37,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     private modalCtrl: ModalController,
     private changeDetectorRef: ChangeDetectorRef,
     private savedPlacesService: SavedPlacesService,
+    private router: Router
   ) { }
   map: any;
   dat: any;
@@ -644,6 +646,12 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     if (this.MapSubscription) {
       this.MapSubscription.unsubscribe();
     }
+  }
+
+  // REPORTING
+  goToReport()
+  {
+    this.router.navigate(['/report']);
   }
 }
 

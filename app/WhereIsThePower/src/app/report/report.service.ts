@@ -19,6 +19,7 @@ export class ReportService {
   getReports()
   {
     this.headers = this.authService.getAuthHeaders(); // get the auth headers
+    return this.http.get(this.apiUrl, { headers: this.headers });
   }
 
   reportIssue(type: string)
