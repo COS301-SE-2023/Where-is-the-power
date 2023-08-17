@@ -1,0 +1,3 @@
+[submodule "api/eskom-calendar"]
+	path = api/eskom-calendar
+	url = https://github.com/beyarkay/eskom-calendar
