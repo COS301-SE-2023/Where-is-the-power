@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ReportService } from './report.service';
 
 @Component({
   selector: 'app-report',
@@ -7,13 +8,17 @@ import { Component, OnInit } from '@angular/core';
 })
 export class ReportPage implements OnInit {
 
-  constructor() { }
+  constructor(
+    private reportService: ReportService
+  ) { }
 
   ngOnInit() {
   }
 
   report(reportType: string)
   {
-    console.log(reportType); 
+    this.reportService.reportIssue(reportType);
   }
 }
+
+
