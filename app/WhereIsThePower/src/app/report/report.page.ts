@@ -19,9 +19,14 @@ export class ReportPage implements OnInit {
   }
 
   report(reportType: string) {
-    this.reportService.reportIssue(reportType).subscribe((res: any) => {
-      console.log(res);
-    });
+    this.reportService.reportIssue(reportType).subscribe(
+      (res: any) => {
+        console.log(res);
+      },
+      (error: any) => {
+        console.error('An error occurred:', error);
+      }
+    );
   }
 }
 
