@@ -26,6 +26,7 @@ export class ReportService {
   }
 
   reportIssue(type: string) {
+    // Get the current user location
     this.latitude = this.userLocationService.getLatitude();
     this.longitude = this.userLocationService.getLongitude();
 
