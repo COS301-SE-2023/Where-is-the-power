@@ -27,8 +27,6 @@ export class ReportService {
       "report_type": type,
       "timestamp": Date.now()
     }
-    this.http.post(this.apiUrl, body, { headers: this.headers }).subscribe((res: any) => {
-      console.log(res);
-    });
+    return this.http.post(this.apiUrl, body, { headers: this.headers });
   }
 }
