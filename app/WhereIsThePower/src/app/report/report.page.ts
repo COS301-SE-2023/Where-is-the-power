@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ReportService } from './report.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-report',
@@ -7,6 +8,7 @@ import { ReportService } from './report.service';
   styleUrls: ['./report.page.scss'],
 })
 export class ReportPage implements OnInit {
+  private createReportSubscription: Subscription = new Subscription();
 
   constructor(
     private reportService: ReportService
@@ -19,7 +21,7 @@ export class ReportPage implements OnInit {
   }
 
   report(reportType: string) {
-    this.reportService.reportIssue(reportType).subscribe(
+    this.createReportSubscription = this.reportService.reportIssue(reportType).subscribe(
       (res: any) => {
         console.log(res);
       },
@@ -27,6 +29,12 @@ export class ReportPage implements OnInit {
         console.error('An error occurred:', error);
       }
     );
+  }
+
+  ngOnDestroy() {
+    if (this.createReportSubscription) {
+      this.createReportSubscription.unsubscribe();
+    }
   }
 }
 
