@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../authentication/auth.service';
+import { UserLocationService } from '../user-location.service';
 
 @Injectable({
   providedIn: 'root'
@@ -9,11 +10,14 @@ import { AuthService } from '../authentication/auth.service';
 export class ReportService {
   apiUrl = 'https://witpa.codelog.co.za/api/reports'
   private headers: HttpHeaders = new HttpHeaders();
+  latitude: any;
+  longitude: any;
 
   constructor(
     private http: HttpClient,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private userLocationService: UserLocationService
   ) { }
 
   getReports() {
@@ -22,6 +26,9 @@ export class ReportService {
   }
 
   reportIssue(type: string) {
+    this.latitude = this.userLocationService.getLatitude();
+    this.longitude = this.userLocationService.getLongitude();
+
     let body =
     {
       "report_type": type,
