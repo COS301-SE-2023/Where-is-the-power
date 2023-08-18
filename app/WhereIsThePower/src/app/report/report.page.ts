@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ReportService } from './report.service';
 import { Subscription } from 'rxjs';
+import { UserLocationService } from '../user-location.service';
 
 @Component({
   selector: 'app-report',
@@ -9,12 +10,18 @@ import { Subscription } from 'rxjs';
 })
 export class ReportPage implements OnInit {
   private createReportSubscription: Subscription = new Subscription();
+  latitude: any;
+  longitude: any;
 
   constructor(
-    private reportService: ReportService
+    private reportService: ReportService,
+    private userLocationService: UserLocationService  
   ) { }
 
   ngOnInit() {
+    this.latitude = this.userLocationService.getLatitude();
+    this.longitude = this.userLocationService.getLongitude();
+
     this.reportService.getReports().subscribe((data) => {
       console.log(data);
     });
