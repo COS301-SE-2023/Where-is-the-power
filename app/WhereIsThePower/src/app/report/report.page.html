@@ -1,5 +1,11 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
+    <ion-buttons slot="start">
+      <!-- Close button -->
+      <ion-button routerLink="/tabs/tab-navigate" routerLinkActive="active">
+        <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
     <ion-title>Report issue</ion-title>
   </ion-toolbar>
 </ion-header>
