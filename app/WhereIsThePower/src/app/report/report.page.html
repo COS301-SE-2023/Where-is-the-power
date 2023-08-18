@@ -11,58 +11,80 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-grid>
-    <ion-row class = "ion-margin-bottom">
-      <ion-col size="6" size-xl="4" class="ion-text-center ion-margin-bottom">
-        <ion-card (click)="report('SubstationBlew')">   
-          <ion-card-content>
-            <ion-icon name = "bonfire-outline">
-
-            </ion-icon>          
-          </ion-card-content>     
-        </ion-card>
-        <ion-text>Substation Blew</ion-text>
-      </ion-col>
-      <ion-col size="6" size-xl="4" class="ion-text-center ion-margin-bottom">
-        <ion-card (click)="report('CablesStolen')">   
-          <ion-card-content>
-            <ion-icon name = "walk-outline">
-
-            </ion-icon>          
-          </ion-card-content>     
-        </ion-card>
-        <ion-text>Cables Stolen</ion-text>
-      </ion-col>
-      <ion-col size="6" size-xl="4" class="ion-text-center ion-margin-bottom">
-        <ion-card (click)="report('PowerOutage')">   
-          <ion-card-content>
-            <ion-icon name = "flash-off">
-
-            </ion-icon>          
-          </ion-card-content>     
-        </ion-card>
-        <ion-text>Power Outage</ion-text>
-      </ion-col>
-      <ion-col size="6" size-xl="4" class="ion-text-center ion-margin-bottom">
-        <ion-card (click)="report('CablesDamaged')">   
-          <ion-card-content>
-            <ion-icon name = "construct-outline">
-
-            </ion-icon>          
-          </ion-card-content>     
-        </ion-card>
-        <ion-text>Cables Damaged</ion-text>
-      </ion-col>
-      <ion-col size="6" size-xl="4" class="ion-text-center ion-margin-bottom">
-        <ion-card (click)="report('Traffic')">   
-          <ion-card-content>
-            <ion-icon name = "car">
-
-            </ion-icon>          
-          </ion-card-content>     
-        </ion-card>
-        <ion-text>Traffic</ion-text>
+  <div *ngIf="!isLoggedIn; else elseIsloggedIn">
+    <ion-row>
+      <ion-col size="6" offset="3" size-md="3" offset-md="4.5" size-xl="2" offset-xl="5">
+        <ion-img
+            src="assets/Stop.svg"
+            alt="Stop sign Illustration"
+            class="ion-padding"
+          >
+          </ion-img>
       </ion-col>
     </ion-row>
-  </ion-grid>
+    <ion-row>
+      <ion-col size="12" size-md="6" offset-md="3" size-xl="4" offset-xl="4" class="ion-text-center">
+        <h3>Reporting is only available to registered users. </h3>
+      </ion-col>
+      <ion-col size="12" size-md="6" offset-md="3" size-xl="4" offset-xl="4">
+        <ion-button [routerLink]="['/tabs/tab-profile']" routerLinkActive="router-link-active"  expand="block">Go to Profile</ion-button>
+      </ion-col>
+    </ion-row>
+  </div>
+  <ng-template #elseIsloggedIn>
+    <ion-grid>
+      <ion-row class = "ion-margin-bottom">
+        <ion-col size="6" size-xl="4" class="ion-text-center ion-margin-bottom">
+          <ion-card (click)="report('SubstationBlew')">
+            <ion-card-content>
+              <ion-icon name = "bonfire-outline">
+
+              </ion-icon>
+            </ion-card-content>
+          </ion-card>
+          <ion-text>Substation Blew</ion-text>
+        </ion-col>
+        <ion-col size="6" size-xl="4" class="ion-text-center ion-margin-bottom">
+          <ion-card (click)="report('CablesStolen')">
+            <ion-card-content>
+              <ion-icon name = "walk-outline">
+
+              </ion-icon>
+            </ion-card-content>
+          </ion-card>
+          <ion-text>Cables Stolen</ion-text>
+        </ion-col>
+        <ion-col size="6" size-xl="4" class="ion-text-center ion-margin-bottom">
+          <ion-card (click)="report('PowerOutage')">
+            <ion-card-content>
+              <ion-icon name = "flash-off">
+
+              </ion-icon>
+            </ion-card-content>
+          </ion-card>
+          <ion-text>Power Outage</ion-text>
+        </ion-col>
+        <ion-col size="6" size-xl="4" class="ion-text-center ion-margin-bottom">
+          <ion-card (click)="report('CablesDamaged')">
+            <ion-card-content>
+              <ion-icon name = "construct-outline">
+
+              </ion-icon>
+            </ion-card-content>
+          </ion-card>
+          <ion-text>Cables Damaged</ion-text>
+        </ion-col>
+        <ion-col size="6" size-xl="4" class="ion-text-center ion-margin-bottom">
+          <ion-card (click)="report('Traffic')">
+            <ion-card-content>
+              <ion-icon name = "car">
+
+              </ion-icon>
+            </ion-card-content>
+          </ion-card>
+          <ion-text>Traffic</ion-text>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </ng-template>
 </ion-content>
