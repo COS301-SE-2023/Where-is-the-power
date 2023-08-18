@@ -117,23 +117,25 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       // get user location
       this.latitude = this.userLocationService.getLatitude();
       this.longitude = this.userLocationService.getLongitude();
- // Create a Point object with the latitude and longitude
-const point = {
-  type: 'Point',
-  coordinates: [this.longitude, this.latitude]
-};     
-// Iterate through the features in the GeoJSON data
-for (const feature of data.result.mapPolygons[0].features) {
-  const polygon = {
-    type: 'Polygon',
-    coordinates: feature.geometry.coordinates
-  };
-  if (this.isPointInsidePolygon(point, polygon)) {
-    const suburbName = feature.properties.SP_NAME;
-    console.log(`The point is within the suburb: ${suburbName}`);
-    break;
-  }
-}
+
+      // Create a Point object with the latitude and longitude
+      const point = {
+        type: 'Point',
+        coordinates: [this.longitude, this.latitude]
+      };
+      // Iterate through the features in the GeoJSON data
+      for (const feature of data.result.mapPolygons[0].features) {
+        const polygon = {
+          type: 'Polygon',
+          coordinates: feature.geometry.coordinates
+        };
+        if (this.isPointInsidePolygon(point, polygon)) {
+          const suburbName = feature.properties.SP_NAME;
+          console.log(`The point is within the suburb: ${suburbName}`);
+          break;
+        }
+      }
+
       this.map.on('load', () => {
         this.map.resize(); // Trigger map resize after the initial rendering
       });
@@ -665,32 +667,31 @@ for (const feature of data.result.mapPolygons[0].features) {
   }
 
   // REPORTING
-  goToReport()
-  {
+  goToReport() {
     this.router.navigate(['/report']);
   }
 
-   isPointInsidePolygon(point: any, polygon: any) {
+  isPointInsidePolygon(point: any, polygon: any) {
     const x = point.coordinates[0];
     const y = point.coordinates[1];
-    
+
     const vertices = polygon.coordinates[0]; // Assuming the first set of coordinates defines the polygon
     let isInside = false;
-  
+
     for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
       const xi = vertices[i][0];
       const yi = vertices[i][1];
       const xj = vertices[j][0];
       const yj = vertices[j][1];
-  
+
       const intersect = ((yi > y) !== (yj > y)) && (x < ((xj - xi) * (y - yi)) / (yj - yi) + xi);
       if (intersect) {
         isInside = !isInside;
       }
     }
-  
+
     return isInside;
   }
-  
+
 }
 
