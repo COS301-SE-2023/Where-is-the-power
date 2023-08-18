@@ -32,7 +32,9 @@ export class ReportService {
     let body =
     {
       "report_type": type,
-      "timestamp": Date.now()
+      "timestamp": Date.now(),
+      "latitude": this.latitude,
+      "longitude": this.longitude
     }
     return this.http.post(this.apiUrl, body, { headers: this.headers });
   }
