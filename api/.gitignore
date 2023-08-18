@@ -6,3 +6,4 @@
 .env
 macros/target
 Cargo.lock
+area_metadata.json
