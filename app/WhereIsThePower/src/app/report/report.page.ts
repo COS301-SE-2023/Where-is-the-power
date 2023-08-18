@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ReportService } from './report.service';
 import { Subscription } from 'rxjs';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-report',
@@ -12,6 +13,7 @@ export class ReportPage implements OnInit {
 
   constructor(
     private reportService: ReportService,
+    private router: Router
   ) { }
 
   ngOnInit() {
@@ -24,6 +26,7 @@ export class ReportPage implements OnInit {
     this.createReportSubscription = this.reportService.reportIssue(reportType).subscribe(
       (res: any) => {
         console.log(res);
+        this.router.navigate(['/tabs/tab-navigate']);
       },
       (error: any) => {
         console.error('An error occurred:', error);
