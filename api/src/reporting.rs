@@ -78,17 +78,17 @@ pub async fn get_reports(state: &State<Option<Client>>) -> ApiResponse<Vec<UserR
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[non_exhaustive]
 pub enum ReportType {
-    StolenCables,
-    BlownSubstation,
+    CablesStolen,
+    SubstationBlew,
     PowerOutage,
-    DamagedCables,
-    HeavyTraffic,
+    CablesDamaged,
+    Traffic,
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
 #[schema(example = json! {
     UserReportResponse {
-        report_type: ReportType::StolenCables,
+        report_type: ReportType::CablesStolen,
         email: "joe".to_string(),
         expired: false
     }
@@ -135,7 +135,7 @@ impl UserReport {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[schema(example = json! {
     NewUserReport {
-        report_type: ReportType::StolenCables,
+        report_type: ReportType::CablesStolen,
         timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
     }
 })]
