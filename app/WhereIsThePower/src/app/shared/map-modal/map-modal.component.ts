@@ -19,6 +19,7 @@ import { EventEmitter, Output } from '@angular/core';
 import { Subscribable } from 'rxjs';
 import { Place } from '../../tab-saved/place';
 import { Router } from '@angular/router';
+import { ReportService } from '../../report/report.service';
 declare let MapboxDirections: any;
 declare let mapboxgl: any;
 declare let MapboxGeocoder: any;
@@ -37,7 +38,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     private modalCtrl: ModalController,
     private changeDetectorRef: ChangeDetectorRef,
     private savedPlacesService: SavedPlacesService,
-    private router: Router
+    private router: Router,
+    private reportService: ReportService
   ) { }
   map: any;
   dat: any;
@@ -149,8 +151,43 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       }
     );
 
+    // Reporting
+    this.reportService.reports.subscribe((reports: any) => {
+      console.log("reports", reports.result);
+      if (reports.length > 0) {
+        reports.forEach((report: any) => {
+          this.addMarker(report.longitude, report.latitude, report.report_type);
+        });
+      }
+    });
   }
 
+  addMarker(lon: number, lat: number, reportType: string) {
+    console.log("addMarkeraddMarker");
+    const customIcon = document.createElement('div');
+    customIcon.style.width = '30px'; // Set the width of your custom icon
+    customIcon.style.height = '30px'; // Set the height of your custom icon
+    customIcon.style.backgroundColor = 'var(--ion-color-primary)'; // Use Ionic primary color variable
+    customIcon.style.backgroundImage = `url('assets/${reportType}')`; // Replace with your icon path
+    customIcon.style.backgroundSize = 'cover';
+    customIcon.style.backgroundPosition = 'center';
+
+    const formattedReportType = reportType.replace(/([A-Z])/g, ' $1');
+
+    const marker = new mapboxgl.Marker({
+      element: customIcon,
+    })
+      .setLngLat([lon, lat])
+      .setPopup(
+        new mapboxgl.Popup({ offset: 25 }) // add popups
+          .setHTML(
+            `<h3>${formattedReportType}</h3>`
+          )
+      )
+      .addTo(this.map);
+
+    // this.markers.push(marker); // Add the marker to the markers array
+  }
   populatePolygons() {
     this.map.on('load', () => {
       // Add a data source containing GeoJSON data.
