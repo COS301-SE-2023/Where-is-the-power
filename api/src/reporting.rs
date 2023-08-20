@@ -90,12 +90,16 @@ pub enum ReportType {
     UserReportResponse {
         report_type: ReportType::CablesStolen,
         email: "joe".to_string(),
+        latitude: 0.0,
+        longitude: 0.0,
         expired: false
     }
 })]
 pub struct UserReportResponse {
     pub report_type: ReportType,
     pub email: String,
+    pub latitude: f64,
+    pub longitude: f64,
     pub expired: bool,
 }
 
@@ -103,6 +107,8 @@ impl From<&UserReport> for UserReportResponse {
     fn from(value: &UserReport) -> Self {
         Self {
             expired: value.is_expired(),
+            latitude: value.latitude,
+            longitude: value.longitude,
             report_type: value.report_type.clone(),
             email: value.email.clone(),
         }
@@ -115,6 +121,8 @@ pub struct UserReport {
     #[serde(skip_serializing_if = "Option::is_none", rename = "_id")]
     pub id: Option<ObjectId>,
     pub report_type: ReportType,
+    pub latitude: f64,
+    pub longitude: f64,
     pub email: String,
     pub expires: u64,
 }
@@ -136,11 +144,15 @@ impl UserReport {
 #[schema(example = json! {
     NewUserReport {
         report_type: ReportType::CablesStolen,
+        latitude: 0.0,
+        longitude: 0.0,
         timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
     }
 })]
 pub struct NewUserReport {
     pub report_type: ReportType,
+    pub latitude: f64,
+    pub longitude: f64,
     pub timestamp: u128,
 }
 
@@ -149,6 +161,8 @@ impl NewUserReport {
         UserReport {
             id: None,
             report_type: self.report_type,
+            latitude: self.latitude,
+            longitude: self.longitude,
             expires: u64::try_from(self.timestamp).unwrap() + 1000 * 60 * 30,
             email,
         }
