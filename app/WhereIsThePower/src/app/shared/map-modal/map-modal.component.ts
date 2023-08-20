@@ -154,8 +154,11 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     // Reporting
     this.reportService.reports.subscribe((reports: any) => {
       console.log("reports", reports.result);
-      if (reports.length > 0) {
-        reports.forEach((report: any) => {
+      // console.log("reports.length", reports.size);
+
+      if (reports) {
+        console.log("reports??");
+        reports.result.forEach((report: any) => {
           this.addMarker(report.longitude, report.latitude, report.report_type);
         });
       }
@@ -164,13 +167,15 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
   addMarker(lon: number, lat: number, reportType: string) {
     console.log("addMarkeraddMarker");
-    const customIcon = document.createElement('div');
+    const customIcon = document.createElement('ion-icon');
     customIcon.style.width = '30px'; // Set the width of your custom icon
     customIcon.style.height = '30px'; // Set the height of your custom icon
     customIcon.style.backgroundColor = 'var(--ion-color-primary)'; // Use Ionic primary color variable
-    customIcon.style.backgroundImage = `url('assets/${reportType}')`; // Replace with your icon path
+    customIcon.style.backgroundImage = `url('assets/${reportType}.svg')`; // Replace with your icon path
     customIcon.style.backgroundSize = 'cover';
     customIcon.style.backgroundPosition = 'center';
+    customIcon.style.borderRadius = '50%';
+    customIcon.style.padding = '8px';
 
     const formattedReportType = reportType.replace(/([A-Z])/g, ' $1');
 
@@ -181,7 +186,14 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       .setPopup(
         new mapboxgl.Popup({ offset: 25 }) // add popups
           .setHTML(
-            `<h3>${formattedReportType}</h3>`
+            `<ion-card class="popup-ion-card">
+            <ion-card-header class="popup-ion-card-header">
+              <ion-card-title color="primary">${formattedReportType}</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <h4><ion-icon src="assets/schedule.svg"></ion-icon><ion-text>Reported at 14:00</ion-text></h4>
+            </ion-card-content>
+          </ion-card>`
           )
       )
       .addTo(this.map);
