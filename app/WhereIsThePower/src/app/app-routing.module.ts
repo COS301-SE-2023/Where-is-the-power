@@ -13,8 +13,11 @@ const routes: Routes = [
   {
     path: 'tab-profile',
     loadChildren: () => import('./tab-profile/tab-profile.module').then( m => m.TabProfilePageModule)
-  }
-
+  },
+  {
+    path: 'report',
+    loadChildren: () => import('./report/report.module').then(m => m.ReportPageModule)
+  },
 ];
 @NgModule({
   imports: [
