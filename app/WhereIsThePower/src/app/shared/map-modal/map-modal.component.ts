@@ -211,18 +211,18 @@ export class MapModalComponent implements OnInit, AfterViewInit {
                 console.log('No time ranges available.');
                 this.currentSuburbSchedule = "unavailable";
               }
-
+              const showSchedule = suburbInfo?.PowerStatus !== 'on';
               const popupContent = `
-          <ion-card class="popup-ion-card">
-            <ion-card-header class="popup-ion-card-header">
-              <ion-card-title color="primary">${suburbInfo?.SP_NAME}</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-              <h4><ion-icon src="assets/lightbulb.svg"></ion-icon><ion-text>Power Status: <strong>${suburbInfo?.PowerStatus}</strong></ion-text></h4>
-              <h4><ion-icon src="assets/schedule.svg"></ion-icon><ion-text> Schedule: <strong>${this.currentSuburbSchedule}</strong></ion-text></h4>
-            </ion-card-content>
-          </ion-card>
-          `;
+              <ion-card class="popup-ion-card">
+                <ion-card-header class="popup-ion-card-header">
+                  <ion-card-title color="primary">${suburbInfo?.SP_NAME}</ion-card-title>
+                </ion-card-header>
+                <ion-card-content>
+                  <h4><ion-icon src="assets/lightbulb.svg"></ion-icon><ion-text>Power Status: <strong>${suburbInfo?.PowerStatus}</strong></ion-text></h4>
+                  ${showSchedule ? `<h4><ion-icon src="assets/schedule.svg"></ion-icon><ion-text> Schedule: <strong>${this.currentSuburbSchedule}</strong></ion-text></h4>` : ''}
+                  </ion-card-content>
+              </ion-card>
+              `;
               // Create a new popup and set its HTML content
               this.popup = new mapboxgl.Popup()
                 .setLngLat(e.lngLat)
