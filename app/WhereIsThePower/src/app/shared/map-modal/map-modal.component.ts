@@ -65,6 +65,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   MapSubscription: Subscription = new Subscription();
   goToPlace: any; // Physical place
   navigateToPlace = false;
+  currentSuburbSchedule: any;
   @ViewChild('myModal') myModal: any; // Reference to the ion-modal element
   modalResult: any; // To store the selected result data
 
@@ -247,30 +248,61 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         //console.log(e);
 
         if (clickedFeature) {
-
+          let suburbId = clickedFeature.id;
           // Get the properties of the clicked feature (suburb information)
           const suburbInfo = clickedFeature.properties;
           if (suburbInfo.PowerStatus == "undefined") {
             suburbInfo.PowerStatus = "unavailable"
           }
 
-          const popupContent = `
-          <ion-card class="popup-ion-card">
-            <ion-card-header class="popup-ion-card-header">
-              <ion-card-title color="primary">${suburbInfo?.SP_NAME}</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-              <h4><ion-icon src="assets/lightbulb.svg"></ion-icon><ion-text>Power Status: <strong>${suburbInfo?.PowerStatus}</strong></ion-text></h4>
-              <h4><ion-icon src="assets/schedule.svg"></ion-icon><ion-text> Schedule: <strong>12:00 - 14:00</strong></ion-text></h4>
-            </ion-card-content>
-          </ion-card>
-          `;
-          // Create a new popup and set its HTML content
-          this.popup = new mapboxgl.Popup()
-            .setLngLat(e.lngLat)
-            .setHTML(popupContent)
-            .addTo(this.map);
+          this.mapSuburbsService.fetchTimeForPolygon(suburbId).subscribe(
+            (response: any) => {
+              // Handle the response here
+              console.log('Time response:', response);
+              const timesOff = response.result.timesOff; // Assuming "response" holds your API response
 
+              if (timesOff && timesOff.length > 0) {
+                const formattedTimes = timesOff.map((time: any) => {
+                  const start = new Date(time.start * 1000); // Convert seconds to milliseconds
+                  const end = new Date(time.end * 1000); // Convert seconds to milliseconds
+
+                  const startHours = start.getHours().toString().padStart(2, '0');
+                  const startMinutes = start.getMinutes().toString().padStart(2, '0');
+
+                  const endHours = end.getHours().toString().padStart(2, '0');
+                  const endMinutes = end.getMinutes().toString().padStart(2, '0');
+
+                  this.currentSuburbSchedule = `${startHours}:${startMinutes} - ${endHours}:${endMinutes}`;
+                });
+
+                console.log('Formatted Time Ranges:', formattedTimes);
+              } else {
+                console.log('No time ranges available.');
+                this.currentSuburbSchedule = "unavailable";
+              }
+              const showSchedule = suburbInfo?.PowerStatus !== 'on';
+              const popupContent = `
+              <ion-card class="popup-ion-card">
+                <ion-card-header class="popup-ion-card-header">
+                  <ion-card-title color="primary">${suburbInfo?.SP_NAME}</ion-card-title>
+                </ion-card-header>
+                <ion-card-content>
+                  <h4><ion-icon src="assets/lightbulb.svg"></ion-icon><ion-text>Power Status: <strong>${suburbInfo?.PowerStatus}</strong></ion-text></h4>
+                  ${showSchedule ? `<h4><ion-icon src="assets/schedule.svg"></ion-icon><ion-text> Schedule: <strong>${this.currentSuburbSchedule}</strong></ion-text></h4>` : ''}
+                  </ion-card-content>
+              </ion-card>
+              `;
+              // Create a new popup and set its HTML content
+              this.popup = new mapboxgl.Popup()
+                .setLngLat(e.lngLat)
+                .setHTML(popupContent)
+                .addTo(this.map);
+            },
+            (error) => {
+              // Handle errors here
+              console.error('Error fetching time:', error);
+            }
+          );
         }
       });
     });
