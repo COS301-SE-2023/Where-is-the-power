@@ -149,6 +149,40 @@ pub async fn fetch_schedule<'a>(
         Err(err) => return err.into(),
     }
 }
+
+#[utoipa::path(post, tag = "Schedule Data", path = "/api/fetchTimeForPolygon", request_body = SuburbStatsRequest)]
+#[post("/fetchTimeForPolygon", format = "application/json", data = "<request>")]
+pub async fn fetch_time_for_polygon<'a>(
+    db: &State<Option<Client>>,
+    request: Json<SuburbStatsRequest>,
+) -> ApiResponse<'a, PredictiveSuburbStatsResponse> {
+    let oid = &request.suburb_id;
+    let connection = db.as_ref().unwrap().database("production");
+    let query = doc! {"geometry" : {"$in" : [oid]}};
+    let suburb: SuburbEntity = match connection
+        .collection("suburbs")
+        .find_one(query, None)
+        .await
+        .unwrap()
+    {
+        Some(result) => result,
+        None => return ApiError::ServerError("Document not found").into(),
+    };
+    let db_functions = DBFunctions {};
+    let time_now = get_date_time(None);
+    match suburb.build_schedule(&connection, &db_functions).await {
+        Ok(data) => {
+            let relevant: Vec<TimeSlot> = data.times_off.into_iter().filter(|time| time_slot_bound_validation(time, &time_now)).collect();
+            if let Some(to_return) = relevant.get(0) {
+                return ApiResponse::Ok(PredictiveSuburbStatsResponse { times_off: vec![to_return.clone()] })
+            } else {
+                return ApiResponse::Ok(PredictiveSuburbStatsResponse { times_off: vec![] })
+            }
+        },
+        Err(err) => err.into(),
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Entity)]
 #[serde(rename_all = "camelCase")]
 #[collection_name = "stage_log"]
@@ -401,7 +435,7 @@ pub struct PredictiveSuburbStatsResponse {
     times_off: Vec<TimeSlot>,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Clone)]
 pub struct TimeSlot {
     start: i64,
     end: i64,
@@ -622,6 +656,19 @@ fn schedule_time_bound_validation(
         }
     }
     return maybe;
+}
+
+fn time_slot_bound_validation(
+    slot: &TimeSlot,
+    time_to_search: &DateTime<FixedOffset>,
+) -> bool {
+    let stamp = time_to_search.timestamp();
+    if slot.start <= stamp {
+        if slot.end > stamp {
+            return true;
+        }
+    }
+    return false;
 }
 // db functions end
 

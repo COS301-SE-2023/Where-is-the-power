@@ -18,6 +18,8 @@ import { MapSuburbsService } from './map-suburbs.service';
 import { EventEmitter, Output } from '@angular/core';
 import { Subscribable } from 'rxjs';
 import { Place } from '../../tab-saved/place';
+import { Router } from '@angular/router';
+import { ReportService } from '../../report/report.service';
 declare let MapboxDirections: any;
 declare let mapboxgl: any;
 declare let MapboxGeocoder: any;
@@ -36,6 +38,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     private modalCtrl: ModalController,
     private changeDetectorRef: ChangeDetectorRef,
     private savedPlacesService: SavedPlacesService,
+    private router: Router,
+    private reportService: ReportService
   ) { }
   map: any;
   dat: any;
@@ -61,6 +65,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   MapSubscription: Subscription = new Subscription();
   goToPlace: any; // Physical place
   navigateToPlace = false;
+  currentSuburbSchedule: any;
   @ViewChild('myModal') myModal: any; // Reference to the ion-modal element
   modalResult: any; // To store the selected result data
 
@@ -116,6 +121,24 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       this.latitude = this.userLocationService.getLatitude();
       this.longitude = this.userLocationService.getLongitude();
 
+      // Create a Point object with the latitude and longitude
+      const point = {
+        type: 'Point',
+        coordinates: [this.longitude, this.latitude]
+      };
+      // Iterate through the features in the GeoJSON data
+      for (const feature of data.result.mapPolygons[0].features) {
+        const polygon = {
+          type: 'Polygon',
+          coordinates: feature.geometry.coordinates
+        };
+        if (this.isPointInsidePolygon(point, polygon)) {
+          const suburbName = feature.properties.SP_NAME;
+          console.log(`The point is within the suburb: ${suburbName}`);
+          break;
+        }
+      }
+
       this.map.on('load', () => {
         this.map.resize(); // Trigger map resize after the initial rendering
       });
@@ -129,8 +152,55 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       }
     );
 
+    // Reporting
+    this.reportService.reports.subscribe((reports: any) => {
+      console.log("reports", reports.result);
+      // console.log("reports.length", reports.size);
+
+      if (reports) {
+        console.log("reports??");
+        reports.result.forEach((report: any) => {
+          this.addMarker(report.longitude, report.latitude, report.report_type);
+        });
+      }
+    });
   }
 
+  addMarker(lon: number, lat: number, reportType: string) {
+    console.log("addMarkeraddMarker");
+    const customIcon = document.createElement('ion-icon');
+    customIcon.style.width = '30px'; // Set the width of your custom icon
+    customIcon.style.height = '30px'; // Set the height of your custom icon
+    customIcon.style.backgroundColor = 'var(--ion-color-primary)'; // Use Ionic primary color variable
+    customIcon.style.backgroundImage = `url('assets/${reportType}.svg')`; // Replace with your icon path
+    customIcon.style.backgroundSize = 'cover';
+    customIcon.style.backgroundPosition = 'center';
+    customIcon.style.borderRadius = '50%';
+    customIcon.style.padding = '8px';
+
+    const formattedReportType = reportType.replace(/([A-Z])/g, ' $1');
+
+    const marker = new mapboxgl.Marker({
+      element: customIcon,
+    })
+      .setLngLat([lon, lat])
+      .setPopup(
+        new mapboxgl.Popup({ offset: 25 }) // add popups
+          .setHTML(
+            `<ion-card class="popup-ion-card">
+            <ion-card-header class="popup-ion-card-header">
+              <ion-card-title color="primary">${formattedReportType}</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <h4><ion-icon src="assets/schedule.svg"></ion-icon><ion-text>Reported at 14:00</ion-text></h4>
+            </ion-card-content>
+          </ion-card>`
+          )
+      )
+      .addTo(this.map);
+
+    // this.markers.push(marker); // Add the marker to the markers array
+  }
   populatePolygons() {
     this.map.on('load', () => {
       // Add a data source containing GeoJSON data.
@@ -178,30 +248,61 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         //console.log(e);
 
         if (clickedFeature) {
-
+          let suburbId = clickedFeature.id;
           // Get the properties of the clicked feature (suburb information)
           const suburbInfo = clickedFeature.properties;
           if (suburbInfo.PowerStatus == "undefined") {
             suburbInfo.PowerStatus = "unavailable"
           }
 
-          const popupContent = `
-          <ion-card class="popup-ion-card">
-            <ion-card-header class="popup-ion-card-header">
-              <ion-card-title color="primary">${suburbInfo?.SP_NAME}</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-              <h4><ion-icon src="assets/lightbulb.svg"></ion-icon><ion-text>Power Status: <strong>${suburbInfo?.PowerStatus}</strong></ion-text></h4>
-              <h4><ion-icon src="assets/schedule.svg"></ion-icon><ion-text> Schedule: <strong>12:00 - 14:00</strong></ion-text></h4>
-            </ion-card-content>
-          </ion-card>
-          `;
-          // Create a new popup and set its HTML content
-          this.popup = new mapboxgl.Popup()
-            .setLngLat(e.lngLat)
-            .setHTML(popupContent)
-            .addTo(this.map);
+          this.mapSuburbsService.fetchTimeForPolygon(suburbId).subscribe(
+            (response: any) => {
+              // Handle the response here
+              console.log('Time response:', response);
+              const timesOff = response.result.timesOff; // Assuming "response" holds your API response
 
+              if (timesOff && timesOff.length > 0) {
+                const formattedTimes = timesOff.map((time: any) => {
+                  const start = new Date(time.start * 1000); // Convert seconds to milliseconds
+                  const end = new Date(time.end * 1000); // Convert seconds to milliseconds
+
+                  const startHours = start.getHours().toString().padStart(2, '0');
+                  const startMinutes = start.getMinutes().toString().padStart(2, '0');
+
+                  const endHours = end.getHours().toString().padStart(2, '0');
+                  const endMinutes = end.getMinutes().toString().padStart(2, '0');
+
+                  this.currentSuburbSchedule = `${startHours}:${startMinutes} - ${endHours}:${endMinutes}`;
+                });
+
+                console.log('Formatted Time Ranges:', formattedTimes);
+              } else {
+                console.log('No time ranges available.');
+                this.currentSuburbSchedule = "unavailable";
+              }
+              const showSchedule = suburbInfo?.PowerStatus !== 'on';
+              const popupContent = `
+              <ion-card class="popup-ion-card">
+                <ion-card-header class="popup-ion-card-header">
+                  <ion-card-title color="primary">${suburbInfo?.SP_NAME}</ion-card-title>
+                </ion-card-header>
+                <ion-card-content>
+                  <h4><ion-icon src="assets/lightbulb.svg"></ion-icon><ion-text>Power Status: <strong>${suburbInfo?.PowerStatus}</strong></ion-text></h4>
+                  ${showSchedule ? `<h4><ion-icon src="assets/schedule.svg"></ion-icon><ion-text> Schedule: <strong>${this.currentSuburbSchedule}</strong></ion-text></h4>` : ''}
+                  </ion-card-content>
+              </ion-card>
+              `;
+              // Create a new popup and set its HTML content
+              this.popup = new mapboxgl.Popup()
+                .setLngLat(e.lngLat)
+                .setHTML(popupContent)
+                .addTo(this.map);
+            },
+            (error) => {
+              // Handle errors here
+              console.error('Error fetching time:', error);
+            }
+          );
         }
       });
     });
@@ -645,5 +746,33 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       this.MapSubscription.unsubscribe();
     }
   }
+
+  // REPORTING
+  goToReport() {
+    this.router.navigate(['/report']);
+  }
+
+  isPointInsidePolygon(point: any, polygon: any) {
+    const x = point.coordinates[0];
+    const y = point.coordinates[1];
+
+    const vertices = polygon.coordinates[0]; // Assuming the first set of coordinates defines the polygon
+    let isInside = false;
+
+    for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
+      const xi = vertices[i][0];
+      const yi = vertices[i][1];
+      const xj = vertices[j][0];
+      const yj = vertices[j][1];
+
+      const intersect = ((yi > y) !== (yj > y)) && (x < ((xj - xi) * (y - yi)) / (yj - yi) + xi);
+      if (intersect) {
+        isInside = !isInside;
+      }
+    }
+
+    return isInside;
+  }
+
 }
 
