@@ -16,10 +16,10 @@ start_coords = input["origin"]
 end_coords = input["destination"]
 
 # Separate into start_long, start_lat, end_long, and end_lat
-start_long, start_lat = start_coords
-end_long, end_lat = end_coords
-
-endpoint = f"https://api.mapbox.com/directions/v5/mapbox/driving/{start_long},{start_lat};{end_long},{end_lat}";
+start_long, start_lat = 28.233795,-25.801693#start_coords
+end_long, end_lat = 28.269476,-25.827567#end_coords
+28.233795,-25.801693
+endpoint = f"https://api.mapbox.com/directions/v5/mapbox/driving-traffic/{start_long},{start_lat};{end_long},{end_lat}";
 
 # # Prepare the API request
 params = {
@@ -33,15 +33,11 @@ params = {
 
 # Send the API request
 response = requests.get(endpoint, params=params)
-
-intersections = []
-
-# Load JSON data into a Python dictionary
 data = response.json()
-for step in data['routes'][0]['legs'][0]['steps']:
-    for intersection in step['intersections']:
-        if 'traffic_signal' in intersection:
-            intersections.append(intersection["location"])
+
+
+
+
 
 def point_in_polygon(point, polygon):
     x, y = point
@@ -97,59 +93,89 @@ for polygon in polygons:
             newpolygon.append(point)
     newpolygons.append(newpolygon)
 
-redIntersections = [] #traffic lights on route that are currently facing loadshedding. 
-for point in intersections: 
+robots = []
+for step in data['routes'][0]['legs'][0]['steps']:
+    for intersection in step['intersections']:
+        if 'traffic_signal' in intersection:
+            robots.append(intersection["location"])
+
+shedding_robots = [] #traffic lights on route that are currently facing loadshedding. 
+for point in robots: 
         for polygon in newpolygons:
             if len(point) == 2: 
                 if point_in_polygon(point,polygon):
-                    redIntersections.append(point)
+                    shedding_robots.append(point)
 
-exclusionArea = ""
-
-first = True
-for point in redIntersections:
-    if first:
-        exclusionArea = f"point({point[0]} {point[1]})"
-        first = False
-    else:
-        exclusionArea = exclusionArea + f",point({point[0]} {point[1]})"
+#find the traffic lights on route
 
 
-endpoint = f"https://api.mapbox.com/directions/v5/mapbox/driving/{start_long},{start_lat};{end_long},{end_lat}"
+print("---------robots---------- \n", shedding_robots)
 
-# # Prepare the API request
-params = {
-    "access_token": access_token,
-    "alternatives": "true",
-    "geometries": "geojson",
-    "language": "en",
-    "overview": "full",
-    "steps": "true",
-}
-# Check if exclusionArea is not None before adding it to params
-if exclusionArea:
-    params["exclude"] = exclusionArea
+# determine if the robots have high traffic congestion
 
-eresponse = requests.get(endpoint, params=params).json()
+avoid_robots = [] #robots that need to be avoided
+for robot in shedding_robots:
+    traffic_endpoint = f"https://api.mapbox.com/v4/mapbox.mapbox-traffic-v1/tilequery/{robot[0]},{robot[1]}.json"
+    traffic_params = {
+        "access_token": access_token,
+        "radius": 1,
+        "dedupe": "false"
+    }
+    traffic_response = requests.get(traffic_endpoint, traffic_params).json()
+    for feature in traffic_response['features']:
+        if feature['properties']['congestion'] in ["heavy", "severe"]:
+            print(feature['properties']['congestion'])
+            avoid_robots.append(robot)
 
-# print(eresponse)
-instructions = []
-for step in  eresponse['routes'][0]['legs'][0]['steps']:
-    instructions.append(step['maneuver']['instruction'])
+#exclusionArea = ""
 
-duration = eresponse['routes'][0]['duration']
-distance = eresponse['routes'][0]['distance']
-coordinates = eresponse['routes'][0]['geometry']['coordinates']
+# first = True
+# for point in redIntersections:
+#     if first:
+#         exclusionArea = f"point({point[0]} {point[1]})"
+#         first = False
+#     else:
+#         exclusionArea = exclusionArea + f",point({point[0]} {point[1]})"
 
-response_data = {
-    "duration": duration,
-    "distance": distance,
-    "trafficLightsAvoided": redIntersections,
-    "instructions": instructions,
-    "coordinates" : coordinates
-}
-json_response = json.dumps(response_data)
-print(json_response)
+
+# endpoint = f"https://api.mapbox.com/directions/v5/mapbox/driving/{start_long},{start_lat};{end_long},{end_lat}"
+
+# # # Prepare the API request
+# params = {
+#     "access_token": access_token,
+#     "alternatives": "true",
+#     "geometries": "geojson",
+#     "language": "en",
+#     "overview": "full",
+#     "steps": "true",
+# }
+# # Check if exclusionArea is not None before adding it to params
+# if exclusionArea:
+#     params["exclude"] = exclusionArea
+
+# eresponse = requests.get(endpoint, params=params).json()
+
+# # print(eresponse)
+# instructions = []
+# for step in  eresponse['routes'][0]['legs'][0]['steps']:
+#     instructions.append(step['maneuver']['instruction'])
+
+# duration = eresponse['routes'][0]['duration']
+# distance = eresponse['routes'][0]['distance']
+# coordinates = eresponse['routes'][0]['geometry']['coordinates']
+
+# response_data = {
+#     "duration": duration,
+#     "distance": distance,
+#     "trafficLightsAvoided": redIntersections,
+#     "instructions": instructions,
+#     "coordinates" : coordinates
+# }
+# json_response = json.dumps(response_data)
+# print(json_response)
+
+# with open("output.json", "w") as json_file:
+#     json.dump(response_data, json_file, indent=4)
 
 
 
