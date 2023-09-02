@@ -1166,7 +1166,7 @@ impl LoadSheddingStage {
                 },
             };
             let latest_info = times.last().unwrap().start.0.naive_local();
-            let latest_in_db = NaiveDateTime::from_timestamp_opt(result.start_time, 0).unwrap();
+            let latest_in_db = get_date_time(Some(result.start_time)).naive_local();
             if latest_info > latest_in_db {
                 // find point where we must update and update the rest
                 loop {
