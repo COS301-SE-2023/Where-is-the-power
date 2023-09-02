@@ -818,6 +818,7 @@ impl SuburbEntity {
             Ok(data) => data,
             Err(err) => return Err(err),
         };
+        all_stages.reverse();
 
         let mut time_to_search = time_now;
         println!("{:?}", time_to_search.timestamp());
@@ -842,24 +843,31 @@ impl SuburbEntity {
                     .unwrap()
                     .with_minute(slot.stop_minute as u32)
                     .unwrap();
-                println!("{:?}", end_time.timestamp());
-                println!("{:?}", time_to_search.timestamp());
                 if end_time < time_to_search {
                     end_time = end_time
                         .checked_add_signed(chrono::Duration::days(1))
                         .unwrap();
                 }
-                println!("{:?}", end_time.timestamp());
-                println!("{:?}", time_to_search.timestamp());
-                response.push(TimeSlot {
-                    start: time_to_search.timestamp(),
-                    end: end_time.timestamp(),
-                });
+                // Extend existing or add a new interval
+                match response.last_mut() {
+                    Some(time) => {
+                        if time.end >= time_to_search.timestamp() {
+                            time.end = end_time.timestamp();
+                        } else {
+                            response.push(TimeSlot {
+                                start: time_to_search.timestamp(),
+                                end: end_time.timestamp(),
+                            });
+                        }
+                    }
+                    None => response.push(TimeSlot {
+                                start: time_to_search.timestamp(),
+                                end: end_time.timestamp(),
+                            })
+                }
                 time_to_search = end_time;
             } else {
                 time_to_search += chrono::Duration::minutes(30);
-                println!("{:?}", time_to_search.hour());
-                println!("{:?}", time_to_search.minute());
             }
         }
         return Ok(PredictiveSuburbStatsResponse {
@@ -993,7 +1001,7 @@ impl SuburbEntity {
             let stages: Vec<&StageTimes> = time_slot
                 .stages
                 .iter()
-                .filter(|x| x.stage < stage.stage)
+                .filter(|x| x.stage <= stage.stage)
                 .collect();
             for stage in stages {
                 if stage.groups.get((day - 1) as usize).unwrap().to_owned() == group.id.unwrap() {
@@ -1158,7 +1166,7 @@ impl LoadSheddingStage {
                 },
             };
             let latest_info = times.last().unwrap().start.0.naive_local();
-            let latest_in_db = NaiveDateTime::from_timestamp_opt(result.start_time, 0).unwrap();
+            let latest_in_db = get_date_time(Some(result.start_time)).naive_local();
             if latest_info > latest_in_db {
                 // find point where we must update and update the rest
                 loop {
