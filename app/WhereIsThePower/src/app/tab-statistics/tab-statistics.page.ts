@@ -240,11 +240,15 @@ export class TabStatisticsPage implements OnInit {
     this.showResultsList = false;
     this.isAreaFound = true;
 
-    this.statisticsService.getSuburbData(selectedSuburb.id).subscribe((data) => {
+    this.statisticsService.getSuburbData(selectedSuburb.id).subscribe((data: any) => {
       console.log("statisticsService: ", data);
-
-      this.processDoughnutChart(data);
-      this.processBarChart(data);
+      if (data.result != null) {
+        this.processDoughnutChart(data);
+        this.processBarChart(data);
+      }
+      else {
+        this.isAreaFound = false;
+      }
     },
       (error) => {
         console.error(error);
