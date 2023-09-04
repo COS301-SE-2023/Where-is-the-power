@@ -254,7 +254,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           if (suburbInfo.PowerStatus == "undefined") {
             suburbInfo.PowerStatus = "unavailable"
           }
-          console.log("DEBUG: SuburbID = " + suburbId);
+
           this.mapSuburbsService.fetchTimeForPolygon(suburbId).subscribe(
             (response: any) => {
               // Handle the response here
@@ -300,8 +300,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
             },
             (error) => {
               // Handle errors here
-              // console.error('Error fetching time:', error);
-              console.log("Error message display disabled for readability when matching polygons, enable once matching is complete");
+              console.error('Error fetching time:', error);
             }
           );
         }
