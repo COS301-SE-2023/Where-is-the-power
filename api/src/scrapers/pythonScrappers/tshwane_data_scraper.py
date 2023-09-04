@@ -89,8 +89,8 @@ def parseGeoJSON():
   # go through the suburbs
   for key,value in groups.items():
     for suburb in value.keys():
-      regex1 = re.compile(suburb + "*", re.IGNORECASE)
-      regex2 = re.compile(suburb.replace(" ", "")+ "*",re.IGNORECASE)
+      regex1 = re.compile(suburb, re.IGNORECASE)
+      regex2 = re.compile(suburb.replace(" ", ""),re.IGNORECASE)
 
       # go through the geoJSON, this is very disgusting code
       for feature in data["features"]:

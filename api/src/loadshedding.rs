@@ -151,7 +151,11 @@ pub async fn fetch_schedule<'a>(
 }
 
 #[utoipa::path(post, tag = "Schedule Data", path = "/api/fetchTimeForPolygon", request_body = SuburbStatsRequest)]
-#[post("/fetchTimeForPolygon", format = "application/json", data = "<request>")]
+#[post(
+    "/fetchTimeForPolygon",
+    format = "application/json",
+    data = "<request>"
+)]
 pub async fn fetch_time_for_polygon<'a>(
     db: &State<Option<Client>>,
     request: Json<SuburbStatsRequest>,
@@ -172,13 +176,19 @@ pub async fn fetch_time_for_polygon<'a>(
     let time_now = get_date_time(None);
     match suburb.build_schedule(&connection, &db_functions).await {
         Ok(data) => {
-            let relevant: Vec<TimeSlot> = data.times_off.into_iter().filter(|time| time_slot_bound_validation(time, &time_now)).collect();
+            let relevant: Vec<TimeSlot> = data
+                .times_off
+                .into_iter()
+                .filter(|time| time.time_slot_bound_validation(&time_now))
+                .collect();
             if let Some(to_return) = relevant.get(0) {
-                return ApiResponse::Ok(PredictiveSuburbStatsResponse { times_off: vec![to_return.clone()] })
+                return ApiResponse::Ok(PredictiveSuburbStatsResponse {
+                    times_off: vec![to_return.clone()],
+                });
             } else {
-                return ApiResponse::Ok(PredictiveSuburbStatsResponse { times_off: vec![] })
+                return ApiResponse::Ok(PredictiveSuburbStatsResponse { times_off: vec![] });
             }
-        },
+        }
         Err(err) => err.into(),
     }
 }
@@ -634,43 +644,64 @@ impl DBFunctionsTrait for DBFunctions {
         Ok(result.deref().clone())
     }
 }
-
-fn schedule_time_bound_validation(
-    schedule: &TimeScheduleEntity,
-    time_to_search: &DateTime<FixedOffset>,
-) -> bool {
-    let mut maybe = false;
-    if schedule.start_hour <= time_to_search.hour() as i32 {
-        if schedule.stop_hour >= time_to_search.hour() as i32 {
-            maybe = true;
-            if schedule.stop_minute <= time_to_search.minute() as i32
-                && schedule.stop_hour == time_to_search.hour() as i32
-            {
-                return false;
-            }
-            if schedule.start_minute > time_to_search.minute() as i32
-                && schedule.start_hour == time_to_search.hour() as i32
-            {
-                return false;
-            }
-        }
-    }
-    return maybe;
-}
-
-fn time_slot_bound_validation(
-    slot: &TimeSlot,
-    time_to_search: &DateTime<FixedOffset>,
-) -> bool {
-    let stamp = time_to_search.timestamp();
-    if slot.start <= stamp {
-        if slot.end > stamp {
-            return true;
-        }
-    }
-    return false;
-}
 // db functions end
+
+impl TimeScheduleEntity {
+    pub fn timestamp_from_slot_times(
+        &self,
+        time_to_search: DateTime<FixedOffset>,
+        start: bool,
+    ) -> DateTime<FixedOffset> {
+        let mut time = time_to_search
+            .with_hour(if start {
+                self.start_hour as u32
+            } else {
+                self.stop_hour as u32
+            })
+            .unwrap()
+            .with_minute(if start {
+                self.start_minute as u32
+            } else {
+                self.stop_minute as u32
+            })
+            .unwrap();
+        if time < time_to_search {
+            time = time.checked_add_signed(chrono::Duration::days(1)).unwrap();
+        }
+        time
+    }
+    fn is_within_timeslot(&self, time_to_search: &DateTime<FixedOffset>) -> bool {
+        let mut maybe = false;
+        if self.start_hour <= time_to_search.hour() as i32 {
+            if self.stop_hour >= time_to_search.hour() as i32 {
+                maybe = true;
+                if self.stop_minute <= time_to_search.minute() as i32
+                    && self.stop_hour == time_to_search.hour() as i32
+                {
+                    return false;
+                }
+                if self.start_minute > time_to_search.minute() as i32
+                    && self.start_hour == time_to_search.hour() as i32
+                {
+                    return false;
+                }
+            }
+        }
+        return maybe;
+    }
+}
+
+impl TimeSlot {
+    fn time_slot_bound_validation(&self, time_to_search: &DateTime<FixedOffset>) -> bool {
+        let stamp = time_to_search.timestamp();
+        if self.start <= stamp {
+            if self.end > stamp {
+                return true;
+            }
+        }
+        return false;
+    }
+}
 
 impl MunicipalityEntity {
     pub async fn get_regions_at_time(
@@ -698,7 +729,7 @@ impl MunicipalityEntity {
         let mut schedules: Vec<TimeScheduleEntity> = Vec::new();
         // filter schedules to relevant ones
         for schedule in unfiltered_schedules {
-            let keep = schedule_time_bound_validation(&schedule, &time_to_search);
+            let keep = schedule.is_within_timeslot(&time_to_search);
             println!("{:?}", time_to_search.hour());
             if keep {
                 schedules.push(schedule);
@@ -829,7 +860,7 @@ impl SuburbEntity {
                 .into_iter()
                 .filter(|time| {
                     // check what time it falls under
-                    schedule_time_bound_validation(time, &time_to_search)
+                    time.is_within_timeslot(&time_to_search)
                 })
                 .collect();
             if all_stages.len() >= 2 {
@@ -838,17 +869,8 @@ impl SuburbEntity {
                 }
             }
             if let Some(slot) = self.add_time_checker(&all_stages[0], &time_slots, &group, &day) {
-                let mut end_time = time_to_search
-                    .with_hour(slot.stop_hour as u32)
-                    .unwrap()
-                    .with_minute(slot.stop_minute as u32)
-                    .unwrap();
-                if end_time < time_to_search {
-                    end_time = end_time
-                        .checked_add_signed(chrono::Duration::days(1))
-                        .unwrap();
-                }
-                // Extend existing or add a new interval
+                let end_time = slot.timestamp_from_slot_times(time_to_search, false);
+                time_to_search = slot.timestamp_from_slot_times(time_to_search, true);
                 match response.last_mut() {
                     Some(time) => {
                         if time.end >= time_to_search.timestamp() {
@@ -861,9 +883,9 @@ impl SuburbEntity {
                         }
                     }
                     None => response.push(TimeSlot {
-                                start: time_to_search.timestamp(),
-                                end: end_time.timestamp(),
-                            })
+                        start: time_to_search.timestamp(),
+                        end: end_time.timestamp(),
+                    }),
                 }
                 time_to_search = end_time;
             } else {
@@ -953,7 +975,7 @@ impl SuburbEntity {
                 .into_iter()
                 .filter(|time| {
                     // check what time it falls under
-                    schedule_time_bound_validation(time, &time_to_search)
+                    time.is_within_timeslot(&time_to_search)
                 })
                 .collect();
             // check next to see if its less than the current TTS
