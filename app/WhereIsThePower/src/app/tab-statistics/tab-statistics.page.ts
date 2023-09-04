@@ -23,6 +23,8 @@ export class TabStatisticsPage implements OnInit {
   filteredItems: any[] = [];
   geojsonData: any;
   showResultsList = false;
+  isLocationProvided = false;
+  isAreaFound = false;
 
   constructor(
     private statisticsService: StatisticsService,
@@ -41,8 +43,6 @@ export class TabStatisticsPage implements OnInit {
 
     });
 
-    const suburbId = 17959;
-
     // Default Statistics: Area stats on user location
     let area = await this.userLocationService.getArea();
     console.log("Area: ", area);
@@ -55,15 +55,23 @@ export class TabStatisticsPage implements OnInit {
           "name": area.properties.SP_NAME
         }
       );
+      this.isAreaFound = true;
     }
     else {
-      console.log("Search for a place in City of Tshwane");
+      console.log("Area is not available outside of City of Tshwane.");
+      this.isAreaFound = false;
     }
   }
 
   async ionViewDidEnter() {
     // Attempt to get location
     this.userLocationService.getUserLocation();
+
+    // Check if the location is available
+    this.userLocationService.isLocationAvailable.subscribe((isLocationAvailable) => {
+      this.isLocationProvided = isLocationAvailable;
+      console.log("isLocationAvailable (Stats page): ", this.isLocationProvided);
+    });
   }
 
   processDoughnutChart(data: any) {
