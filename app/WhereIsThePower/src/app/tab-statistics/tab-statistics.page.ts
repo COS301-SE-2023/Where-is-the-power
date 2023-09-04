@@ -49,7 +49,12 @@ export class TabStatisticsPage implements OnInit {
     if (area != null) {
       console.log("Area Name: ", area.properties.SP_NAME);
       console.log("Area ID: ", area.id);
-      this.selectSuburb(area.id);
+      this.selectSuburb(
+        {
+          "id": area.id,
+          "name": area.properties.SP_NAME
+        }
+      );
     }
     else {
       console.log("Search for a place in City of Tshwane");
