@@ -4,6 +4,7 @@ import { StatisticsService } from './statistics.service';
 import { HttpClient } from '@angular/common/http';
 import { Chart } from 'chart.js/auto'
 import { Renderer2 } from '@angular/core';
+import { UserLocationService } from '../user-location.service';
 
 Chart.register(...registerables)
 
@@ -22,8 +23,14 @@ export class TabStatisticsPage implements OnInit {
   filteredItems: any[] = [];
   geojsonData: any;
   showResultsList = false;
+  latitude: number = 0;
+  longitude: number = 0;
 
-  constructor(private statisticsService: StatisticsService, private http: HttpClient, private renderer: Renderer2) { }
+  constructor(
+    private statisticsService: StatisticsService,
+    private http: HttpClient, private renderer: Renderer2,
+    private userLocationService: UserLocationService
+  ) { }
   ngOnInit() {
     this.http.get('assets/suburbs.json').subscribe(data => {
       this.geojsonData = data;
@@ -32,8 +39,17 @@ export class TabStatisticsPage implements OnInit {
         id: feature.id
       }));
       this.filteredItems = [...this.searchItems];
+      console.log("Search Items:", this.filteredItems);
+
     });
     const suburbId = 17959;
+
+    // Default Statistics: Area stats on user location
+    this.latitude = this.userLocationService.getLatitude();
+    this.longitude = this.userLocationService.getLongitude();
+
+    this.selectSuburb(suburbId);
+    console.log("User Location: ", this.latitude, this.longitude);
   }
 
   processDoughnutChart(data: any) {
@@ -192,7 +208,7 @@ export class TabStatisticsPage implements OnInit {
       }
       return false;
     });
-    console.log(this.filteredItems);
+    console.log("Filtered Items: ", this.filteredItems);
   }
 
   selectSuburb(selectedSuburb: any) {
