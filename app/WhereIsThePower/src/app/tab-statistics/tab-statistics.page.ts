@@ -55,11 +55,9 @@ export class TabStatisticsPage implements OnInit {
           "name": area.properties.SP_NAME
         }
       );
-      this.isAreaFound = true;
     }
     else {
       console.log("Area is not available outside of City of Tshwane.");
-      this.isAreaFound = false;
     }
   }
 
@@ -103,6 +101,8 @@ export class TabStatisticsPage implements OnInit {
   }
 
   populateDoughnutChart(doughnutData: any) {
+    console.log(this.doughnutChart);
+
     if (this.doughnutChart) {
       this.doughnutChart.clear();
       this.doughnutChart.destroy();
@@ -238,7 +238,7 @@ export class TabStatisticsPage implements OnInit {
     console.log(selectedSuburb.name); // Logs the suburb name
     console.log(selectedSuburb.id); // Logs the suburb id
     this.showResultsList = false;
-
+    this.isAreaFound = true;
 
     this.statisticsService.getSuburbData(selectedSuburb.id).subscribe((data) => {
       console.log("statisticsService: ", data);
@@ -248,6 +248,7 @@ export class TabStatisticsPage implements OnInit {
     },
       (error) => {
         console.error(error);
+        this.isAreaFound = false;
       });
   }
 }
