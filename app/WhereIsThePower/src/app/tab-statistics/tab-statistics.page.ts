@@ -31,7 +31,7 @@ export class TabStatisticsPage implements OnInit {
     private http: HttpClient, private renderer: Renderer2,
     private userLocationService: UserLocationService
   ) { }
-  ngOnInit() {
+  async ngOnInit() {
     this.http.get('assets/suburbs.json').subscribe(data => {
       this.geojsonData = data;
       this.searchItems = this.geojsonData.features.map((feature: any) => ({
@@ -42,14 +42,21 @@ export class TabStatisticsPage implements OnInit {
       console.log("Search Items:", this.filteredItems);
 
     });
+
     const suburbId = 17959;
 
     // Default Statistics: Area stats on user location
-    this.latitude = this.userLocationService.getLatitude();
-    this.longitude = this.userLocationService.getLongitude();
+    let area = await this.userLocationService.getArea();
+    console.log("Area: ", area);
+    if (area != null) {
+      console.log("User Location: ", this.latitude, this.longitude);
+      console.log("Area Name: ", area.properties.SP_NAME);
+      this.selectSuburb(area.id);
+    }
+    else {
+      console.log("Search for a place in City of Tshwane");
+    }
 
-    this.selectSuburb(suburbId);
-    console.log("User Location: ", this.latitude, this.longitude);
   }
 
   processDoughnutChart(data: any) {
