@@ -23,8 +23,6 @@ export class TabStatisticsPage implements OnInit {
   filteredItems: any[] = [];
   geojsonData: any;
   showResultsList = false;
-  latitude: number = 0;
-  longitude: number = 0;
 
   constructor(
     private statisticsService: StatisticsService,
@@ -49,14 +47,13 @@ export class TabStatisticsPage implements OnInit {
     let area = await this.userLocationService.getArea();
     console.log("Area: ", area);
     if (area != null) {
-      console.log("User Location: ", this.latitude, this.longitude);
       console.log("Area Name: ", area.properties.SP_NAME);
+      console.log("Area ID: ", area.id);
       this.selectSuburb(area.id);
     }
     else {
       console.log("Search for a place in City of Tshwane");
     }
-
   }
 
   processDoughnutChart(data: any) {
