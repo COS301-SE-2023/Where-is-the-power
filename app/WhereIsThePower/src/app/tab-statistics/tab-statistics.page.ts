@@ -56,6 +56,11 @@ export class TabStatisticsPage implements OnInit {
     }
   }
 
+  async ionViewDidEnter() {
+    // Attempt to get location
+    this.userLocationService.getUserLocation();
+  }
+
   processDoughnutChart(data: any) {
     // Get today's day name (e.g., "Mon", "Tue", etc.)
     const today = new Date().toLocaleDateString('en-US', { weekday: 'short' });
