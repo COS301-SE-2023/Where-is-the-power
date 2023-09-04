@@ -249,6 +249,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
         if (clickedFeature) {
           let suburbId = clickedFeature.id;
+          console.log("Suburb ID =" + suburbId)
           // Get the properties of the clicked feature (suburb information)
           const suburbInfo = clickedFeature.properties;
           if (suburbInfo.PowerStatus == "undefined") {
@@ -300,7 +301,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
             },
             (error) => {
               // Handle errors here
-              console.error('Error fetching time:', error);
+              //console.error('Error fetching time:', error);
+              console.log("Re-enable errors on line 304 when polygons are matched");
             }
           );
         }
