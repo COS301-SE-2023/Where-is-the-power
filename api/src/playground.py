@@ -1,5 +1,4 @@
 import requests
-
 congestion_levels = {
     "low": 1,
     "moderate": 2,
@@ -11,7 +10,7 @@ congestion_levels_reverse = {v: k for k, v in congestion_levels.items()}
 
 
 
-def mapbox(start_coords, end_coords, exclude = None ):
+def get_route(start_coords, end_coords, exclude = None ):
     # Separate into start_long, start_lat, end_long, and end_lat
     start_long, start_lat = start_coords
     end_long, end_lat = end_coords
@@ -141,7 +140,7 @@ def get_shedding_robots(robots):
                     shedding_robots.append(point)
     return shedding_robots
 
-routeData1 = mapbox([28.233795,-25.801693],[28.269476,-25.827567])
+routeData1 = get_route([28.233795,-25.801693],[28.269476,-25.827567])
 robots1 = get_robots(routeData1)
 print("---------robots of route 1---------- \n")
 print_robots(robots1)
