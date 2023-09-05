@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { Chart } from 'chart.js/auto'
 import { Renderer2 } from '@angular/core';
 import { UserLocationService } from '../user-location.service';
+import { Subscription } from 'rxjs';
 
 Chart.register(...registerables)
 
@@ -27,13 +28,19 @@ export class TabStatisticsPage implements OnInit {
   isAreaFound = false;
   suburbName = "";
 
+  // Subscriptions
+  isLocationAvailableSubscription: Subscription  = new Subscription();
+  suburbDataSubscription: Subscription = new Subscription();
+  listSuburbsSubscription: Subscription = new Subscription();
+
   constructor(
     private statisticsService: StatisticsService,
-    private http: HttpClient, private renderer: Renderer2,
+    private http: HttpClient, 
+    private renderer: Renderer2,
     private userLocationService: UserLocationService
   ) { }
   async ngOnInit() {
-    this.http.get('assets/suburbs.json').subscribe(data => {
+    this.listSuburbsSubscription = this.http.get('assets/suburbs.json').subscribe(data => {
       this.geojsonData = data;
       this.searchItems = this.geojsonData.features.map((feature: any) => ({
         name: feature.properties.SP_NAME,
@@ -50,7 +57,7 @@ export class TabStatisticsPage implements OnInit {
     await this.userLocationService.getUserLocation();
 
     // Check if the location is available
-    this.userLocationService.isLocationAvailable.subscribe((isLocationAvailable) => {
+    this.isLocationAvailableSubscription = this.userLocationService.isLocationAvailable.subscribe((isLocationAvailable) => {
       this.isLocationProvided = isLocationAvailable;
       console.log("isLocationAvailable (Stats page): ", this.isLocationProvided);
     });
@@ -102,8 +109,6 @@ export class TabStatisticsPage implements OnInit {
   }
 
   populateDoughnutChart(doughnutData: any) {
-    console.log(this.doughnutChart);
-
     if (this.doughnutChart) {
       this.doughnutChart.clear();
       this.doughnutChart.destroy();
@@ -241,7 +246,7 @@ export class TabStatisticsPage implements OnInit {
     this.showResultsList = false;
     this.isAreaFound = true;
 
-    this.statisticsService.getSuburbData(selectedSuburb.id).subscribe((data: any) => {
+    this.suburbDataSubscription = this.statisticsService.getSuburbData(selectedSuburb.id).subscribe((data: any) => {
       console.log("statisticsService: ", data);
       if (data.result != null) {
         this.suburbName = selectedSuburb.name;
@@ -256,6 +261,12 @@ export class TabStatisticsPage implements OnInit {
         console.error(error);
         this.isAreaFound = false;
       });
+  }
+
+  ngOnDestroy() {
+    this.isLocationAvailableSubscription.unsubscribe();
+    this.suburbDataSubscription.unsubscribe();
+    this.listSuburbsSubscription.unsubscribe();
   }
 }
 
