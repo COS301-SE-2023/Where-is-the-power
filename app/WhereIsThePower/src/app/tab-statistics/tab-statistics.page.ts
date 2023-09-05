@@ -25,6 +25,7 @@ export class TabStatisticsPage implements OnInit {
   showResultsList = false;
   isLocationProvided = false;
   isAreaFound = false;
+  suburbName = "";
 
   constructor(
     private statisticsService: StatisticsService,
@@ -41,6 +42,17 @@ export class TabStatisticsPage implements OnInit {
       this.filteredItems = [...this.searchItems];
       console.log("Search Items:", this.filteredItems);
 
+    });
+  }
+  
+  async ionViewWillEnter() {
+    // Attempt to get location
+    await this.userLocationService.getUserLocation();
+
+    // Check if the location is available
+    this.userLocationService.isLocationAvailable.subscribe((isLocationAvailable) => {
+      this.isLocationProvided = isLocationAvailable;
+      console.log("isLocationAvailable (Stats page): ", this.isLocationProvided);
     });
 
     // Default Statistics: Area stats on user location
@@ -59,17 +71,6 @@ export class TabStatisticsPage implements OnInit {
     else {
       console.log("Area is not available outside of City of Tshwane.");
     }
-  }
-
-  async ionViewDidEnter() {
-    // Attempt to get location
-    this.userLocationService.getUserLocation();
-
-    // Check if the location is available
-    this.userLocationService.isLocationAvailable.subscribe((isLocationAvailable) => {
-      this.isLocationProvided = isLocationAvailable;
-      console.log("isLocationAvailable (Stats page): ", this.isLocationProvided);
-    });
   }
 
   processDoughnutChart(data: any) {
@@ -243,6 +244,7 @@ export class TabStatisticsPage implements OnInit {
     this.statisticsService.getSuburbData(selectedSuburb.id).subscribe((data: any) => {
       console.log("statisticsService: ", data);
       if (data.result != null) {
+        this.suburbName = selectedSuburb.name;
         this.processDoughnutChart(data);
         this.processBarChart(data);
       }
