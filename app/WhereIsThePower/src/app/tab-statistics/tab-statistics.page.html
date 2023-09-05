@@ -29,14 +29,17 @@
       <ion-row
       *ngIf="isLocationProvided && isAreaFound; else areaNotAvailable"
       class="ion-justify-content-center ion-padding-bottom">
+        <ion-col size="12" class="ion-text-start">
+          <h2>{{ suburbName }}</h2>
+        </ion-col>
         <ion-col size="10" offset="1" size-md="4" offset-md="0" class="ion-text-center">
-          <ion-text><h2>Loadshedding for Today</h2></ion-text>
+          <ion-text><h3>Loadshedding for Today</h3></ion-text>
           <div class="doughnutChart-container ion-justify-content-center">
             <canvas #doughnutChartRef id="doughnutChart"></canvas>
           </div>
         </ion-col>
         <ion-col size="12" size-md="7" offset-md="1" class="ion-text-center ion-padding-vertical ion-justify-content-center ion-padding-vertical">
-          <ion-text><h2>Loadshedding for this Week</h2></ion-text>
+          <ion-text><h3>Loadshedding for this Week</h3></ion-text>
           <div class="chart-container">
             <canvas #barChart id="barChart"></canvas>
           </div>
