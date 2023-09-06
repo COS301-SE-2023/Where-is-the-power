@@ -9,6 +9,23 @@
 <ion-content [fullscreen]="true">
   <ion-content>
     <ion-grid>
+      <ion-row>
+        <ion-col class="searchbar-container" size-xs="12" size-md="4" offset-md="7.8">
+          <ion-searchbar
+          animated="true"
+          placeholder="Search for a place..."
+          (ionInput)="onSearch($event)"
+          (keyup.enter)="onSearch($event)">
+          </ion-searchbar>
+          <ion-list *ngIf="filteredItems.length > 0 && showResultsList" class="search-results">
+            <ion-item *ngFor="let result of filteredItems" (click)="selectSuburb(result)" button>
+              <ion-label>
+                <h3><strong>{{ result.name }}</strong></h3>
+              </ion-label>
+            </ion-item>
+          </ion-list>
+        </ion-col>
+      </ion-row>
       <ion-row class="ion-justify-content-center ion-padding-bottom">
         <ion-col size="10" offset="1" size-md="4" offset-md="0" class="ion-text-center">
           <ion-text><h2>Loadshedding for Today</h2></ion-text>
@@ -19,7 +36,7 @@
         <ion-col size="12" size-md="7" offset-md="1" class="ion-text-center ion-padding-vertical ion-justify-content-center ion-padding-vertical">
           <ion-text><h2>Loadshedding for this Week</h2></ion-text>
           <div class="chart-container">
-            <canvas #barChartRef id="barChart"></canvas>
+            <canvas #barChart id="barChart"></canvas>
           </div>
         </ion-col>
       </ion-row>

@@ -57,7 +57,7 @@ export class LoginComponent implements OnInit {
           this.User.lastName = response.lastName;
           this.authService.user.next(this.User);
           await this.authService.saveUserData('Token', JSON.stringify(this.User.token));
-          this.sucessToast('Welcome back ' + this.User.firstName)
+          // this.sucessToast('Welcome back ' + this.User.firstName)
           //const userData = await this.authService.getUserData();
           //console.log("TOKEN " + userData);
         }

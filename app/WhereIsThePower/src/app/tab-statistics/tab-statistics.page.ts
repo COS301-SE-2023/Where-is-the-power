@@ -1,6 +1,10 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { Chart, registerables } from 'chart.js';
+import { registerables } from 'chart.js';
 import { StatisticsService } from './statistics.service';
+import { HttpClient } from '@angular/common/http';
+import { Chart } from 'chart.js/auto'
+import { Renderer2 } from '@angular/core';
+
 Chart.register(...registerables)
 
 @Component({
@@ -14,50 +18,58 @@ export class TabStatisticsPage implements OnInit {
 
   doughnutChart: any = null;
   barChart: any = null;
-  constructor(private statisticsService: StatisticsService) { }
-  ngOnInit() {
-    const suburbId = 17959;
-    this.statisticsService.getSuburbData(suburbId).subscribe((data) => {
-      console.log("statisticsService: ",data);
+  searchItems: any[] = [];
+  filteredItems: any[] = [];
+  geojsonData: any;
+  showResultsList = false;
 
-      this.processDoughnutChart(data);
-      this.processBarChart(data);
-    }, 
-    (error) => {
-        console.error(error);
+  constructor(private statisticsService: StatisticsService, private http: HttpClient, private renderer: Renderer2) { }
+  ngOnInit() {
+    this.http.get('assets/suburbs.json').subscribe(data => {
+      this.geojsonData = data;
+      this.searchItems = this.geojsonData.features.map((feature: any) => ({
+        name: feature.properties.SP_NAME,
+        id: feature.id
+      }));
+      this.filteredItems = [...this.searchItems];
     });
+    const suburbId = 17959;
   }
 
-  processDoughnutChart(data: any)
-  {
-     // Get today's day name (e.g., "Mon", "Tue", etc.)
-     const today = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+  processDoughnutChart(data: any) {
+    // Get today's day name (e.g., "Mon", "Tue", etc.)
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'short' });
 
-      // Get the on and off values for today's day from the data
-      const todayOnValue = data.result.perDayTimes[today]?.on || 0;
-      const todayOffValue = data.result.perDayTimes[today]?.off || 0;
-  
-      // Convert total uptime and downtime to hours
-      const uptimeToday = Math.floor(todayOnValue / 60);
-      const downtimeToday = Math.floor(todayOffValue / 60);
+    // Get the on and off values for today's day from the data
+    const todayOnValue = data.result.perDayTimes[today]?.on || 0;
+    const todayOffValue = data.result.perDayTimes[today]?.off || 0;
 
-      // Data for Doughnut Chart (Uptime/Downtime for Today)
-      const doughnutData = {
-        labels: ['Uptime', 'Downtime'],
-        datasets: [{
-          label: 'Loadshedding',
-          data: [uptimeToday, downtimeToday], // Uptime vs Downtime
-          borderWidth: 0,
-          backgroundColor: [
-            '#007A4D',
-            '#DE3831',
-          ],
-        }]
-      };
-      this.populateDoughnutChart(doughnutData);
+    // Convert total uptime and downtime to hours
+    const uptimeToday = Math.floor(todayOnValue / 60);
+    const downtimeToday = Math.floor(todayOffValue / 60);
+
+    // Data for Doughnut Chart (Uptime/Downtime for Today)
+    const doughnutData = {
+      labels: ['Uptime', 'Downtime'],
+      datasets: [{
+        label: 'Loadshedding',
+        data: [uptimeToday, downtimeToday], // Uptime vs Downtime
+        borderWidth: 0,
+        backgroundColor: [
+          '#007A4D',
+          '#DE3831',
+        ],
+      }]
+    };
+    this.populateDoughnutChart(doughnutData);
   }
 
   populateDoughnutChart(doughnutData: any) {
+    if (this.doughnutChart) {
+      this.doughnutChart.clear();
+      this.doughnutChart.destroy();
+    }
+
     this.doughnutChart = new Chart("doughnutChart", {
       type: 'doughnut',
       data: doughnutData,
@@ -72,11 +84,10 @@ export class TabStatisticsPage implements OnInit {
     });
   }
 
-  processBarChart(data: any)
-  {
+  processBarChart(data: any) {
     const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const todayIndex = new Date().getDay(); // 0 for Sunday, 1 for Monday, etc.
-    const orderedDaysOfWeek = [...daysOfWeek.slice(todayIndex+1), ...daysOfWeek.slice(0, todayIndex+1)];
+    const orderedDaysOfWeek = [...daysOfWeek.slice(todayIndex + 1), ...daysOfWeek.slice(0, todayIndex + 1)];
 
     const barData = {
       labels: orderedDaysOfWeek,
@@ -100,7 +111,12 @@ export class TabStatisticsPage implements OnInit {
   }
 
   populateBarChart(barData: any) {
-    this.barChart = new Chart("barChart", {
+    if (this.barChart) {
+      this.barChart.clear();
+      this.barChart.destroy();
+    }
+
+    this.barChart = new Chart(this.barChartRef.nativeElement, {
       type: 'bar',
       data: barData,
       options: {
@@ -131,7 +147,14 @@ export class TabStatisticsPage implements OnInit {
           }
         },
       },
-    });
+    });/*
+    console.log("????: ", this.barChart);
+
+    if (this.barChart) {
+      this.barChart.clear();
+
+      this.barChart.destroy();
+    }*/
   }
 
   clearDoughnutChart() {
@@ -145,6 +168,49 @@ export class TabStatisticsPage implements OnInit {
   clearAllCharts() {
     this.clearBarChart();
     this.clearDoughnutChart();
+  }
+
+  onSearch(event: any) {
+    const searchTerm = event.srcElement.value;
+
+    if (event.target.value.length > 0) {
+      this.showResultsList = true;
+    }
+    else {
+      this.showResultsList = false;
+    }
+    console.log(searchTerm);
+    // Reset items back to all of the items
+    this.filteredItems = [...this.searchItems];
+
+    // if the value is an empty string, don't filter the items
+    if (!searchTerm) return;
+
+    this.filteredItems = this.searchItems.filter(item => {
+      if (item.name && searchTerm) {
+        return item.name.toLowerCase().includes(searchTerm.toLowerCase());
+      }
+      return false;
+    });
+    console.log(this.filteredItems);
+  }
+
+  selectSuburb(selectedSuburb: any) {
+    //this.clearAllCharts();
+    console.log(selectedSuburb.name); // Logs the suburb name
+    console.log(selectedSuburb.id); // Logs the suburb id
+    this.showResultsList = false;
+
+
+    this.statisticsService.getSuburbData(selectedSuburb.id).subscribe((data) => {
+      console.log("statisticsService: ", data);
+
+      this.processDoughnutChart(data);
+      this.processBarChart(data);
+    },
+      (error) => {
+        console.error(error);
+      });
   }
 }
 

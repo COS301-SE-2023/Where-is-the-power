@@ -20,4 +20,11 @@ export class MapSuburbsService {
   getSuburbData() {
     return this.httpClient.post(this.apiUrl, this.body);
   }
+
+  fetchTimeForPolygon(suburbId: number) {
+    const url = `https://witpa.codelog.co.za/api/fetchTimeForPolygon`;
+    const requestBody = { suburbId };
+
+    return this.httpClient.post(url, requestBody);
+  }
 }
