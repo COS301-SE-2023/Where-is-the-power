@@ -645,6 +645,74 @@ impl DBFunctionsTrait for DBFunctions {
     }
 }
 // db functions end
+impl LoadsheddingData {
+    pub fn convert_to_loadsheddingstage(&self) -> LoadSheddingStage {
+        return LoadSheddingStage {
+            id: None,
+            start_time: self.start.0.timestamp(),
+            end_time: self.end.0.timestamp(),
+            db: None,
+            stage: self.stage,
+        }
+    }
+}
+
+impl TimeScheduleEntity {
+    pub fn timestamp_from_slot_times(
+        &self,
+        time_to_search: DateTime<FixedOffset>,
+        start: bool,
+    ) -> DateTime<FixedOffset> {
+        let mut time = time_to_search
+            .with_hour(if start {
+                self.start_hour as u32
+            } else {
+                self.stop_hour as u32
+            })
+            .unwrap()
+            .with_minute(if start {
+                self.start_minute as u32
+            } else {
+                self.stop_minute as u32
+            })
+            .unwrap();
+        if time < time_to_search {
+            time = time.checked_add_signed(chrono::Duration::days(1)).unwrap();
+        }
+        time
+    }
+    fn is_within_timeslot(&self, time_to_search: &DateTime<FixedOffset>) -> bool {
+        let mut maybe = false;
+        if self.start_hour <= time_to_search.hour() as i32 {
+            if self.stop_hour >= time_to_search.hour() as i32 {
+                maybe = true;
+                if self.stop_minute <= time_to_search.minute() as i32
+                    && self.stop_hour == time_to_search.hour() as i32
+                {
+                    return false;
+                }
+                if self.start_minute > time_to_search.minute() as i32
+                    && self.start_hour == time_to_search.hour() as i32
+                {
+                    return false;
+                }
+            }
+        }
+        return maybe;
+    }
+}
+
+impl TimeSlot {
+    fn time_slot_bound_validation(&self, time_to_search: &DateTime<FixedOffset>) -> bool {
+        let stamp = time_to_search.timestamp();
+        if self.start <= stamp {
+            if self.end > stamp {
+                return true;
+            }
+        }
+        return false;
+    }
+}
 
 impl TimeScheduleEntity {
     pub fn timestamp_from_slot_times(
@@ -1187,27 +1255,17 @@ impl LoadSheddingStage {
                     db: None,
                 },
             };
-            let latest_info = times.last().unwrap().start.0.naive_local();
             let latest_in_db = get_date_time(Some(result.start_time)).naive_local();
-            if latest_info > latest_in_db {
-                // find point where we must update and update the rest
-                loop {
-                    let next = times.pop();
-                    if let Some(data) = next {
-                        if latest_in_db >= data.start.0.naive_local() {
-                            break;
-                        }
-                        let to_insert = LoadSheddingStage {
-                            id: None,
-                            start_time: data.start.0.timestamp(),
-                            end_time: data.end.0.timestamp(),
-                            db: None,
-                            stage: data.stage,
-                        };
-                        let _ = to_insert.insert(db_con).await;
+            loop {
+                let next = times.pop();
+                if let Some(new_data) = next {
+                    if latest_in_db >= new_data.start.0.naive_local() {
+                        let _ = self.update_db_with_changes(new_data, db_con).await;
                     } else {
-                        break;
+                        let _ = new_data.convert_to_loadsheddingstage().insert(db_con).await;
                     }
+                } else {
+                    break;
                 }
             }
             self.set_stage().await;
@@ -1215,6 +1273,62 @@ impl LoadSheddingStage {
             return ();
         }
     }
+
+    async fn update_db_with_changes(&self, new_data:LoadsheddingData, db_con:&Database) {
+        // findone that matches our times.
+        let query = doc! {
+            "startTime" : new_data.start.0.timestamp(),
+            "endTime" : new_data.end.0.timestamp()
+        };
+        //match LoadSheddingStage::find_one(query, db_con, None).await {
+        match db_con
+        .collection::<LoadSheddingStage>("stage_log")
+        .find_one(query, None)
+        .await
+        .unwrap() {
+            // if match
+            // check similarities
+            // if stage change: update
+            Some(mut db_data) => {
+                if db_data.stage != new_data.stage {
+                    let update =
+                        mongodb::options::UpdateModifications::Document(doc! {
+                            "$set" : {"stage" : new_data.stage}
+                        });
+                    let _ = db_data.update(update, db_con).await;
+                }
+            }
+            // else if no match
+            // find all that encapsulate this new time.
+            // delete all of them
+            // insert
+            None => {
+                let filter = doc! {
+                    "startTime" : {"$lt" : new_data.end.0.timestamp()},
+                    "endTime" : {"$gt" : new_data.start.0.timestamp()}
+                };
+                // Can be optimized into a delete many
+                match LoadSheddingStage::find(filter, db_con, None).await {
+                    Ok(data) => {
+                        for stage in data {
+                            let _ = stage.delete(db_con).await;
+                        }
+                        let _ = new_data
+                            .convert_to_loadsheddingstage()
+                            .insert(db_con)
+                            .await;
+                    }
+                    Err(_) => {
+                        let _ = new_data
+                            .convert_to_loadsheddingstage()
+                            .insert(db_con)
+                            .await;
+                    }
+                }
+            }
+        };
+    }
+
     pub fn set_db(&mut self, db: &Client) {
         self.db = Some(db.to_owned());
     }
