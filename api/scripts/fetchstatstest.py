@@ -21,7 +21,7 @@ def sendRequest():
 def sendScheduleRequest():
     body = {
       #"suburbId" :18231 
-      "suburbId" : 18231
+      "suburbId" : 18195
     }
     request = json.dumps(body)
     headers = {
@@ -34,7 +34,7 @@ def sendTimeForPolygonRequest():
     body = {
       #"suburbId" :18057 
       #"suburbId" : 18231 
-      "suburbId" : 18231
+      "suburbId" : 18195
     }
     request = json.dumps(body)
     headers = {
