@@ -4,6 +4,8 @@ import { StatisticsService } from './statistics.service';
 import { HttpClient } from '@angular/common/http';
 import { Chart } from 'chart.js/auto'
 import { Renderer2 } from '@angular/core';
+import { UserLocationService } from '../user-location.service';
+import { Subscription } from 'rxjs';
 
 Chart.register(...registerables)
 
@@ -22,18 +24,60 @@ export class TabStatisticsPage implements OnInit {
   filteredItems: any[] = [];
   geojsonData: any;
   showResultsList = false;
+  isLocationProvided = false;
+  isAreaFound = false;
+  suburbName = "";
 
-  constructor(private statisticsService: StatisticsService, private http: HttpClient, private renderer: Renderer2) { }
-  ngOnInit() {
-    this.http.get('assets/suburbs.json').subscribe(data => {
+  // Subscriptions
+  isLocationAvailableSubscription: Subscription  = new Subscription();
+  suburbDataSubscription: Subscription = new Subscription();
+  listSuburbsSubscription: Subscription = new Subscription();
+
+  constructor(
+    private statisticsService: StatisticsService,
+    private http: HttpClient, 
+    private renderer: Renderer2,
+    private userLocationService: UserLocationService
+  ) { }
+  async ngOnInit() {
+    this.listSuburbsSubscription = this.http.get('assets/suburbs.json').subscribe(data => {
       this.geojsonData = data;
       this.searchItems = this.geojsonData.features.map((feature: any) => ({
         name: feature.properties.SP_NAME,
         id: feature.id
       }));
       this.filteredItems = [...this.searchItems];
+      console.log("Search Items:", this.filteredItems);
+
     });
-    const suburbId = 17959;
+  }
+  
+  async ionViewWillEnter() {
+    // Attempt to get location
+    await this.userLocationService.getUserLocation();
+
+    // Check if the location is available
+    this.isLocationAvailableSubscription = this.userLocationService.isLocationAvailable.subscribe((isLocationAvailable) => {
+      this.isLocationProvided = isLocationAvailable;
+      console.log("isLocationAvailable (Stats page): ", this.isLocationProvided);
+    });
+
+    // Default Statistics: Area stats on user location
+    let area = await this.userLocationService.getArea();
+    console.log("Area: ", area);
+    if (area != null) {
+      console.log("Area Name: ", area.properties.SP_NAME);
+      console.log("Area ID: ", area.id);
+      this.selectSuburb(
+        {
+          "id": area.id,
+          "name": area.properties.SP_NAME
+        }
+      );
+    }
+    else {
+      console.log("Area is not available outside of City of Tshwane.");
+    }
   }
 
   processDoughnutChart(data: any) {
@@ -192,7 +236,7 @@ export class TabStatisticsPage implements OnInit {
       }
       return false;
     });
-    console.log(this.filteredItems);
+    console.log("Filtered Items: ", this.filteredItems);
   }
 
   selectSuburb(selectedSuburb: any) {
@@ -200,17 +244,29 @@ export class TabStatisticsPage implements OnInit {
     console.log(selectedSuburb.name); // Logs the suburb name
     console.log(selectedSuburb.id); // Logs the suburb id
     this.showResultsList = false;
+    this.isAreaFound = true;
 
-
-    this.statisticsService.getSuburbData(selectedSuburb.id).subscribe((data) => {
+    this.suburbDataSubscription = this.statisticsService.getSuburbData(selectedSuburb.id).subscribe((data: any) => {
       console.log("statisticsService: ", data);
-
-      this.processDoughnutChart(data);
-      this.processBarChart(data);
+      if (data.result != null) {
+        this.suburbName = selectedSuburb.name;
+        this.processDoughnutChart(data);
+        this.processBarChart(data);
+      }
+      else {
+        this.isAreaFound = false;
+      }
     },
       (error) => {
         console.error(error);
+        this.isAreaFound = false;
       });
+  }
+
+  ngOnDestroy() {
+    this.isLocationAvailableSubscription.unsubscribe();
+    this.suburbDataSubscription.unsubscribe();
+    this.listSuburbsSubscription.unsubscribe();
   }
 }
 
