@@ -1,40 +1,85 @@
-import math
 import requests
-import mapbox_vector_tile
 import json
+import math
 
-def deg2num(lat_deg, lon_deg, zoom):
-  lat_rad = math.radians(lat_deg)
-  n = 1 << zoom
-  xtile = int((lon_deg + 180.0) / 360.0 * n)
-  ytile = int((1.0 - math.asinh(math.tan(lat_rad)) / math.pi) / 2.0 * n)
-  return xtile, ytile
-
-def num2deg(xtile, ytile, zoom):
-  n = 1 << zoom
-  lon_deg = xtile / n * 360.0 - 180.0
-  lat_rad = math.atan(math.sinh(math.pi * (1 - 2 * ytile / n)))
-  lat_deg = math.degrees(lat_rad)
-  return lat_deg, lon_deg
-
-def get_tileset():
-    x,y = deg2num(-25.821315,28.260659,10)
-    endpoint = f"https://api.mapbox.com/v4/mapbox.mapbox-traffic-v1/10/{x}/{y}.mvt"
-    params = {
-        "access_token": access_token
-    }
-    response = requests.get(endpoint, params=params)
-    print(response.status_code)
-    return response.content
-
-output = mapbox_vector_tile.decode(get_tileset())
-json_data = json.dumps(output, indent=4)
-# print(output["admin"])
-
-with open("output.json", "w") as f:
-    f.write(json_data)
-
-print(f'Data has been saved.')
+# length = 120648.3281136583
 
 
-    
+# 120648.3281136583 =  r.sqrt(2)
+
+# r = 120648.3281136583/sqrt(2)
+# = 85311.250948
+
+
+# 120648.3281136583/2 = 60324.1640568
+
+# Center:
+# lat =  (-25.1096 + -26.0781)/2 = -25.59385
+# lon = (29.0984 +27.8904)/2 = 28.4944
+
+# maxY: 29.0984
+# minY:27.8904
+# maxX:-25.1096
+# minX:-26.0781
+
+#100 
+
+
+# access_token = "pk.eyJ1IjoiZG9jdG9yYnVpbGRlciIsImEiOiJjbGtjZGtzYWQwMDdtM3Bsdm90bDJ6dmFpIn0.Z3CBinZUO0h3Pi96_8wBPw"
+# lon = 28.2938
+# lat = -25.7446
+# endpoint = f"https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/tilequery/{lon},{lat}.json"
+
+# # # Prepare the API request
+# params = {
+#     "access_token": access_token,
+#     "layers": "road",
+#     "radius": 100,
+#     "limit": 50,
+# }
+
+# # Send the API request
+# response = requests.get(endpoint, params=params).json()
+
+
+
+def offset(value, distance_in_meters):
+    # Earth radius in meters
+    earth_radius = 6371000
+
+    # Calculate the angular distance covered by the given distance
+    angular_distance = distance_in_meters / earth_radius
+
+    # Calculate the new value
+    lat2 = math.radians(value) + angular_distance
+
+    # Convert the new value from radians back to degrees
+    new_value = math.degrees(lat2)
+
+    return new_value
+
+# with open("test.json", "w") as f:
+#     f.write(json.dumps(response, indent=2))
+
+squares = []
+
+x_step = 141.4213562373095
+y_step = 141.4213562373095
+
+x = -26.0781
+while x < -25.1096:
+    y = 27.8904
+    xo = offset(x,x_step)
+    while y < 29.0984:      
+        yo = offset(y,y_step)
+        xend = xo if xo < 25.1096 else -25.1096
+        yend = yo if yo < 29.0984 else 29.0984
+        center = [ (y + yend) / 2,(x + xend) / 2]
+        squares.append(center)
+        y = yo
+    x = xo
+
+with open("robots.json", "w") as f:
+  f.write(json.dumps(squares,indent=2))
+
+print(len(squares))

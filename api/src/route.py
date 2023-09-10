@@ -1,6 +1,5 @@
 import requests
 
-
 def get_loadshedding_polygons():
     api_url = 'https://witpa.codelog.co.za/api/fetchMapData'
 
