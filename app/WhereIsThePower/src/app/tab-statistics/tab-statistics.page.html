@@ -15,7 +15,9 @@
           animated="true"
           placeholder="Search for a place..."
           (ionInput)="onSearch($event)"
-          (keyup.enter)="onSearch($event)">
+          (keyup.enter)="onSearch($event)"
+          (ionBlur)="onBlur()"
+          >
           </ion-searchbar>
           <ion-list *ngIf="filteredItems.length > 0 && showResultsList" class="search-results">
             <ion-item *ngFor="let result of filteredItems" (click)="selectSuburb(result)" button>
