@@ -29,13 +29,13 @@ export class TabStatisticsPage implements OnInit {
   suburbName = "";
 
   // Subscriptions
-  isLocationAvailableSubscription: Subscription  = new Subscription();
+  isLocationAvailableSubscription: Subscription = new Subscription();
   suburbDataSubscription: Subscription = new Subscription();
   listSuburbsSubscription: Subscription = new Subscription();
 
   constructor(
     private statisticsService: StatisticsService,
-    private http: HttpClient, 
+    private http: HttpClient,
     private renderer: Renderer2,
     private userLocationService: UserLocationService
   ) { }
@@ -51,7 +51,7 @@ export class TabStatisticsPage implements OnInit {
 
     });
   }
-  
+
   async ionViewWillEnter() {
     // Attempt to get location
     await this.userLocationService.getUserLocation();
@@ -237,6 +237,13 @@ export class TabStatisticsPage implements OnInit {
       return false;
     });
     console.log("Filtered Items: ", this.filteredItems);
+  }
+
+  onBlur() {
+    console.log("Search Bar Blurred");
+    setTimeout(() => {
+      this.showResultsList = false;
+    }, 500); // 500ms delay
   }
 
   selectSuburb(selectedSuburb: any) {
