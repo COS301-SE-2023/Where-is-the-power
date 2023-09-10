@@ -243,7 +243,7 @@ export class TabStatisticsPage implements OnInit {
     console.log("Search Bar Blurred");
     setTimeout(() => {
       this.showResultsList = false;
-    }, 500); // 500ms delay
+    }, 300); // 300ms delay
   }
 
   selectSuburb(selectedSuburb: any) {
