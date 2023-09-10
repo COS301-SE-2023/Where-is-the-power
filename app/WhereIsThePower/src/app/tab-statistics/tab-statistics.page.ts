@@ -27,6 +27,7 @@ export class TabStatisticsPage implements OnInit {
   isLocationProvided = false;
   isAreaFound = false;
   suburbName = "";
+  searchTerm: string = "";
 
   // Subscriptions
   isLocationAvailableSubscription: Subscription = new Subscription();
@@ -215,24 +216,22 @@ export class TabStatisticsPage implements OnInit {
   }
 
   onSearch(event: any) {
-    const searchTerm = event.srcElement.value;
-
-    if (event.target.value.length > 0) {
+    if (this.searchTerm.length > 0) {
       this.showResultsList = true;
     }
     else {
       this.showResultsList = false;
     }
-    console.log(searchTerm);
+    console.log(this.searchTerm);
     // Reset items back to all of the items
     this.filteredItems = [...this.searchItems];
 
     // if the value is an empty string, don't filter the items
-    if (!searchTerm) return;
+    if (!this.searchTerm) return;
 
     this.filteredItems = this.searchItems.filter(item => {
-      if (item.name && searchTerm) {
-        return item.name.toLowerCase().includes(searchTerm.toLowerCase());
+      if (item.name && this.searchTerm) {
+        return item.name.toLowerCase().includes(this.searchTerm.toLowerCase());
       }
       return false;
     });
@@ -274,6 +273,10 @@ export class TabStatisticsPage implements OnInit {
     this.isLocationAvailableSubscription.unsubscribe();
     this.suburbDataSubscription.unsubscribe();
     this.listSuburbsSubscription.unsubscribe();
+  }
+
+  ionViewDidLeave() {
+    this.searchTerm = '';
   }
 }
 
