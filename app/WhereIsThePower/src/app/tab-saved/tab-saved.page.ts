@@ -33,8 +33,7 @@ export class TabSavedPage {
     private authService: AuthService,
     private savedPlaceService: SavedPlacesService,
     private toastController: ToastController
-  ) 
-  { 
+  ) {
     this.placesSubscription = new Subscription();
     this.savePlaceSubscription = new Subscription();
   }
@@ -53,10 +52,8 @@ export class TabSavedPage {
         this.places = data.result;
       });
 
-      this.savePlaceSubscription = this.savedPlaceService.savePlace.subscribe((savePlace: any) =>
-      {
-        if(savePlace === true)
-        {
+      this.savePlaceSubscription = this.savedPlaceService.savePlace.subscribe((savePlace: any) => {
+        if (savePlace === true) {
           this.savePlace(this.savedPlaceService.savedPlace);
           this.router.navigate(['tabs/tab-saved']);
         }
@@ -68,8 +65,7 @@ export class TabSavedPage {
     this.isLoggedIn = false;
   }
 
-  goToPlace(result: any)
-  {
+  goToPlace(result: any) {
     this.savedPlaceService.goToPlace(result);
   }
 
@@ -87,6 +83,8 @@ export class TabSavedPage {
       "address": result.place_name,
       "latitude": result.center[1],
       "longitude": result.center[0],
+      "category": "average",
+      "placeType": "unkown"
     }
 
     if (!this.isPlaceSaved(newPlace)) {
@@ -100,9 +98,15 @@ export class TabSavedPage {
           } else {
             this.savedPlaceService.place.next([newPlace]);
           }
-         // this.sucessToast('Succesfully added place');
+          // this.sucessToast('Succesfully added place');
 
-        });
+
+        },
+          error => {
+            console.error("addSavedPlace error: ", error);
+          }
+
+        );
     }
   }
 
