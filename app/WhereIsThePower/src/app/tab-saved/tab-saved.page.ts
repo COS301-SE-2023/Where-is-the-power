@@ -54,8 +54,9 @@ export class TabSavedPage {
 
       this.savePlaceSubscription = this.savedPlaceService.savePlace.subscribe((savePlace: any) => {
         if (savePlace === true) {
-          this.savePlace(this.savedPlaceService.savedPlace);
+          console.log("Save Page savePlace: ", this.savedPlaceService.savedPlace);
           this.router.navigate(['tabs/tab-saved']);
+          this.addSavedPlace(this.savedPlaceService.savedPlace);
         }
       });
     }
@@ -85,17 +86,19 @@ export class TabSavedPage {
       "placeType": "unkown"
     }
     this.goToPlace(newPlace);
+  }
 
-    if (!this.isPlaceSaved(newPlace)) {
-      this.savedPlaceService.addSavedPlace(newPlace)
+  addSavedPlace(place: any) {
+    if (!this.isPlaceSaved(place)) {
+      this.savedPlaceService.addSavedPlace(place)
         .pipe(take(1)) //subscription will automatically unsubscribe after the first emission
         .subscribe(data => {
           console.log("addSavedPlace: ", data);
 
           if (this.places.length > 0) {
-            this.savedPlaceService.place.next([...this.places, newPlace]);
+            this.savedPlaceService.place.next([...this.places, place]);
           } else {
-            this.savedPlaceService.place.next([newPlace]);
+            this.savedPlaceService.place.next([place]);
           }
           // this.sucessToast('Succesfully added place');
         },

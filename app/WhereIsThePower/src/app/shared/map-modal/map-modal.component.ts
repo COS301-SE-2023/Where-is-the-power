@@ -722,13 +722,14 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     }
   }
 
-  savePlace(result: any) {
-    this.cancelNavigateModal();
+  savePlace() {
     this.navigateToPlace = false;
     this.savedPlacesService.savedPlace = this.goToPlace;
     //this.savedPlacesService.addSavedPlace(this.goToPlace);
     console.log("SAVE NEW PLACE", this.goToPlace);
     this.savedPlacesService.savePlace.next(true);
+    this.cancelNavigateModal();
+
   }
 
   cancelNavigateModal() {
