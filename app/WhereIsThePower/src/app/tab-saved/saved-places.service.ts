@@ -45,10 +45,6 @@ export class SavedPlacesService {
   addSavedPlace(newPlace: Place) {
     this.savePlace.next(false);
     this.navigateToPlace.next(false);
-    console.log("__________________", newPlace);
-    console.log("Save place: ", newPlace);
-    console.log("headers: ", this.headers);
-    console.log("__________________", newPlace);
 
     return this.httpClient.put(`${this.apiUrl}user/savedPlaces`, newPlace, { headers: this.headers })
   }
