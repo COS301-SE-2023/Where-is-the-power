@@ -66,6 +66,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   goToPlace: any; // Physical place
   navigateToPlace = false;
   currentSuburbSchedule: any;
+  modifiedAddress: string = "";
   @ViewChild('myModal') myModal: any; // Reference to the ion-modal element
   modalResult: any; // To store the selected result data
 
@@ -75,16 +76,16 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       console.log(" this.navigateToPlace", this.navigateToPlace)
       if (isNavigate == true) {
         this.goToPlace = this.savedPlacesService.selectedPlace;
+        this.modifiedAddress = this.goToPlace.address.substring(this.goToPlace.address.indexOf(",") + 1).trim();
+
         console.log("savedPlacesServicegoToPlace", this.goToPlace);
         let placeCenter: any;
 
         // TODO
         if (!this.goToPlace.hasOwnProperty('center')) {  // Place object
-          console.log("goToPlacegoToPlace", this.goToPlace);
+          console.log("goToPlace", this.goToPlace);
 
           placeCenter = [this.goToPlace.longitude, this.goToPlace.latitude];
-          console.log("bbbbb,,bbbbb", placeCenter);
-
         }
         else { // Mapbox object
           placeCenter = [this.goToPlace.center[0], this.goToPlace.center[1]]
@@ -730,7 +731,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     this.navigateToPlace = false;
     this.savedPlacesService.savedPlace = this.goToPlace;
     //this.savedPlacesService.addSavedPlace(this.goToPlace);
-
+    console.log("SAVE NEW PLACE", this.goToPlace);
     this.savedPlacesService.savePlace.next(true);
   }
 
