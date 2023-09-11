@@ -256,6 +256,8 @@ export class TabStatisticsPage implements OnInit {
       console.log("statisticsService: ", data);
       if (data.result != null) {
         this.suburbName = selectedSuburb.name;
+        this.searchTerm = selectedSuburb.name;
+
         this.processDoughnutChart(data);
         this.processBarChart(data);
       }
