@@ -73,7 +73,6 @@ export class TabSavedPage {
     this.showResultsList = false;
     console.log("result: ", result);
 
-    this.goToPlace(result);
 
     // Assign the result to a new object
     let newPlace: Place = {
@@ -85,6 +84,7 @@ export class TabSavedPage {
       "category": "average",
       "placeType": "unkown"
     }
+    this.goToPlace(newPlace);
 
     if (!this.isPlaceSaved(newPlace)) {
       this.savedPlaceService.addSavedPlace(newPlace)
