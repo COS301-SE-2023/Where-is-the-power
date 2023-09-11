@@ -22,6 +22,7 @@ export class SavedPlacesService {
   apiUrl = 'https://witpa.codelog.co.za/api/';
   selectedPlace: any;
   navigateToPlace: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  navigateToSavedPlace: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   savePlace: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   savedPlace: any;
 
@@ -45,11 +46,11 @@ export class SavedPlacesService {
   addSavedPlace(newPlace: Place) {
     this.savePlace.next(false);
     this.navigateToPlace.next(false);
+
     return this.httpClient.put(`${this.apiUrl}user/savedPlaces`, newPlace, { headers: this.headers })
   }
 
   goToPlace(place: Place) {
-    console.log(">>>>>", place);
     this.selectedPlace = place;
     this.navigateToPlace.next(true);
     this.router.navigate(['tabs/tab-navigate']);

@@ -66,6 +66,9 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   goToPlace: any; // Physical place
   navigateToPlace = false;
   currentSuburbSchedule: any;
+  modifiedAddress: string = "";
+  isPlaceSaved: boolean = false;
+
   @ViewChild('myModal') myModal: any; // Reference to the ion-modal element
   modalResult: any; // To store the selected result data
 
@@ -75,19 +78,20 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       console.log(" this.navigateToPlace", this.navigateToPlace)
       if (isNavigate == true) {
         this.goToPlace = this.savedPlacesService.selectedPlace;
-        console.log("savedPlacesServicegoToPlace", this.goToPlace);
+        console.log("selectedPlace", this.goToPlace);
+
+        this.modifiedAddress = this.goToPlace.address.substring(this.goToPlace.address.indexOf(",") + 1).trim();
         let placeCenter: any;
 
         // TODO
         if (!this.goToPlace.hasOwnProperty('center')) {  // Place object
-          console.log("goToPlacegoToPlace", this.goToPlace);
+          console.log("goToPlace", this.goToPlace);
 
           placeCenter = [this.goToPlace.longitude, this.goToPlace.latitude];
-          console.log("bbbbb,,bbbbb", placeCenter);
-
         }
         else { // Mapbox object
           placeCenter = [this.goToPlace.center[0], this.goToPlace.center[1]]
+
         }
 
         this.map.flyTo({
@@ -95,9 +99,14 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           zoom: 15, // Adjust the zoom level
           speed: 1.2, // Adjust the speed of the animation
         });
-        console.log("WTFFFFFFFFFF", isNavigate);
+        console.log("isNavigate: ", isNavigate);
         this.openNavigateModal();
       }
+    });
+
+    this.savedPlacesService.navigateToSavedPlace.subscribe((isNavigate: any) => {
+      console.log("navigateToSavedPlace: ", isNavigate);
+      this.isPlaceSaved = isNavigate;
     });
   }
 
@@ -366,16 +375,11 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
     this.showResultsList = false;
     let coords: any;
-    console.log(selectedResult);
+    console.log("selected Result for directions", selectedResult);
 
     let query: any;
-    if (Array.isArray(selectedResult)) {
-      query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult[0]},${selectedResult[1]}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
-    }
-    else {
-      query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.center[0]},${selectedResult.center[1]}?alternatives=true&geometries=geojson&language=en&steps=true&access_token=${environment.MapboxApiKey}`)
-      coords = [selectedResult.center[0], selectedResult.center[1]];
-    }
+    query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.longitude},${selectedResult.latitude}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
+    console.log("Directions query: ", query);
     console.log(coords);
     // Add a marker for the start point
 
@@ -583,8 +587,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   openModal(result: any) {
     // if (!this.myModal) {
     this.modalResult = result;
-    console.log("FGGR", this.navigateToPlace)
-
     this.myModal.present();
   }
 
@@ -594,7 +596,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     this.navigateModal.present();
     this.updateBreakpoint();
   }
-
 
   calculateETA() {
     let tripETAHours: number = 0;
@@ -725,13 +726,14 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     }
   }
 
-  savePlace(result: any) {
-    this.cancelNavigateModal();
+  savePlace() {
     this.navigateToPlace = false;
     this.savedPlacesService.savedPlace = this.goToPlace;
     //this.savedPlacesService.addSavedPlace(this.goToPlace);
-
+    console.log("SAVE NEW PLACE", this.goToPlace);
     this.savedPlacesService.savePlace.next(true);
+    this.cancelNavigateModal();
+
   }
 
   cancelNavigateModal() {

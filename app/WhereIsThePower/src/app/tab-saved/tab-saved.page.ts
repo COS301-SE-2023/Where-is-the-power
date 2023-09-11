@@ -33,8 +33,7 @@ export class TabSavedPage {
     private authService: AuthService,
     private savedPlaceService: SavedPlacesService,
     private toastController: ToastController
-  ) 
-  { 
+  ) {
     this.placesSubscription = new Subscription();
     this.savePlaceSubscription = new Subscription();
   }
@@ -51,14 +50,17 @@ export class TabSavedPage {
     if (this.isLoggedIn) {
       this.placesSubscription = this.savedPlaceService.getPlaces().subscribe((data: any) => {
         this.places = data.result;
+        this.places.sort((a: Place, b: Place) => {
+          return a.name.localeCompare(b.name); // Sort alphabetically based on the name property
+        });
+        console.log("Saved Places: ", this.places);
       });
 
-      this.savePlaceSubscription = this.savedPlaceService.savePlace.subscribe((savePlace: any) =>
-      {
-        if(savePlace === true)
-        {
-          this.savePlace(this.savedPlaceService.savedPlace);
+      this.savePlaceSubscription = this.savedPlaceService.savePlace.subscribe((savePlace: any) => {
+        if (savePlace === true) {
+          console.log("Save Page savePlace: ", this.savedPlaceService.savedPlace);
           this.router.navigate(['tabs/tab-saved']);
+          this.addSavedPlace(this.savedPlaceService.savedPlace);
         }
       });
     }
@@ -68,17 +70,19 @@ export class TabSavedPage {
     this.isLoggedIn = false;
   }
 
-  goToPlace(result: any)
-  {
+  goToPlace(result: any) {
+    this.savedPlaceService.goToPlace(result);
+  }
+
+  goToSavedPlace(result: any) {
+    this.savedPlaceService.navigateToSavedPlace.next(true);
     this.savedPlaceService.goToPlace(result);
   }
 
   savePlace(result: any) {
     this.showResultsList = false;
     console.log("result: ", result);
-    console.log("WHYYYYYYYYYYYYYY ");
 
-    this.goToPlace(result);
 
     // Assign the result to a new object
     let newPlace: Place = {
@@ -87,22 +91,30 @@ export class TabSavedPage {
       "address": result.place_name,
       "latitude": result.center[1],
       "longitude": result.center[0],
+      "category": "average",
+      "placeType": "unkown"
     }
+    this.goToPlace(newPlace);
+  }
 
-    if (!this.isPlaceSaved(newPlace)) {
-      this.savedPlaceService.addSavedPlace(newPlace)
+  addSavedPlace(place: any) {
+    if (!this.isPlaceSaved(place)) {
+      this.savedPlaceService.addSavedPlace(place)
         .pipe(take(1)) //subscription will automatically unsubscribe after the first emission
         .subscribe(data => {
           console.log("addSavedPlace: ", data);
 
           if (this.places.length > 0) {
-            this.savedPlaceService.place.next([...this.places, newPlace]);
+            this.savedPlaceService.place.next([...this.places, place]);
           } else {
-            this.savedPlaceService.place.next([newPlace]);
+            this.savedPlaceService.place.next([place]);
           }
-         // this.sucessToast('Succesfully added place');
-
-        });
+          // this.sucessToast('Succesfully added place');
+        },
+          error => {
+            console.error("addSavedPlace error: ", error);
+          }
+        );
     }
   }
 

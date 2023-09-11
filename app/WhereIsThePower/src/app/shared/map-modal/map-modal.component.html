@@ -42,17 +42,17 @@
     >
     <ng-template>
       <ion-content class="ion-padding">
-        <h3><ion-text color="primary">{{ goToPlace.text }}</ion-text></h3>
-        <ion-text *ngIf ="goToPlace.properties.category; else elseType" color="medium">{{ goToPlace.properties.category }}</ion-text>
+        <h3><ion-text color="primary">{{ goToPlace.name }}</ion-text></h3>
+        <ion-text *ngIf ="goToPlace.category; else elseType" color="medium">{{ modifiedAddress }}</ion-text>
         <ng-template #elseType>
           <ion-text>
-            {{ goToPlace.place_type }}
+            {{ modifiedAddress }}
           </ion-text>
         </ng-template>
-        <ion-grid>
+        <ion-grid class="ion-no-padding ion-margin-top">
           <ion-row>
             <ion-col>
-              <ion-button shape="round" (click)="savePlace(goToPlace)">
+              <ion-button *ngIf = "!isPlaceSaved" shape="round" (click)="savePlace()">
                 <ion-icon slot="start" src="assets/bookmarks.svg"></ion-icon>
                 Save
               </ion-button>

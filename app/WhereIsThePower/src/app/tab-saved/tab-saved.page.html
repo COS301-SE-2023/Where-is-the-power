@@ -68,7 +68,7 @@
               </ion-title>
               <!-- Show Saved places -->
               <ion-list *ngFor="let savedPlace of places">
-                <ion-item (click)="goToPlace(savedPlace)">
+                <ion-item (click)="goToSavedPlace(savedPlace)">
                   <!-- <ion-icon slot="start" name="{{ savedPlace.type }}"></ion-icon> -->
                   <ion-label class="ion-text-wrap">
                     <h2>{{ savedPlace.name }}, {{ savedPlace.address }}</h2>
