@@ -43,12 +43,8 @@
     <ng-template>
       <ion-content class="ion-padding">
         <h3><ion-text color="primary">{{ goToPlace.name }}</ion-text></h3>
-        <ion-text *ngIf ="goToPlace.category; else elseType" color="medium">{{ modifiedAddress }}</ion-text>
-        <ng-template #elseType>
-          <ion-text>
-            {{ modifiedAddress }}
-          </ion-text>
-        </ng-template>
+        <ion-text color="medium">{{ modifiedAddress }}</ion-text>
+
         <ion-grid class="ion-no-padding ion-margin-top">
           <ion-row>
             <ion-col>
