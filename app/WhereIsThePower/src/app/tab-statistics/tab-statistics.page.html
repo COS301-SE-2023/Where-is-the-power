@@ -17,6 +17,7 @@
           placeholder="Search for a place..."
           (ionInput)="onSearch($event)"
           (keyup.enter)="onSearch($event)"
+          (ionFocus)="onSearch($event)"
           (ionBlur)="onBlur()"
           >
           </ion-searchbar>
