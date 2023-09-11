@@ -72,7 +72,6 @@ export class TabSavedPage {
   savePlace(result: any) {
     this.showResultsList = false;
     console.log("result: ", result);
-    console.log("WHYYYYYYYYYYYYYY ");
 
     this.goToPlace(result);
 

@@ -95,7 +95,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           zoom: 15, // Adjust the zoom level
           speed: 1.2, // Adjust the speed of the animation
         });
-        console.log("WTFFFFFFFFFF", isNavigate);
+        console.log("isNavigate: ", isNavigate);
         this.openNavigateModal();
       }
     });
