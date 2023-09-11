@@ -22,6 +22,7 @@ export class SavedPlacesService {
   apiUrl = 'https://witpa.codelog.co.za/api/';
   selectedPlace: any;
   navigateToPlace: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  navigateToSavedPlace: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   savePlace: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   savedPlace: any;
 

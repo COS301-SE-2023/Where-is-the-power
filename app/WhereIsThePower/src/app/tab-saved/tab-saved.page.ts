@@ -74,6 +74,11 @@ export class TabSavedPage {
     this.savedPlaceService.goToPlace(result);
   }
 
+  goToSavedPlace(result: any) {
+    this.savedPlaceService.navigateToSavedPlace.next(true);
+    this.savedPlaceService.goToPlace(result);
+  }
+
   savePlace(result: any) {
     this.showResultsList = false;
     console.log("result: ", result);

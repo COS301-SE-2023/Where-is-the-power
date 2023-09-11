@@ -67,6 +67,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   navigateToPlace = false;
   currentSuburbSchedule: any;
   modifiedAddress: string = "";
+  isPlaceSaved: boolean = false;
+
   @ViewChild('myModal') myModal: any; // Reference to the ion-modal element
   modalResult: any; // To store the selected result data
 
@@ -100,6 +102,11 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         console.log("isNavigate: ", isNavigate);
         this.openNavigateModal();
       }
+    });
+
+    this.savedPlacesService.navigateToSavedPlace.subscribe((isNavigate: any) => {
+      console.log("navigateToSavedPlace: ", isNavigate);
+      this.isPlaceSaved = isNavigate;
     });
   }
 
@@ -580,8 +587,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   openModal(result: any) {
     // if (!this.myModal) {
     this.modalResult = result;
-    console.log("FGGR", this.navigateToPlace)
-
     this.myModal.present();
   }
 
@@ -591,7 +596,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     this.navigateModal.present();
     this.updateBreakpoint();
   }
-
 
   calculateETA() {
     let tripETAHours: number = 0;

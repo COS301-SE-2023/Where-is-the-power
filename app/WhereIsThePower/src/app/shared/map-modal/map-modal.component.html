@@ -52,7 +52,7 @@
         <ion-grid>
           <ion-row>
             <ion-col>
-              <ion-button shape="round" (click)="savePlace()">
+              <ion-button *ngIf = "!isPlaceSaved" shape="round" (click)="savePlace()">
                 <ion-icon slot="start" src="assets/bookmarks.svg"></ion-icon>
                 Save
               </ion-button>

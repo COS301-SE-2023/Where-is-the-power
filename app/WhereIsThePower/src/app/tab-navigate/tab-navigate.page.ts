@@ -29,5 +29,6 @@ export class TabNavigatePage {
 
   ionViewDidLeave() {
     this.savedPlacesService.navigateToPlace.next(false);
+    this.savedPlacesService.navigateToSavedPlace.next(false);
   }
 }
