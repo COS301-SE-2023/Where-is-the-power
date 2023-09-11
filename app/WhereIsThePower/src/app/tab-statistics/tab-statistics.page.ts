@@ -27,15 +27,16 @@ export class TabStatisticsPage implements OnInit {
   isLocationProvided = false;
   isAreaFound = false;
   suburbName = "";
+  searchTerm: string = "";
 
   // Subscriptions
-  isLocationAvailableSubscription: Subscription  = new Subscription();
+  isLocationAvailableSubscription: Subscription = new Subscription();
   suburbDataSubscription: Subscription = new Subscription();
   listSuburbsSubscription: Subscription = new Subscription();
 
   constructor(
     private statisticsService: StatisticsService,
-    private http: HttpClient, 
+    private http: HttpClient,
     private renderer: Renderer2,
     private userLocationService: UserLocationService
   ) { }
@@ -51,7 +52,7 @@ export class TabStatisticsPage implements OnInit {
 
     });
   }
-  
+
   async ionViewWillEnter() {
     // Attempt to get location
     await this.userLocationService.getUserLocation();
@@ -215,28 +216,33 @@ export class TabStatisticsPage implements OnInit {
   }
 
   onSearch(event: any) {
-    const searchTerm = event.srcElement.value;
-
-    if (event.target.value.length > 0) {
+    if (this.searchTerm.length > 0) {
       this.showResultsList = true;
     }
     else {
       this.showResultsList = false;
     }
-    console.log(searchTerm);
+    console.log(this.searchTerm);
     // Reset items back to all of the items
     this.filteredItems = [...this.searchItems];
 
     // if the value is an empty string, don't filter the items
-    if (!searchTerm) return;
+    if (!this.searchTerm) return;
 
     this.filteredItems = this.searchItems.filter(item => {
-      if (item.name && searchTerm) {
-        return item.name.toLowerCase().includes(searchTerm.toLowerCase());
+      if (item.name && this.searchTerm) {
+        return item.name.toLowerCase().includes(this.searchTerm.toLowerCase());
       }
       return false;
     });
     console.log("Filtered Items: ", this.filteredItems);
+  }
+
+  onBlur() {
+    console.log("Search Bar Blurred");
+    setTimeout(() => {
+      this.showResultsList = false;
+    }, 200); // 200ms delay
   }
 
   selectSuburb(selectedSuburb: any) {
@@ -250,6 +256,8 @@ export class TabStatisticsPage implements OnInit {
       console.log("statisticsService: ", data);
       if (data.result != null) {
         this.suburbName = selectedSuburb.name;
+        this.searchTerm = selectedSuburb.name;
+
         this.processDoughnutChart(data);
         this.processBarChart(data);
       }
@@ -267,6 +275,10 @@ export class TabStatisticsPage implements OnInit {
     this.isLocationAvailableSubscription.unsubscribe();
     this.suburbDataSubscription.unsubscribe();
     this.listSuburbsSubscription.unsubscribe();
+  }
+
+  ionViewDidLeave() {
+    this.searchTerm = '';
   }
 }
 
