@@ -76,9 +76,9 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       console.log(" this.navigateToPlace", this.navigateToPlace)
       if (isNavigate == true) {
         this.goToPlace = this.savedPlacesService.selectedPlace;
-        this.modifiedAddress = this.goToPlace.address.substring(this.goToPlace.address.indexOf(",") + 1).trim();
+        console.log("selectedPlace", this.goToPlace);
 
-        console.log("savedPlacesServicegoToPlace", this.goToPlace);
+        this.modifiedAddress = this.goToPlace.address.substring(this.goToPlace.address.indexOf(",") + 1).trim();
         let placeCenter: any;
 
         // TODO
@@ -89,6 +89,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         }
         else { // Mapbox object
           placeCenter = [this.goToPlace.center[0], this.goToPlace.center[1]]
+
         }
 
         this.map.flyTo({
