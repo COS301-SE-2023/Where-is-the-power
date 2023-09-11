@@ -363,7 +363,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   }
 
 
-  async getRoute(selectedResult: any) {
+  async getRoute(selectedResult: Place | any) {
     this.updateBreakpoint();
     this.emitGetDirections();
     this.gettingRoute = true;
@@ -371,14 +371,26 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     await this.cancelNavigateModal();
     this.openModal(selectedResult);
 
-    this.searchBar.value = `${selectedResult.place_name}`;
-
     this.showResultsList = false;
     let coords: any;
     console.log("selected Result for directions", selectedResult);
 
     let query: any;
-    query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.longitude},${selectedResult.latitude}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
+
+    if (!selectedResult.hasOwnProperty('center')) {
+      console.log("SELECTED DIRECTION", selectedResult);
+
+      this.searchBar.value = `${selectedResult.address}`;
+      query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.longitude},${selectedResult.latitude}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
+      coords = [selectedResult[0], selectedResult[1]];
+    }
+    else {
+      console.log("SEARCH DIRECTION", selectedResult);
+
+      this.searchBar.value = `${selectedResult.place_name}`;
+      query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.center[0]},${selectedResult.center[1]}?alternatives=true&geometries=geojson&language=en&steps=true&access_token=${environment.MapboxApiKey}`)
+      coords = [selectedResult.center[0], selectedResult.center[1]];
+    }
     console.log("Directions query: ", query);
     console.log(coords);
     // Add a marker for the start point
