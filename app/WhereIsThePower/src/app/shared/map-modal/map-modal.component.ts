@@ -368,16 +368,11 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
     this.showResultsList = false;
     let coords: any;
-    console.log(selectedResult);
+    console.log("selected Result for directions", selectedResult);
 
     let query: any;
-    if (Array.isArray(selectedResult)) {
-      query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult[0]},${selectedResult[1]}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
-    }
-    else {
-      query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.center[0]},${selectedResult.center[1]}?alternatives=true&geometries=geojson&language=en&steps=true&access_token=${environment.MapboxApiKey}`)
-      coords = [selectedResult.center[0], selectedResult.center[1]];
-    }
+    query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.longitude},${selectedResult.latitude}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
+    console.log("Directions query: ", query);
     console.log(coords);
     // Add a marker for the start point
 
