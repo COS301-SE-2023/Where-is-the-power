@@ -363,7 +363,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   }
 
 
-  async getRoute(selectedResult: any) {
+  async getRoute(selectedResult: Place) {
     this.updateBreakpoint();
     this.emitGetDirections();
     this.gettingRoute = true;
@@ -371,14 +371,13 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     await this.cancelNavigateModal();
     this.openModal(selectedResult);
 
-    this.searchBar.value = `${selectedResult.place_name}`;
-
     this.showResultsList = false;
     let coords: any;
     console.log("selected Result for directions", selectedResult);
+    this.searchBar.value = `${selectedResult.name}`;
 
     let query: any;
-    query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.longitude},${selectedResult.latitude}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
+    query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.longitude},${selectedResult.latitude}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`);
     console.log("Directions query: ", query);
     console.log(coords);
     // Add a marker for the start point
