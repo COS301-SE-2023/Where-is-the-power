@@ -43,10 +43,10 @@
     <ng-template>
       <ion-content class="ion-padding">
         <h3><ion-text color="primary">{{ goToPlace.text }}</ion-text></h3>
-        <ion-text *ngIf ="goToPlace.properties.category; else elseType" color="medium">{{ goToPlace.properties.category }}</ion-text>
+        <ion-text *ngIf ="goToPlace.category; else elseType" color="medium">{{ goToPlace.category }}</ion-text>
         <ng-template #elseType>
           <ion-text>
-            {{ goToPlace.place_type }}
+            {{ goToPlace.placeType }}
           </ion-text>
         </ng-template>
         <ion-grid>
