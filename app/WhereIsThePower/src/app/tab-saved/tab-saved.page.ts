@@ -98,13 +98,10 @@ export class TabSavedPage {
             this.savedPlaceService.place.next([newPlace]);
           }
           // this.sucessToast('Succesfully added place');
-
-
         },
           error => {
             console.error("addSavedPlace error: ", error);
           }
-
         );
     }
   }
