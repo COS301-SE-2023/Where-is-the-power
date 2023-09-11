@@ -50,6 +50,10 @@ export class TabSavedPage {
     if (this.isLoggedIn) {
       this.placesSubscription = this.savedPlaceService.getPlaces().subscribe((data: any) => {
         this.places = data.result;
+        this.places.sort((a: Place, b: Place) => {
+          return a.name.localeCompare(b.name); // Sort alphabetically based on the name property
+        });
+        console.log("Saved Places: ", this.places);
       });
 
       this.savePlaceSubscription = this.savedPlaceService.savePlace.subscribe((savePlace: any) => {
