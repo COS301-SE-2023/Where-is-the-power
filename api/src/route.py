@@ -178,5 +178,6 @@ destination = parsed_data["destination"]
 first_route = get_route(origin,destination)
 second_route = get_route(origin,destination,get_route_robots(first_route))
 
+json_response = json.dumps(second_route)
+print(json_response)
 
-print(second_route)
