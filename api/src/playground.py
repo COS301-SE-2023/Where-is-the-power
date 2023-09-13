@@ -44,42 +44,38 @@ def get_congestion(coordinate):
             congestion_level = congestion_levels[congestion]
     return congestion_levels_reverse[congestion_level]
 
-def get_robots(data):
+def get_robots_on_route(route):
     robots = []
     for step in data['routes'][0]['legs'][0]['steps']:
         for intersection in step['intersections']:
             if 'traffic_signal' in intersection:
-                robot = {
-                    "coordinates" : intersection["location"],
-                    "congestion" : get_congestion(intersection["location"])
-                }
-                robots.append(robot)
+                robots.append(intersection["location"])
     return robots
 
 def print_robot(robot):
-    print(robot['coordinates'], '-', robot["congestion"]) 
+    print(robot, '-', get_congestion(robot)) 
 
 def print_robots(robots):
     for robot in robots:
         print_robot(robot)
     
 def get_exclusion_points(robots):
+    
     exclusionArea = ""
     first = True
 
     for robot in robots:
-        point = robot['coordinates']
         if first:
-            exclusionArea = f"point({point[0]} {point[1]})"
+            exclusionArea = f"point({robot[0]} {robot[1]})"
             first = False
         else:
-            exclusionArea = exclusionArea + f",point({point[0]} {point[1]})"
+            exclusionArea = exclusionArea + f",point({robot[0]} {robot[1]})"
     return exclusionArea
 
 def get_bad_robots(robots):
     bad_robots = []
     for robot in robots:
-        if robot["congestion"] in ["heavy", "severe"]:
+        if get_congestion(robot) in ["heavy", "severe"]:
             bad_robots.append(robot)
     return bad_robots
 
@@ -95,12 +91,15 @@ def get_loadshedding_polygons():
     # Send a POST request to the API
     witpaData = requests.post(api_url, json=body).json()
 
-    polygons = []
+    polygons = {
+        "coordinates":[],
+        }
     for feature in witpaData['result']['mapPolygons'][0]['features']:
         if feature['properties']['PowerStatus'] == 'off':
             polygon = [point for point in feature['geometry']['coordinates'][0] if len(point) == 2]
             sub_polygon = [point for point in feature['geometry']['coordinates'][0] if len(point) > 2]
-            polygons.append(polygon)
+            polygons.append(["coordinates"].append(polygon))
+            polygons['id'] = feature['id']
     return polygons
 
 def point_in_polygon(point, polygon):
@@ -131,14 +130,21 @@ def point_in_polygon(point, polygon):
     return inside
 
 #traffic lights on route that are currently facing loadshedding.
-def get_shedding_robots(robots):  
-    shedding_robots = []
-    for robot in robots:
-            point = robot['coordinates'] 
-            for polygon in get_loadshedding_polygons():
-                if point_in_polygon(point,polygon):
-                    shedding_robots.append(point)
-    return shedding_robots
+def get_shedding_robots(route):  
+   polygons = get_route_polygons(route)
+
+
+#returns all the polygons that are on the route that currently have loadshedding
+def get_route_polygons(coordinates): 
+    route_polygons = []
+    polygons = get_loadshedding_polygons()
+    
+    for polygon in polygons:
+        for coordinate in coordinates:
+            if point_in_polygon(coordinate,polygon):
+                route_polygons.append(polygon)
+                break
+    return route_polygons
 
 routeData1 = get_route([28.233795,-25.801693],[28.269476,-25.827567])
 robots1 = get_robots(routeData1)
@@ -148,7 +154,7 @@ print_robots(robots1)
 print("---------shedding robots---------- \n")
 print_robots(get_shedding_robots(robots1))
 
-# routeData2 = mapbox([28.233795,-25.801693],[28.269476,-25.827567],get_exclusion_points(get_bad_robots(robots1)))
+routeData2 = mapbox([28.233795,-25.801693],[28.269476,-25.827567],get_exclusion_points(get_bad_robots(robots1)))
 # print("---------robots of route 2---------- \n")
 # print_robots(get_robots(routeData2))
 
