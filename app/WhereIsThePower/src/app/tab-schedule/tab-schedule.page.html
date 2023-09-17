@@ -7,48 +7,47 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <h1 class="ion-text-center">Area</h1>
-  <h1 class="ion-padding-start">Sat, 06 May</h1>
-  <ion-list>
-    <ion-item>
-      <ion-label>
-        <p>Stage 5</p>
-        <h2>00:00 - 02:30</h2>
-      </ion-label>
-    </ion-item>
-    <ion-item>
-      <ion-label>
-        <p>Stage 4</p>
-        <h2>08:00 - 10:30</h2>
-      </ion-label>
-    </ion-item>
-    <ion-item>
-      <ion-label>
-        <p>Stage 5</p>
-        <h2>16:00 - 18:30</h2>
-      </ion-label>
-    </ion-item>
-  </ion-list>
-
-  <h1 class="ion-padding-start ion-padding-top">Sun, 07 May</h1>
-  <ion-list>
-    <ion-item>
-      <ion-label>
-        <p>Stage 5</p>
-        <h2>00:00 - 02:30</h2>
-      </ion-label>
-    </ion-item>
-    <ion-item>
-      <ion-label>
-        <p>Stage 4</p>
-        <h2>08:00 - 10:30</h2>
-      </ion-label>
-    </ion-item>
-    <ion-item>
-      <ion-label>
-        <p>Stage 5</p>
-        <h2>16:00 - 18:30</h2>
-      </ion-label>
-    </ion-item>
-  </ion-list>
+  <ion-grid>
+    <ion-row>
+      <ion-col class="searchbar-container" size-xs="12" size-md="4" offset-md="7.8">
+        <ion-searchbar
+        [(ngModel)]="searchTerm"
+        animated="true"
+        placeholder="Search for a place..."
+        (ionInput)="onSearch($event)"
+        (keyup.enter)="onSearch($event)"
+        (ionFocus)="onSearch($event)"
+        (ionBlur)="onBlur()"
+        >
+        </ion-searchbar>
+        <ion-list *ngIf="filteredItems.length > 0 && showResultsList" class="search-results">
+          <ion-item *ngFor="let result of filteredItems" (click)="selectSuburb(result)" button>
+            <ion-label>
+              <h3><strong>{{ result.name }}</strong></h3>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-col>
+    </ion-row>
+    <ion-row style="justify-content: center;">
+      <ion-item>
+        <ion-chip [color]="chipColor">
+          Current Stage: {{ loadsheddingStage }}
+        </ion-chip>
+      </ion-item>
+    </ion-row>
+    <ion-row>
+      <ion-list>
+        <ion-item *ngFor="let time of loadshedTimes">
+          <h3>{{ time.startTime.getDay() }} {{ months[time.startTime.getMonth()] }} </h3> <br>
+          <ion-label>
+            {{ time.startTime.getHours() }}:{{ time.startTime.getMinutes() }}
+          </ion-label>
+          <ion-label>
+            {{time.endTime}}
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-row>
+  </ion-grid>
 </ion-content>
