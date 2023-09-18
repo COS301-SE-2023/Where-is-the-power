@@ -657,50 +657,6 @@ impl LoadsheddingData {
     }
 }
 
-impl TimeScheduleEntity {
-    pub fn timestamp_from_slot_times(
-        &self,
-        time_to_search: DateTime<FixedOffset>,
-        start: bool,
-    ) -> DateTime<FixedOffset> {
-        let mut time = time_to_search
-            .with_hour(if start {
-                self.start_hour as u32
-            } else {
-                self.stop_hour as u32
-            })
-            .unwrap()
-            .with_minute(if start {
-                self.start_minute as u32
-            } else {
-                self.stop_minute as u32
-            })
-            .unwrap();
-        if time < time_to_search {
-            time = time.checked_add_signed(chrono::Duration::days(1)).unwrap();
-        }
-        time
-    }
-    fn is_within_timeslot(&self, time_to_search: &DateTime<FixedOffset>) -> bool {
-        let mut maybe = false;
-        if self.start_hour <= time_to_search.hour() as i32 {
-            if self.stop_hour >= time_to_search.hour() as i32 {
-                maybe = true;
-                if self.stop_minute <= time_to_search.minute() as i32
-                    && self.stop_hour == time_to_search.hour() as i32
-                {
-                    return false;
-                }
-                if self.start_minute > time_to_search.minute() as i32
-                    && self.start_hour == time_to_search.hour() as i32
-                {
-                    return false;
-                }
-            }
-        }
-        return maybe;
-    }
-}
 
 impl TimeSlot {
     fn time_slot_bound_validation(&self, time_to_search: &DateTime<FixedOffset>) -> bool {
@@ -756,18 +712,6 @@ impl TimeScheduleEntity {
             }
         }
         return maybe;
-    }
-}
-
-impl TimeSlot {
-    fn time_slot_bound_validation(&self, time_to_search: &DateTime<FixedOffset>) -> bool {
-        let stamp = time_to_search.timestamp();
-        if self.start <= stamp {
-            if self.end > stamp {
-                return true;
-            }
-        }
-        return false;
     }
 }
 
