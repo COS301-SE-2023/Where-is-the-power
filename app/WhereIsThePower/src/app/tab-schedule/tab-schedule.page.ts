@@ -22,7 +22,7 @@ export class TabSchedulePage {
   loadsheddingStage: number = 0;
   chipColor: string = "success";
   months: string[] = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  days: string[] = ["Sun", "Mon", "Tue", "Wed", "Thurs", "Fri", "Sat"]
+  days: string[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
   loadshedTimes: IScheduleTime[] = [];
 
@@ -119,6 +119,11 @@ export class TabSchedulePage {
 
   convertToDateTime(utcTime: number) {
     return new Date(1000 * utcTime);
+  }
+
+  formatTime(unformattedTime: number) {
+    if(unformattedTime < 10) return '0' + unformattedTime;
+    return unformattedTime;
   }
 
   ngOnDestroy() {

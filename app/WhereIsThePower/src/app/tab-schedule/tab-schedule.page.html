@@ -37,17 +37,23 @@
       </ion-item>
     </ion-row>
     <ion-row>
-      <ion-list>
-        <ion-item *ngFor="let time of loadshedTimes">
-          <h3>{{ time.startTime.getDay() }} {{ months[time.startTime.getMonth()] }} </h3> <br>
-          <ion-label>
-            {{ time.startTime.getHours() }}:{{ time.startTime.getMinutes() }}
-          </ion-label>
-          <ion-label>
-            {{time.endTime}}
-          </ion-label>
-        </ion-item>
-      </ion-list>
+      <ion-col>     
+        <ion-card *ngFor="let time of loadshedTimes">
+          <ion-card-header>
+            <ion-card-title>
+              {{ days[time.startTime.getDay()] }}
+            </ion-card-title>
+            <ion-card-subtitle>
+              {{ time.startTime.getDate() }} {{ months[time.startTime.getMonth()] }}
+            </ion-card-subtitle>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-title>
+              {{ formatTime(time.startTime.getHours()) }}:{{ formatTime(time.startTime.getMinutes()) }} - {{ formatTime(time.endTime.getHours()) }}:{{ formatTime(time.endTime.getMinutes()) }}
+            </ion-title>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
     </ion-row>
   </ion-grid>
 </ion-content>
