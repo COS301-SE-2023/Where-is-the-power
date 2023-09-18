@@ -60,6 +60,22 @@ def formatTime(timeIn):
   padded_time_string = ":".join([f"{int(x):02d}" for x in time.split(":")])
   return padded_time_string
 
+def scrapeEskomDirectGroups():
+  excel_data = pd.ExcelFile("./Gauteng_LS.xlsx")
+  excel_data = excel_data.parse("SP_List")
+  for index,row in excel_data.iterrows():
+    data = row.tolist()
+    if data[1] == "City of Tshwane":
+      suburb = data[3]
+      pattern = r"(.*) \((\d+)\)"
+      match = re.search(pattern, suburb)
+      if match:
+        group = match.group(2)
+        suburb = match.group(1)
+        groups[group][suburb] = list()
+
+
+  
 def scrapeXLSX():
   excel_content = requests.get(excel_url).content
   excel_data = pd.read_excel(excel_content, sheet_name=None)
@@ -89,8 +105,8 @@ def parseGeoJSON():
   # go through the suburbs
   for key,value in groups.items():
     for suburb in value.keys():
-      regex1 = re.compile(suburb, re.IGNORECASE)
-      regex2 = re.compile(suburb.replace(" ", ""),re.IGNORECASE)
+      regex1 = re.compile(re.escape(suburb), re.IGNORECASE)
+      regex2 = re.compile(re.escape(suburb.replace(" ", "")),re.IGNORECASE)
 
       # go through the geoJSON, this is very disgusting code
       for feature in data["features"]:
@@ -116,7 +132,7 @@ def parseGeoJSON():
 # --update: send results to the server for updates
 # --dry: view output that will be sent to server
 if (__name__ == "__main__"):
-  if len(sys.argv) < 2: 
+  if len(sys.argv) < 2:
     print("see -h for help")
     exit()
   arg1 = sys.argv[1]
@@ -136,6 +152,7 @@ if (__name__ == "__main__"):
 
   ## impliment multiprocessing
   scrapeHTML()
+  scrapeEskomDirectGroups()
   scrapeXLSX()
   data = parseGeoJSON()
   toSend = {

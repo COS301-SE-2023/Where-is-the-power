@@ -21,7 +21,7 @@ def sendRequest():
 def sendScheduleRequest():
     body = {
       #"suburbId" :18231 
-      "suburbId" : 18195
+      "suburbId" : 18210
     }
     request = json.dumps(body)
     headers = {
