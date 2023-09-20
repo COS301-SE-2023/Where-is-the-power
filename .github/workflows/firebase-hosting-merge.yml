@@ -25,25 +25,28 @@ jobs:
         with:
           tokenPrefix: '{'
           tokenSuffix: '}'
-          files: '**/environment.*'
+          files: '../app/WhereIsThePower/src/environments/environment.prod.ts'
         env:
           MapboxApiKey: 'Hello WOrld'
 
+      - name: PWD
+        run: pwd
+
       - name: Cat PRODENV
         # run: ls 
-        run: cat ./app/WhereIsThePower/src/environments/environment.prod.ts
+        run: cat ../app/WhereIsThePower/src/environments/environment.prod.ts
 
       - name: Update env
         uses: cschleiden/replace-tokens@v1.2
         with:
           tokenPrefix: '{'
           tokenSuffix: '}'
-          files: '**/environment.*'
+          files: '../app/WhereIsThePower/src/environments/environment.ts'
         env:
           MapboxApiKey: ${{ secrets.MAPBOX_API_KEY }}
 
       - name: Cat ENV
-        run: cat ./app/WhereIsThePower/src/environments/environment.ts
+        run: cat ../app/WhereIsThePower/src/environments/environment.ts
 
       # - name: Build app
       #   working-directory: ./app/WhereIsThePower
