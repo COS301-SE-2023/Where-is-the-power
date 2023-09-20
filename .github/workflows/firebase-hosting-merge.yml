@@ -20,7 +20,7 @@ jobs:
           files: ./app/WhereIsThePower/src/environments/environment.ts
         env:
           MapboxApiKey: ${{ secrets.TEST_SECRET }}
-      - run: npm run build
+      - run: npm install && npm run build
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
