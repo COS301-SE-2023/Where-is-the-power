@@ -39,7 +39,7 @@ jobs:
 
       - name: Build app
         working-directory: ./app/WhereIsThePower
-        run: npm run build && cat ./app/WhereIsThePower/src/environments/environment.ts
+        run: npm run build && cat ./src/environments/environment.ts
 
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
