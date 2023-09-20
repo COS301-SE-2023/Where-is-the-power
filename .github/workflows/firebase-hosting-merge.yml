@@ -30,7 +30,7 @@ jobs:
           MapboxApiKey: 'Hello WOrld'
 
       - name: PWD
-        run: pwd
+        run: ls
 
       - name: Cat PRODENV
         # run: ls 
