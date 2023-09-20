@@ -19,12 +19,21 @@ jobs:
         working-directory: ./app/WhereIsThePower
         run: npm install --frozen-lock
       
-      - name: Update env
+      - name: Update Prod Env
         uses: cschleiden/replace-tokens@v1.2
         with:
           tokenPrefix: '{'
           tokenSuffix: '}'
           files: ./app/WhereIsThePower/src/environments/environment.prod.ts
+        env:
+          MapboxApiKey: ${{ secrets.MAPBOX_API_KEY }}
+
+      - name: Update env
+        uses: cschleiden/replace-tokens@v1.2
+        with:
+          tokenPrefix: '{'
+          tokenSuffix: '}'
+          files: ./app/WhereIsThePower/src/environments/environment.ts
         env:
           MapboxApiKey: ${{ secrets.MAPBOX_API_KEY }}
 
