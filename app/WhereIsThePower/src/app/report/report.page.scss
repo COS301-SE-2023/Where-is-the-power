@@ -1,0 +1,23 @@
+ion-card {
+    background-color: var(--ion-color-primary-tint);
+    color: #fff;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  ion-icon {
+    font-size: 132px;
+  }
+
+  ion-text{
+    color: #000;
+  }
+
+  @media screen and (max-width: 500px) {
+    ion-icon {
+        font-size: 88px;
+    }
+  }

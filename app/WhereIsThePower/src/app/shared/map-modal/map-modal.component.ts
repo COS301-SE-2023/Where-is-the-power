@@ -9,11 +9,17 @@ import {
 import { environment } from 'src/environments/environment';
 import { UserLocationService } from '../../user-location.service';
 import { IonContent, ModalController } from '@ionic/angular';
+import { SavedPlacesService } from '../../tab-saved/saved-places.service';
+import { Subscription } from 'rxjs';
 
 //import * as mapboxgl from 'mapbox-gl';
 //import * as MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 import { MapSuburbsService } from './map-suburbs.service';
 import { EventEmitter, Output } from '@angular/core';
+import { Subscribable } from 'rxjs';
+import { Place } from '../../tab-saved/place';
+import { Router } from '@angular/router';
+import { ReportService } from '../../report/report.service';
 declare let MapboxDirections: any;
 declare let mapboxgl: any;
 declare let MapboxGeocoder: any;
@@ -30,7 +36,10 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     private mapSuburbsService: MapSuburbsService,
     private userLocationService: UserLocationService,
     private modalCtrl: ModalController,
-    private changeDetectorRef: ChangeDetectorRef
+    private changeDetectorRef: ChangeDetectorRef,
+    private savedPlacesService: SavedPlacesService,
+    private router: Router,
+    private reportService: ReportService
   ) { }
   map: any;
   dat: any;
@@ -52,11 +61,57 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   tripETA: Date = new Date();
   tripETAH: string = '';
   tripETAM: string = '';
+  navigateToPlaceSubscription: Subscription = new Subscription();
+  MapSubscription: Subscription = new Subscription();
+  goToPlace: any; // Physical place
+  navigateToPlace = false;
+  currentSuburbSchedule: any;
+  modifiedAddress: string = "";
+  isPlaceSaved: boolean = false;
 
-  ngOnInit() { }
+  @ViewChild('myModal') myModal: any; // Reference to the ion-modal element
+  modalResult: any; // To store the selected result data
+
+  ngOnInit() {
+    this.navigateToPlaceSubscription = this.savedPlacesService.navigateToPlace.subscribe((isNavigate: any) => {
+      this.navigateToPlace = isNavigate;
+      console.log(" this.navigateToPlace", this.navigateToPlace)
+      if (isNavigate == true) {
+        this.goToPlace = this.savedPlacesService.selectedPlace;
+        console.log("selectedPlace", this.goToPlace);
+
+        this.modifiedAddress = this.goToPlace.address.substring(this.goToPlace.address.indexOf(",") + 1).trim();
+        let placeCenter: any;
+
+        // TODO
+        if (!this.goToPlace.hasOwnProperty('center')) {  // Place object
+          console.log("goToPlace", this.goToPlace);
+
+          placeCenter = [this.goToPlace.longitude, this.goToPlace.latitude];
+        }
+        else { // Mapbox object
+          placeCenter = [this.goToPlace.center[0], this.goToPlace.center[1]]
+
+        }
+
+        this.map.flyTo({
+          center: placeCenter, // Center on place
+          zoom: 15, // Adjust the zoom level
+          speed: 1.2, // Adjust the speed of the animation
+        });
+        console.log("isNavigate: ", isNavigate);
+        this.openNavigateModal();
+      }
+    });
+
+    this.savedPlacesService.navigateToSavedPlace.subscribe((isNavigate: any) => {
+      console.log("navigateToSavedPlace: ", isNavigate);
+      this.isPlaceSaved = isNavigate;
+    });
+  }
 
   ngAfterViewInit() {
-    this.mapSuburbsService.getSuburbData().subscribe(async (data: any) => {
+    this.MapSubscription = this.mapSuburbsService.getSuburbData().subscribe(async (data: any) => {
       console.log(data.result.mapPolygons[0]);
       console.log("Data: ", data);
 
@@ -75,6 +130,24 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       this.latitude = this.userLocationService.getLatitude();
       this.longitude = this.userLocationService.getLongitude();
 
+      // Create a Point object with the latitude and longitude
+      const point = {
+        type: 'Point',
+        coordinates: [this.longitude, this.latitude]
+      };
+      // Iterate through the features in the GeoJSON data
+      for (const feature of data.result.mapPolygons[0].features) {
+        const polygon = {
+          type: 'Polygon',
+          coordinates: feature.geometry.coordinates
+        };
+        if (this.isPointInsidePolygon(point, polygon)) {
+          const suburbName = feature.properties.SP_NAME;
+          console.log(`The point is within the suburb: ${suburbName}`);
+          break;
+        }
+      }
+
       this.map.on('load', () => {
         this.map.resize(); // Trigger map resize after the initial rendering
       });
@@ -88,8 +161,55 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       }
     );
 
+    // Reporting
+    this.reportService.reports.subscribe((reports: any) => {
+      console.log("reports", reports.result);
+      // console.log("reports.length", reports.size);
+
+      if (reports) {
+        console.log("reports??");
+        reports.result.forEach((report: any) => {
+          this.addMarker(report.longitude, report.latitude, report.report_type);
+        });
+      }
+    });
   }
 
+  addMarker(lon: number, lat: number, reportType: string) {
+    console.log("addMarkeraddMarker");
+    const customIcon = document.createElement('ion-icon');
+    customIcon.style.width = '30px'; // Set the width of your custom icon
+    customIcon.style.height = '30px'; // Set the height of your custom icon
+    customIcon.style.backgroundColor = 'var(--ion-color-primary)'; // Use Ionic primary color variable
+    customIcon.style.backgroundImage = `url('assets/${reportType}.svg')`; // Replace with your icon path
+    customIcon.style.backgroundSize = 'cover';
+    customIcon.style.backgroundPosition = 'center';
+    customIcon.style.borderRadius = '50%';
+    customIcon.style.padding = '8px';
+
+    const formattedReportType = reportType.replace(/([A-Z])/g, ' $1');
+
+    const marker = new mapboxgl.Marker({
+      element: customIcon,
+    })
+      .setLngLat([lon, lat])
+      .setPopup(
+        new mapboxgl.Popup({ offset: 25 }) // add popups
+          .setHTML(
+            `<ion-card class="popup-ion-card">
+            <ion-card-header class="popup-ion-card-header">
+              <ion-card-title color="primary">${formattedReportType}</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <h4><ion-icon src="assets/schedule.svg"></ion-icon><ion-text>Reported at 14:00</ion-text></h4>
+            </ion-card-content>
+          </ion-card>`
+          )
+      )
+      .addTo(this.map);
+
+    // this.markers.push(marker); // Add the marker to the markers array
+  }
   populatePolygons() {
     this.map.on('load', () => {
       // Add a data source containing GeoJSON data.
@@ -137,30 +257,63 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         //console.log(e);
 
         if (clickedFeature) {
-
+          let suburbId = clickedFeature.id;
+          console.log("Suburb ID =" + suburbId)
           // Get the properties of the clicked feature (suburb information)
           const suburbInfo = clickedFeature.properties;
           if (suburbInfo.PowerStatus == "undefined") {
             suburbInfo.PowerStatus = "unavailable"
           }
 
-          const popupContent = `
-          <ion-card class="popup-ion-card">
-            <ion-card-header class="popup-ion-card-header">
-              <ion-card-title color="primary">${suburbInfo?.SP_NAME}</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-              <h4><ion-icon src="assets/lightbulb.svg"></ion-icon><ion-text>Power Status: <strong>${suburbInfo?.PowerStatus}</strong></ion-text></h4>
-              <h4><ion-icon src="assets/schedule.svg"></ion-icon><ion-text> Schedule: <strong>12:00 - 14:00</strong></ion-text></h4>
-            </ion-card-content>
-          </ion-card>
-          `;
-          // Create a new popup and set its HTML content
-          this.popup = new mapboxgl.Popup()
-            .setLngLat(e.lngLat)
-            .setHTML(popupContent)
-            .addTo(this.map);
+          this.mapSuburbsService.fetchTimeForPolygon(suburbId).subscribe(
+            (response: any) => {
+              // Handle the response here
+              console.log('Time response:', response);
+              const timesOff = response.result.timesOff; // Assuming "response" holds your API response
 
+              if (timesOff && timesOff.length > 0) {
+                const formattedTimes = timesOff.map((time: any) => {
+                  const start = new Date(time.start * 1000); // Convert seconds to milliseconds
+                  const end = new Date(time.end * 1000); // Convert seconds to milliseconds
+
+                  const startHours = start.getHours().toString().padStart(2, '0');
+                  const startMinutes = start.getMinutes().toString().padStart(2, '0');
+
+                  const endHours = end.getHours().toString().padStart(2, '0');
+                  const endMinutes = end.getMinutes().toString().padStart(2, '0');
+
+                  this.currentSuburbSchedule = `${startHours}:${startMinutes} - ${endHours}:${endMinutes}`;
+                });
+
+                console.log('Formatted Time Ranges:', formattedTimes);
+              } else {
+                console.log('No time ranges available.');
+                this.currentSuburbSchedule = "unavailable";
+              }
+              const showSchedule = suburbInfo?.PowerStatus !== 'on';
+              const popupContent = `
+              <ion-card class="popup-ion-card">
+                <ion-card-header class="popup-ion-card-header">
+                  <ion-card-title color="primary">${suburbInfo?.SP_NAME}</ion-card-title>
+                </ion-card-header>
+                <ion-card-content>
+                  <h4><ion-icon src="assets/lightbulb.svg"></ion-icon><ion-text>Power Status: <strong>${suburbInfo?.PowerStatus}</strong></ion-text></h4>
+                  ${showSchedule ? `<h4><ion-icon src="assets/schedule.svg"></ion-icon><ion-text> Schedule: <strong>${this.currentSuburbSchedule}</strong></ion-text></h4>` : ''}
+                  </ion-card-content>
+              </ion-card>
+              `;
+              // Create a new popup and set its HTML content
+              this.popup = new mapboxgl.Popup()
+                .setLngLat(e.lngLat)
+                .setHTML(popupContent)
+                .addTo(this.map);
+            },
+            (error) => {
+              // Handle errors here
+              //console.error('Error fetching time:', error);
+              console.log("Re-enable errors on line 304 when polygons are matched");
+            }
+          );
         }
       });
     });
@@ -210,26 +363,35 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   }
 
 
-  async getRoute(selectedResult: any) {
+  async getRoute(selectedResult: Place | any) {
     this.updateBreakpoint();
     this.emitGetDirections();
     this.gettingRoute = true;
     this.closePopup();
-
-    this.searchBar.value = `${selectedResult.place_name}`;
+    await this.cancelNavigateModal();
+    this.openModal(selectedResult);
 
     this.showResultsList = false;
     let coords: any;
-    console.log(selectedResult);
+    console.log("selected Result for directions", selectedResult);
 
     let query: any;
-    if (Array.isArray(selectedResult)) {
-      query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult[0]},${selectedResult[1]}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
+
+    if (!selectedResult.hasOwnProperty('center')) {
+      console.log("SELECTED DIRECTION", selectedResult);
+
+      this.searchBar.value = `${selectedResult.address}`;
+      query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.longitude},${selectedResult.latitude}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
+      coords = [selectedResult[0], selectedResult[1]];
     }
     else {
+      console.log("SEARCH DIRECTION", selectedResult);
+
+      this.searchBar.value = `${selectedResult.place_name}`;
       query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.center[0]},${selectedResult.center[1]}?alternatives=true&geometries=geojson&language=en&steps=true&access_token=${environment.MapboxApiKey}`)
       coords = [selectedResult.center[0], selectedResult.center[1]];
     }
+    console.log("Directions query: ", query);
     console.log(coords);
     // Add a marker for the start point
 
@@ -338,11 +500,11 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
     this.tripDuration = Math.floor(data.duration / 60);
     this.tripDistance = Math.floor(data.distance / 1000);
-    
-    //CALCULATE ETA 
+
+    //CALCULATE ETA
     this.tripETA = new Date();
     this.calculateETA();
-    
+
 
     // if the route already exists on the map, we'll reset it using setData
     if (this.map.getSource('route')) {
@@ -433,8 +595,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     });
     this.closePopup();
   }
-  @ViewChild('myModal') myModal: any; // Reference to the ion-modal element
-  modalResult: any; // To store the selected result data
 
   openModal(result: any) {
     // if (!this.myModal) {
@@ -442,11 +602,18 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     this.myModal.present();
   }
 
+  @ViewChild('navigateModal') navigateModal: any; // Reference to the ion-modal element
+
+  openNavigateModal() {
+    this.navigateModal.present();
+    this.updateBreakpoint();
+  }
+
   calculateETA() {
     let tripETAHours: number = 0;
     let tripETAMinutes: number = 0;
 
-    if(this.tripDuration >= 60) {
+    if (this.tripDuration >= 60) {
       tripETAHours = Math.floor(this.tripDuration / 60);
       tripETAMinutes = this.tripDuration - (tripETAHours * 60);
     } else {
@@ -571,6 +738,57 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     }
   }
 
-  
+  savePlace() {
+    this.navigateToPlace = false;
+    this.savedPlacesService.savedPlace = this.goToPlace;
+    //this.savedPlacesService.addSavedPlace(this.goToPlace);
+    console.log("SAVE NEW PLACE", this.goToPlace);
+    this.savedPlacesService.savePlace.next(true);
+    this.cancelNavigateModal();
+
+  }
+
+  cancelNavigateModal() {
+    this.navigateModal.dismiss();
+  }
+
+  ngOnDestroy() {
+    if (this.navigateToPlaceSubscription) {
+      this.navigateToPlaceSubscription.unsubscribe();
+      this.savedPlacesService.navigateToPlace.next(false);
+    }
+
+    if (this.MapSubscription) {
+      this.MapSubscription.unsubscribe();
+    }
+  }
+
+  // REPORTING
+  goToReport() {
+    this.router.navigate(['/report']);
+  }
+
+  isPointInsidePolygon(point: any, polygon: any) {
+    const x = point.coordinates[0];
+    const y = point.coordinates[1];
+
+    const vertices = polygon.coordinates[0]; // Assuming the first set of coordinates defines the polygon
+    let isInside = false;
+
+    for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
+      const xi = vertices[i][0];
+      const yi = vertices[i][1];
+      const xj = vertices[j][0];
+      const yj = vertices[j][1];
+
+      const intersect = ((yi > y) !== (yj > y)) && (x < ((xj - xi) * (y - yi)) / (yj - yi) + xi);
+      if (intersect) {
+        isInside = !isInside;
+      }
+    }
+
+    return isInside;
+  }
+
 }
 

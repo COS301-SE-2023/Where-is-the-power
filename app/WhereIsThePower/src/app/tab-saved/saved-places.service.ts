@@ -2,6 +2,8 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { AuthService } from '../authentication/auth.service';
 import { BehaviorSubject, Subscription } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { Router } from '@angular/router';
 import { Place } from './place';
 
 @Injectable({
@@ -17,26 +19,40 @@ export class SavedPlacesService {
     "name": "Home"
   }
 */
-headers = new HttpHeaders();
-  constructor(
-    private httpClient: HttpClient,
-    private auth: AuthService
-    ) { }
-
   apiUrl = 'https://witpa.codelog.co.za/api/';
-  place = new BehaviorSubject<Place[] | null>(null);
+  selectedPlace: any;
+  navigateToPlace: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  navigateToSavedPlace: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  savePlace: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  savedPlace: any;
+
   poool: any;
-  /*
+  private headers: HttpHeaders = new HttpHeaders();
+  constructor(private httpClient: HttpClient,
+    private authService: AuthService,
+    private router: Router
+  ) { }
+
+  place = new BehaviorSubject<Place[] | null>(null);
+
   getPlaces() {
-    return this.httpClient.get(`${this.apiUrl}user/savedPlaces`, { headers: this.auth.headers });
+    this.headers = this.authService.getAuthHeaders(); // get the auth headers
+
+    return this.httpClient.get<Place[]>(`${this.apiUrl}user/savedPlaces`, { headers: this.headers }).pipe(tap((places: Place[]) => {
+      this.place.next(places);
+    }));
   }
 
+  addSavedPlace(newPlace: Place) {
+    this.savePlace.next(false);
+    this.navigateToPlace.next(false);
 
-  addSavedPlace(place: Place) {
-    console.log("add saved place");
-    console.log("place",this.place);
-    console.log("HEADER", this.headers);
+    return this.httpClient.put(`${this.apiUrl}user/savedPlaces`, newPlace, { headers: this.headers })
+  }
 
-    return this.httpClient.put(`${this.apiUrl}user/savedPlaces`, this.place, { headers: this.headers })
-  }*/
+  goToPlace(place: Place) {
+    this.selectedPlace = place;
+    this.navigateToPlace.next(true);
+    this.router.navigate(['tabs/tab-navigate']);
+  }
 }

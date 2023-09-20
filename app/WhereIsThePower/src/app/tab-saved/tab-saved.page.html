@@ -15,7 +15,7 @@
             alt="Address on phone Illustration"
             class="ion-padding"
           >
-          </ion-img>  
+          </ion-img>
       </ion-col>
     </ion-row>
     <ion-row>
@@ -27,7 +27,7 @@
       </ion-col>
     </ion-row>
   </div>
-  <ng-template #elseIsloggedIn>  
+  <ng-template #elseIsloggedIn>
     <ion-grid>
       <!-- SEARCH BAR -->
       <ion-row class="justify-content-center">
@@ -63,21 +63,21 @@
           <ion-row>
             <ion-toolbar class="ion-text-wrap">
               <!-- Saved Places is empty -->
-              <ion-title *ngIf="places.length === 0">
+              <ion-title *ngIf="places?.length === 0">
                 You have no saved places
               </ion-title>
               <!-- Show Saved places -->
               <ion-list *ngFor="let savedPlace of places">
-                <ion-item>
+                <ion-item (click)="goToSavedPlace(savedPlace)">
                   <!-- <ion-icon slot="start" name="{{ savedPlace.type }}"></ion-icon> -->
                   <ion-label class="ion-text-wrap">
-                    <h2>{{ savedPlace.name }}, {{ savedPlace.address }}</h2>
+                    <h2>{{ savedPlace.address }}</h2>
                   </ion-label>
                   <div>
                     <!-- DELETE -->
-                    <ion-button 
+                    <ion-button
                       color="success"
-                      fill="clear" 
+                      fill="clear"
                       (click)="removeSavedPlace(savedPlace)">
                       <ion-icon slot="icon-only" name="bookmark"></ion-icon>
                     </ion-button>
@@ -92,7 +92,7 @@
         </ion-col>
       </ng-template>
     </ion-grid>
-  </ng-template>  
+  </ng-template>
 </ion-content>
 
 
