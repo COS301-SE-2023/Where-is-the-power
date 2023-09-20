@@ -223,12 +223,166 @@ fn create_mock() -> MockDBFunctionsTrait  {
             "stopMinute": 30, 
             "stages": [ 
                 { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
                 { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
-                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] },
-                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] }
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
             ], 
             "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
-        }
+        },
+        {
+            "_id": { "$oid": "64b6b9b30d09bb4756061c0d" },
+            "startHour": 22,
+            "startMinute": 0,
+            "stopHour": 0,
+            "stopMinute": 30, 
+            "stages": [ 
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+            ], 
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+        },
+        {
+            "_id": { "$oid": "64b6b9b30dabbb4756061c0d" },
+            "startHour": 0,
+            "startMinute": 0,
+            "stopHour": 2,
+            "stopMinute": 30, 
+            "stages": [ 
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+            ], 
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+        },
+        {
+            "_id": { "$oid": "63b6b9b30d09bb4756061c0d" },
+            "startHour": 2,
+            "startMinute": 0,
+            "stopHour": 4,
+            "stopMinute": 30, 
+            "stages": [ 
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+            ], 
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+        },
+        {
+            "_id": { "$oid": "63b6b9bdcd09bb4756061c0d" },
+            "startHour": 4,
+            "startMinute": 0,
+            "stopHour": 6,
+            "stopMinute": 30, 
+            "stages": [ 
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+            ], 
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+        },
+        {
+            "_id": { "$oid": "63b6b9b30d09bb475606dafd" },
+            "startHour": 6,
+            "startMinute": 0,
+            "stopHour": 8,
+            "stopMinute": 30, 
+            "stages": [ 
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+            ], 
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+        },
+        {
+            "_id": { "$oid": "63b6b9b30d09cc4756061c0d" },
+            "startHour": 8,
+            "startMinute": 0,
+            "stopHour": 10,
+            "stopMinute": 30, 
+            "stages": [ 
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+            ], 
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+        },
+        {
+            "_id": { "$oid": "63b6b9b30d09bcf756061c0d" },
+            "startHour": 10,
+            "startMinute": 0,
+            "stopHour": 12,
+            "stopMinute": 30, 
+            "stages": [ 
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+            ], 
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+        },
+        {
+            "_id": { "$oid": "63b7b9b30d09bcf756061c0d" },
+            "startHour": 12,
+            "startMinute": 0,
+            "stopHour": 14,
+            "stopMinute": 30, 
+            "stages": [ 
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+            ], 
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+        },
+        {
+            "_id": { "$oid": "63b6b1b30d09bcf756061c0d" },
+            "startHour": 14,
+            "startMinute": 0,
+            "stopHour": 16,
+            "stopMinute": 30, 
+            "stages": [ 
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+            ], 
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+        },
+        {
+            "_id": { "$oid": "63b6b9b3dd09bcf756061c0d" },
+            "startHour": 16,
+            "startMinute": 0,
+            "stopHour": 18,
+            "stopMinute": 30, 
+            "stages": [ 
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+            ], 
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+        },
+        {
+            "_id": { "$oid": "63b6b9b30d09bcf756061c0d" },
+            "startHour": 18,
+            "startMinute": 0,
+            "stopHour": 20,
+            "stopMinute": 30, 
+            "stages": [ 
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+            ], 
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+        },
     ] "#;
     let test_schedule: Vec<TimeScheduleEntity> = serde_json::from_str(data).unwrap();
     // DO NOT CHANGE ONCE FINALIZED

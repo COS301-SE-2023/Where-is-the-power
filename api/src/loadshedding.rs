@@ -1199,11 +1199,11 @@ impl LoadSheddingStage {
                     db: None,
                 },
             };
-            let latest_in_db = get_date_time(Some(result.start_time)).naive_local();
+            let latest_in_db = result.start_time;
             loop {
                 let next = times.pop();
                 if let Some(new_data) = next {
-                    if latest_in_db >= new_data.start.0.naive_local() {
+                    if latest_in_db >= new_data.start.0.timestamp() {
                         let _ = self.update_db_with_changes(new_data, db_con).await;
                     } else {
                         let _ = new_data.convert_to_loadsheddingstage().insert(db_con).await;
@@ -1352,13 +1352,13 @@ impl<'de> Deserialize<'de> for SASTDateTime {
         D: Deserializer<'de>,
     {
         // get search time
-        let sast = FixedOffset::east_opt(2 * 3600).unwrap();
         let s = String::deserialize(deserializer)?;
         let dt = NaiveDateTime::parse_from_str(&s, FORMAT).unwrap();
-        let sast = DateTime::<Utc>::from_utc(dt, Utc).with_timezone(&sast);
+        // hack for now because library is not being co-operative
+        let convert_to_sast = dt.timestamp() - 2*3600;
+        let sast = get_date_time(Some(convert_to_sast));
         println!("{:?}", sast);
         Ok(SASTDateTime(sast))
-        // DateTime::<FixedOffset>::from_str(&s).map_err(serde::de::Error::custom)
     }
 }
 
