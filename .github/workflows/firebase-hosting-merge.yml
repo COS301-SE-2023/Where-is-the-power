@@ -25,9 +25,9 @@ jobs:
         with:
           tokenPrefix: '{'
           tokenSuffix: '}'
-          files: ./app/WhereIsThePower/src/environments/environment.prod.ts
+          files: '["./app/WhereIsThePower/src/environments/envionment.prod.ts"]'
         env:
-          MapboxApiKey: ${{ secrets.MAPBOX_API_KEY }}
+          MapboxApiKey: 'Hello WOrld'
 
       - name: Cat PRODENV
         # run: ls 
