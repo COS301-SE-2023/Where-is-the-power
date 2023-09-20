@@ -3,7 +3,7 @@ use crate::ai::{AiInfoRequest, AiInfoResponse};
 use crate::api::UnifiedResponse;
 use crate::auth::{AuthClaims, AuthRequest, AuthType, JWTAuthToken};
 use crate::loadshedding::{
-    GroupEntity, MockDBFunctionsTrait, MunicipalityEntity, SuburbEntity, TimeScheduleEntity,
+    GroupEntity, MockDBFunctionsTrait, MunicipalityEntity, SuburbEntity, TimeScheduleEntity, LoadSheddingStage,
 };
 use crate::scraper::convert_to_ints;
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
@@ -433,12 +433,154 @@ fn create_mock() -> MockDBFunctionsTrait  {
         }
     ]"#;
     let test_suburbs: Vec<SuburbEntity> = serde_json::from_str(data).unwrap();
+
+    let data = r#"[
+        {
+            "_id": {
+                "$oid": "650b1a741329313fc8b0c14c"
+            },
+            "startTime": 1695304800,
+            "endTime": 1695351600,
+            "stage": 3
+        },
+        {
+            "_id": {
+                "$oid": "650b1a741329313fc8b0c14d"
+            },
+            "startTime": 1695265200,
+            "endTime": 1695304800,
+            "stage": 1
+        },
+        {
+            "_id": {
+                "$oid": "650b1a741329313fc8b0c14e"
+            },
+            "startTime": 1695218400,
+            "endTime": 1695265200,
+            "stage": 3
+        },
+        {
+            "_id": {
+                "$oid": "650b1a741329313fc8b0c14f"
+            },
+            "startTime": 1695178800,
+            "endTime": 1695218400,
+            "stage": 0
+        },
+        {
+            "_id": {
+                "$oid": "650b1a741329313fc8b0c150"
+            },
+            "startTime": 1695160800,
+            "endTime": 1695178800,
+            "stage": 0
+        },
+        {
+            "_id": {
+                "$oid": "650b1a741329313fc8b0c151"
+            },
+            "startTime": 1695153600,
+            "endTime": 1695160800,
+            "stage": 1
+        },
+        {
+            "_id": {
+                "$oid": "650b1a741329313fc8b0c152"
+            },
+            "startTime": 1695132000,
+            "endTime": 1695150000,
+            "stage": 3
+        },
+        {
+            "_id": {
+                "$oid": "650b1a741329313fc8b0c153"
+            },
+            "startTime": 1695092400,
+            "endTime": 1695132000,
+            "stage": 0
+        },
+        {
+            "_id": {
+                "$oid": "650b1a741329313fc8b0c154"
+            },
+            "startTime": 1695045600,
+            "endTime": 1695092400,
+            "stage": 3
+        },
+        {
+            "_id": {
+                "$oid": "650b1a741329313fc8b0c155"
+            },
+            "startTime": 1695031200,
+            "endTime": 1695045600,
+            "stage": 1
+        },
+        {
+            "_id": {
+                "$oid": "650b1a741329313fc8b0c156"
+            },
+            "startTime": 1694959200,
+            "endTime": 1695031200,
+            "stage": 2
+        },
+        {
+            "_id": {
+                "$oid": "650b1a741329313fc8b0c157"
+            },
+            "startTime": 1694872800,
+            "endTime": 1694959200,
+            "stage": 0
+        },
+        {
+            "_id": {
+                "$oid": "650b1a741329313fc8b0c158"
+            },
+            "startTime": 1694854800,
+            "endTime": 1694872800,
+            "stage": 0
+        },
+        {
+            "_id": {
+                "$oid": "650b1a741329313fc8b0c159"
+            },
+            "startTime": 1694833200,
+            "endTime": 1694854800,
+            "stage": 2
+        },
+        {
+            "_id": {
+                "$oid": "650b1a741329313fc8b0c15a"
+            },
+            "startTime": 1694822400,
+            "endTime": 1694833200,
+            "stage": 0
+        },
+        {
+            "_id": {
+                "$oid": "650b1a741329313fc8b0c15b"
+            },
+            "startTime": 1694746800,
+            "endTime": 1694779200,
+            "stage": 5
+        },
+        {
+            "_id": {
+                "$oid": "650b1a741329313fc8b0c15c"
+            },
+            "startTime": 1694660400,
+            "endTime": 1694746800,
+            "stage": 6
+        }
+    ]"#;
+    let test_stage_logs: Vec<LoadSheddingStage> = serde_json::from_str(data).unwrap();
     mock.expect_collect_schedules()
         .returning(move |_, _, _| Ok(test_schedule.clone()));
     mock.expect_collect_groups()
         .returning(move |_query, _conn, _opts| Ok(test_groups.clone()));
     mock.expect_collect_suburbs()
         .returning(move |_query, _conn, _opts| Ok(test_suburbs.clone()));
+    mock.expect_collect_stage_logs()
+        .returning(move |_query, _conn, _opts| Ok(test_stage_logs.clone()));
     mock
 }
 

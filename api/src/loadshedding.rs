@@ -144,7 +144,7 @@ pub async fn fetch_schedule<'a>(
         None => return ApiError::ServerError("Document not found").into(),
     };
     let db_functions = DBFunctions {};
-    match suburb.build_schedule(&connection, &db_functions).await {
+    match suburb.build_schedule(&connection, &db_functions, None).await {
         Ok(data) => return ApiResponse::Ok(data),
         Err(err) => return err.into(),
     }
@@ -174,7 +174,7 @@ pub async fn fetch_time_for_polygon<'a>(
     };
     let db_functions = DBFunctions {};
     let time_now = get_date_time(None);
-    match suburb.build_schedule(&connection, &db_functions).await {
+    match suburb.build_schedule(&connection, &db_functions, None).await {
         Ok(data) => {
             let relevant: Vec<TimeSlot> = data
                 .times_off
@@ -843,8 +843,9 @@ impl SuburbEntity {
         self,
         connection: &Database,
         db_functions: &dyn DBFunctionsTrait,
+        time: Option<i64>,
     ) -> Result<PredictiveSuburbStatsResponse, ApiError<'static>> {
-        let time_now = get_date_time(None)
+        let time_now = get_date_time(time)
             .with_second(0)
             .unwrap()
             .with_minute(0)
