@@ -20,9 +20,7 @@ export class ReportPage implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.reportService.getReports().subscribe((data) => {
-      console.log(data);
-    });
+
   }
 
   async ionViewWillEnter() {

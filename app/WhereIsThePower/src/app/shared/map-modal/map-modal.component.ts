@@ -108,9 +108,11 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       console.log("navigateToSavedPlace: ", isNavigate);
       this.isPlaceSaved = isNavigate;
     });
+
+
   }
 
-  ngAfterViewInit() {
+  async ngAfterViewInit() {
     this.MapSubscription = this.mapSuburbsService.getSuburbData().subscribe(async (data: any) => {
       console.log(data.result.mapPolygons[0]);
       console.log("Data: ", data);
@@ -150,6 +152,21 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
       this.map.on('load', () => {
         this.map.resize(); // Trigger map resize after the initial rendering
+        // Reporting
+        this.reportService.getReports().subscribe((data) => {
+          console.log("getReports: ", data);
+        });
+    
+        this.reportService.reports.subscribe((reports: any) => {    
+          if (reports) {
+            console.log("Reports (Map Page)", reports);
+    
+            // Add marker on map for each report
+            reports.forEach((report: any) => {
+              this.addMarker(report.longitude, report.latitude, report.report_type);
+            });
+          }
+        });
       });
 
       // Populate Map(suburbs) with Polygons
@@ -160,21 +177,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         console.log(error);
       }
     );
-
-    // Reporting
-    this.reportService.reports.subscribe((reports: any) => {
-      console.log("reports", reports.result);
-      // console.log("reports.length", reports.size);
-
-      if (reports) {
-        console.log("Reports (Map Page)", reports);
-
-        // Add marker on map for each report
-        reports.result.forEach((report: any) => {
-          this.addMarker(report.longitude, report.latitude, report.report_type);
-        });
-      }
-    });
   }
 
   addMarker(lon: number, lat: number, reportType: string) {
