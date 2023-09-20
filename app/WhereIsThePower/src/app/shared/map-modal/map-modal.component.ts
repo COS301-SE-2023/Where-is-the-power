@@ -167,7 +167,9 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       // console.log("reports.length", reports.size);
 
       if (reports) {
-        console.log("reports??");
+        console.log("Reports (Map Page)", reports);
+
+        // Add marker on map for each report
         reports.result.forEach((report: any) => {
           this.addMarker(report.longitude, report.latitude, report.report_type);
         });
