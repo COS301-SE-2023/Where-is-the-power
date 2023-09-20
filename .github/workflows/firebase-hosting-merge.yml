@@ -11,13 +11,14 @@ jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: "18"
-      - name: Install Dependencies
-        working-directory: ./app/WhereIsThePower
-        run: npm install --frozen-lock
+      # - uses: actions/checkout@v3
+      # - uses: actions/setup-node@v3
+      #   with:
+      #     node-version: "18"
+
+      # - name: Install Dependencies
+      #   working-directory: ./app/WhereIsThePower
+      #   run: npm install --frozen-lock
       
       - name: Update Prod Env
         uses: cschleiden/replace-tokens@v1.2
@@ -28,6 +29,9 @@ jobs:
         env:
           MapboxApiKey: ${{ secrets.MAPBOX_API_KEY }}
 
+      - name: Cat PRODENV
+        run: cat ./app/WhereIsThePower/src/environments/environment.prod.ts
+
       - name: Update env
         uses: cschleiden/replace-tokens@v1.2
         with:
@@ -37,14 +41,17 @@ jobs:
         env:
           MapboxApiKey: ${{ secrets.MAPBOX_API_KEY }}
 
-      - name: Build app
-        working-directory: ./app/WhereIsThePower
-        run: npm run build && cat ./src/environments/environment.ts
+      - name: Cat ENV
+        run: cat ./app/WhereIsThePower/src/environments/environment.ts
 
-      - uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_WHEREISTHEPOWER_33A66 }}'
-          channelId: live
-          projectId: whereisthepower-33a66
-          entrypoint: ./app/WhereIsThePower
+      # - name: Build app
+      #   working-directory: ./app/WhereIsThePower
+      #   run: npm run build && cat ./src/environments/environment.ts
+
+      # - uses: FirebaseExtended/action-hosting-deploy@v0
+      #   with:
+      #     repoToken: '${{ secrets.GITHUB_TOKEN }}'
+      #     firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_WHEREISTHEPOWER_33A66 }}'
+      #     channelId: live
+      #     projectId: whereisthepower-33a66
+      #     entrypoint: ./app/WhereIsThePower
