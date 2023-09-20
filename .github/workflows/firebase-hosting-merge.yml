@@ -18,6 +18,7 @@ jobs:
       - name: Install Dependencies
         working-directory: ./app/WhereIsThePower
         run: npm install --frozen-lock
+      
       - name: Update env
         uses: cschleiden/replace-tokens@v1.2
         with:
@@ -37,3 +38,4 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_WHEREISTHEPOWER_33A66 }}'
           channelId: live
           projectId: whereisthepower-33a66
+          entrypoint: ./app/WhereIsThePower
