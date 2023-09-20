@@ -49,7 +49,6 @@ export class TabStatisticsPage implements OnInit {
       }));
       this.filteredItems = [...this.searchItems];
       console.log("Search Items:", this.filteredItems);
-
     });
   }
 
