@@ -40,6 +40,7 @@ const DB_NAME: &'static str = "wip";
 #[openapi(
     paths(
         user::create_user,
+        loadshedding::get_current_stage,
         loadshedding::fetch_map_data,
         loadshedding::fetch_schedule,
         loadshedding::fetch_suburb_stats,
@@ -222,6 +223,7 @@ async fn build_rocket() -> Rocket<Build> {
                 routes!(
                     auth::authenticate,
                     user::create_user,
+                    loadshedding::get_current_stage,
                     loadshedding::fetch_map_data,
                     loadshedding::fetch_suburb_stats,
                     loadshedding::fetch_schedule,
@@ -257,6 +259,7 @@ async fn build_rocket() -> Rocket<Build> {
                     routes!(
                         auth::authenticate,
                         user::create_user,
+                        loadshedding::get_current_stage,
                         loadshedding::fetch_map_data,
                         loadshedding::fetch_suburb_stats,
                         loadshedding::fetch_schedule,
