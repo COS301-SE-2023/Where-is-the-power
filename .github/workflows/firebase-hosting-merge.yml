@@ -24,7 +24,7 @@ jobs:
         with:
           tokenPrefix: '{'
           tokenSuffix: '}'
-          files: ./app/WhereIsThePower/src/environments/environment.ts
+          files: ./app/WhereIsThePower/src/environments/environment.prod.ts
         env:
           MapboxApiKey: ${{ secrets.TEST_SECRET }}
 
