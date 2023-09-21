@@ -24,9 +24,6 @@ jobs:
         run: | 
           echo ${{ secrets.FRONTEND_PROD_ENV }} > ./app/WhereIsThePower/src/environments/environment.prod.ts 
 
-      - name: Cat ENV
-        run: cat ./app/WhereIsThePower/src/environments/environment.ts
-
       - name: Build app
         working-directory: ./app/WhereIsThePower
         run: npm run build && cat ./src/environments/environment.ts
