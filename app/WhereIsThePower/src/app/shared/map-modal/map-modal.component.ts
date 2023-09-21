@@ -375,6 +375,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
 
   async getRoute(selectedResult: Place | any) {
+    this.instructions = [];
     this.updateBreakpoint();
     this.emitGetDirections();
     this.gettingRoute = true;
@@ -387,30 +388,42 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     console.log("selected Result for directions", selectedResult);
 
     let query: any;
+    let fallback = false;
 
     if (!selectedResult.hasOwnProperty('center')) {
-      console.log("Selected directions (saved places) ", selectedResult);
-      // query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.longitude},${selectedResult.latitude}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
-      //coords = [selectedResult.longitude, selectedResult.latitude];
-
-      query = await this.mapSuburbsService.fetchOptimalRoute(this.longitude, this.latitude, selectedResult.longitude, selectedResult.latitude).toPromise();
-
-      coords = query.result.coordinates;
+      try{     
+        console.log("Selected directions (saved places) ", selectedResult);
+        query = await this.mapSuburbsService.fetchOptimalRoute(this.longitude, this.latitude, selectedResult.longitude, selectedResult.latitude).toPromise();
+        coords = query.result.coordinates;
+      }
+      catch(error)
+      {
+        console.error("Error in the first query:", error);
+        fallback = true;
+        query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.longitude},${selectedResult.latitude}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`);
+        coords = [selectedResult.longitude, selectedResult.latitude];
+      }
       this.searchBar.value = `${selectedResult.address}`;
 
     }
     else {
-      console.log("Search directions (searchbar) ", selectedResult);
-      //query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.center[0]},${selectedResult.center[1]}?alternatives=true&geometries=geojson&language=en&steps=true&access_token=${environment.MapboxApiKey}`)
-      // coords = [selectedResult.center[0], selectedResult.center[1]];
+      try {
+        console.log("Searched directions (searchbar) ", selectedResult);
 
-      query = await this.mapSuburbsService.fetchOptimalRoute(this.longitude, this.latitude, selectedResult.center[0], selectedResult.center[1]).toPromise();
+        query = await this.mapSuburbsService.fetchOptimalRoute(this.longitude, this.latitude, selectedResult.center[0], selectedResult.center[1]).toPromise();
+        coords = query.result.coordinates;
 
-      coords = query.result.coordinates;
+      } catch (error) {
+        // Handle the error from the first query
+        console.error("Error in the first query:", error);
+        fallback = true;
+        query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${this.longitude},${this.latitude};${selectedResult.center[0]},${selectedResult.center[1]}?alternatives=true&geometries=geojson&language=en&steps=true&access_token=${environment.MapboxApiKey}`);
+        coords = [selectedResult.center[0], selectedResult.center[1]];
+      }
       this.searchBar.value = `${selectedResult.place_name}`;
     }
     console.log("_________________________");
-    console.log("Directions query", query.result);
+    console.log("Directions query", query);
     console.log("_________________________");
 
 
@@ -466,7 +479,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           properties: {},
           geometry: {
             type: 'Point',
-            coordinates: coords
+            coordinates: [coords[coords.length - 1][0], coords[coords.length - 1][1]]
           }
         }
       ]
@@ -500,28 +513,62 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       });
     }
 
-    const data = query.result; // Pick 1st route in list of route recommendations
-    const route = coords; // list of coordinates forming route
-    const geojson = {
-      type: 'Feature',
-      properties: {},
-      geometry: {
-        type: 'LineString',
-        coordinates: route
+    let geojson: any;
+    let route: any;
+
+    if(!fallback) // Optimised route
+    {
+      const data = query.result; // Pick 1st route in list of route recommendations
+      route = coords; // list of coordinates forming route
+      geojson = {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: route
+        }
+      };
+      // get the sidebar and add the instructions
+
+      const steps = data.instructions;
+      for (const step of steps) {
+        this.instructions.push(step);
       }
-    };
-    // get the sidebar and add the instructions
-    const steps = data.instructions;
-    for (const step of steps) {
-      this.instructions.push(step);
+
+      this.tripDuration = Math.floor(data.duration / 60);
+      this.tripDistance = Math.floor(data.distance / 1000);
+
+      //CALCULATE ETA
+      this.tripETA = new Date();
+      this.calculateETA();
     }
+    else // Mapbox
+    {
+      const json = await query.json();
 
-    this.tripDuration = Math.floor(data.duration / 60);
-    this.tripDistance = Math.floor(data.distance / 1000);
+      const data = json.routes[0]; // Pick 1st route in list of route recommendations
+      route = data.geometry.coordinates; // list of coordinates forming route
+      geojson = {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: route
+        }
+      };
+      // get the sidebar and add the instructions
+      const steps = data.legs[0].steps;
+      for (const step of steps) {
+        this.instructions.push(step.maneuver.instruction);
+      }
 
-    //CALCULATE ETA
-    this.tripETA = new Date();
-    this.calculateETA();
+      this.tripDuration = Math.floor(data.duration / 60);
+      this.tripDistance = Math.floor(data.distance / 1000);
+
+      //CALCULATE ETA
+      this.tripETA = new Date();
+      this.calculateETA();
+    }
 
 
     // if the route already exists on the map, we'll reset it using setData
@@ -549,59 +596,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       });
     }
 
-    /*
-    Mapbox version
-    const json = await query.json();
-
-    const data = json.routes[0]; // Pick 1st route in list of route recommendations
-    const route = data.geometry.coordinates; // list of coordinates forming route
-    const geojson = {
-      type: 'Feature',
-      properties: {},
-      geometry: {
-        type: 'LineString',
-        coordinates: route
-      }
-    };
-    // get the sidebar and add the instructions
-    const steps = data.legs[0].steps;
-    for (const step of steps) {
-      this.instructions.push(step.maneuver.instruction);
-    }
-
-    this.tripDuration = Math.floor(data.duration / 60);
-    this.tripDistance = Math.floor(data.distance / 1000);
-
-    //CALCULATE ETA
-    this.tripETA = new Date();
-    this.calculateETA();
-
-
-    // if the route already exists on the map, we'll reset it using setData
-    if (this.map.getSource('route')) {
-      this.map.getSource('route').setData(geojson);
-    }
-    // otherwise, we'll make a new request
-    else {
-      this.map.addLayer({
-        id: 'route',
-        type: 'line',
-        source: {
-          type: 'geojson',
-          data: geojson
-        },
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#3887be',
-          'line-width': 10,
-          'line-opacity': 1
-        }
-      });
-    }
-*/
     // Calculate the bounding box OF THE ROUTE
     let minLng = Infinity;
     let maxLng = -Infinity;
