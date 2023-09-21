@@ -1312,7 +1312,7 @@ impl Fairing for StageUpdater {
 }
 
 #[derive(Debug, Clone)]
-pub struct SASTDateTime(DateTime<FixedOffset>);
+pub struct SASTDateTime(pub DateTime<FixedOffset>);
 
 const FORMAT: &str = "%Y-%m-%dT%H:%M";
 impl<'de> Deserialize<'de> for SASTDateTime {

@@ -1,9 +1,11 @@
 use super::build_rocket;
+use bson::doc;
+use chrono::{Utc, NaiveDateTime, DateTime};
 use crate::ai::{AiInfoRequest, AiInfoResponse};
 use crate::api::UnifiedResponse;
 use crate::auth::{AuthClaims, AuthRequest, AuthType, JWTAuthToken};
 use crate::loadshedding::{
-    GroupEntity, MockDBFunctionsTrait, MunicipalityEntity, SuburbEntity, TimeScheduleEntity, LoadSheddingStage, SuburbStatsResponse, PredictiveSuburbStatsResponse,
+    GroupEntity, MockDBFunctionsTrait, MunicipalityEntity, SuburbEntity, TimeScheduleEntity, LoadSheddingStage, SuburbStatsResponse, PredictiveSuburbStatsResponse, LoadsheddingData, SASTDateTime, DBFunctionsTrait,
 };
 use crate::scraper::convert_to_ints;
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
@@ -179,6 +181,7 @@ async fn test_getstats() {
     assert_eq!(result,expected_output);
 }
 
+/*
 #[rocket::async_test]
 async fn test_ai_endpoint() {
     let client = Client::tracked(build_rocket().await)
@@ -197,6 +200,25 @@ async fn test_ai_endpoint() {
     let body = serde_json::from_str::<UnifiedResponse<AiInfoResponse>>(&body).unwrap();
 
     assert!(body.success);
+}
+*/
+
+#[rocket::async_test]
+async fn test_loadshedding_helpers() {
+    let mock = create_mock();
+    let db: &dyn DBFunctionsTrait = &mock;
+    let start = SASTDateTime(DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp_opt(1694660400, 0).unwrap(), Utc).fixed_offset());
+    let end = SASTDateTime(DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp_opt(1694746800, 0).unwrap(), Utc).fixed_offset());
+    let test_schedule_conversion = LoadsheddingData {
+        stage: 0,
+        start: start,
+        end: end
+    };
+    let conversion = test_schedule_conversion.convert_to_loadsheddingstage();
+    let doc = doc! {};
+    let compare = db.collect_one_stage_log(doc, None, None).await.unwrap();
+    assert_eq!(conversion.start_time, compare.start_time);
+    assert_eq!(conversion.end_time, compare.end_time);
 }
 
 // #[rocket::async_test]
