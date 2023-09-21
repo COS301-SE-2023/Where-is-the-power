@@ -6,7 +6,7 @@ name: Deploy to Firebase Hosting on merg
   push:
     branches:
       - dev
-      - WIP-55-ISSUE-Frontend-hotfixes
+      - main
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
