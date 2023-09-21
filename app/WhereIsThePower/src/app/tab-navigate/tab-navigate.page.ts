@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { UserLocationService } from '../user-location.service';
 import { SavedPlacesService } from '../tab-saved/saved-places.service';
+import { ViewChild } from '@angular/core';
+import { MapModalComponent } from '../shared/map-modal/map-modal.component';
 
 @Component({
   selector: 'app-tab-navigate',
@@ -8,6 +10,7 @@ import { SavedPlacesService } from '../tab-saved/saved-places.service';
   styleUrls: ['tab-navigate.page.scss']
 })
 export class TabNavigatePage {
+  @ViewChild('mapModalComponent', { static: false }) mapModalComponent!: MapModalComponent;
 
   constructor(private UserLocationService: UserLocationService, private savedPlacesService: SavedPlacesService) { }
   isLocationProvide = false;
@@ -28,6 +31,9 @@ export class TabNavigatePage {
   }
 
   ionViewDidLeave() {
+    if (this.mapModalComponent && this.mapModalComponent.searchBar) {
+      this.mapModalComponent.searchBar.value = "";
+    }
     this.savedPlacesService.navigateToPlace.next(false);
     this.savedPlacesService.navigateToSavedPlace.next(false);
   }

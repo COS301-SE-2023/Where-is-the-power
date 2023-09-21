@@ -465,6 +465,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     if (this.map.getLayer('end')) {
       this.map.getSource('end').setData(end);
     } else {
+      console.log("END POINT", coords)
       this.map.addLayer({
         id: 'end',
         type: 'circle',
