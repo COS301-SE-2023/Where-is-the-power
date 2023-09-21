@@ -13,7 +13,7 @@ export class ReportService {
   private headers: HttpHeaders = new HttpHeaders();
   latitude: any;
   longitude: any;
-  reports: BehaviorSubject<any> = new BehaviorSubject<any>(false);
+  reports: BehaviorSubject<any[]> = new BehaviorSubject<any[]>([]);
 
   constructor(
     private http: HttpClient,
@@ -25,23 +25,36 @@ export class ReportService {
   getReports() {
     this.headers = this.authService.getAuthHeaders(); // get the auth headers
     return this.http.get(this.apiUrl, { headers: this.headers }).pipe(tap((res: any) => {
-      this.reports.next(res);
-      console.log(this.reports);
+      this.reports.next(res.result);
+      console.log("getReports (service file)", res.result);
     }));
   }
 
   reportIssue(type: string) {
+    this.headers = this.authService.getAuthHeaders(); // get the auth headers
+
     // Get the current user location
     this.latitude = this.userLocationService.getLatitude();
     this.longitude = this.userLocationService.getLongitude();
-
-    let body =
+    let report =
     {
       "report_type": type,
       "timestamp": Date.now(),
       "latitude": this.latitude,
       "longitude": this.longitude
     }
-    return this.http.post(this.apiUrl, body, { headers: this.headers });
+    return this.http.post(this.apiUrl, report, { headers:  this.headers}).pipe(tap((res: any) => {
+        if(res) {
+          let currentReports = this.reports.getValue();
+          console.log("====================================");
+          console.log(" this.reports",  this.reports);
+          console.log("currentReports", currentReports);
+          console.log("report", report);
+
+          console.log("====================================");
+
+          this.reports.next([...currentReports, report]);
+        }
+    }));
   }
 }
