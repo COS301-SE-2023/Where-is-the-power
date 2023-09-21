@@ -117,7 +117,7 @@ pub async fn fetch_suburb_stats<'a>(
     };
     let db_functions = DBFunctions {};
     match suburb
-        .get_total_time_down_stats(&connection, &db_functions)
+        .get_total_time_down_stats(Some(&connection), &db_functions)
         .await
     {
         Ok(data) => return ApiResponse::Ok(data),
@@ -144,7 +144,7 @@ pub async fn fetch_schedule<'a>(
         None => return ApiError::ServerError("Document not found").into(),
     };
     let db_functions = DBFunctions {};
-    match suburb.build_schedule(&connection, &db_functions, None).await {
+    match suburb.build_schedule(Some(&connection), &db_functions, None).await {
         Ok(data) => return ApiResponse::Ok(data),
         Err(err) => return err.into(),
     }
@@ -174,7 +174,7 @@ pub async fn fetch_time_for_polygon<'a>(
     };
     let db_functions = DBFunctions {};
     let time_now = get_date_time(None);
-    match suburb.build_schedule(&connection, &db_functions, None).await {
+    match suburb.build_schedule(Some(&connection), &db_functions, None).await {
         Ok(data) => {
             let relevant: Vec<TimeSlot> = data
                 .times_off
@@ -841,7 +841,7 @@ impl MunicipalityEntity {
 impl SuburbEntity {
     pub async fn build_schedule(
         self,
-        connection: &Database,
+        connection: Option<&Database>,
         db_functions: &dyn DBFunctionsTrait,
         time: Option<i64>,
     ) -> Result<PredictiveSuburbStatsResponse, ApiError<'static>> {
@@ -911,7 +911,7 @@ impl SuburbEntity {
     }
     pub async fn get_total_time_down_stats(
         self,
-        connection: &Database,
+        connection: Option<&Database>,
         db_functions: &dyn DBFunctionsTrait,
     ) -> Result<SuburbStatsResponse, ApiError<'static>> {
         // queries
@@ -924,7 +924,7 @@ impl SuburbEntity {
         };
         let find_options = FindOptions::builder().sort(doc! { "startTime": 1 }).build();
         let mut all_stages = match db_functions
-            .collect_stage_logs(query, Some(connection), Some(find_options))
+            .collect_stage_logs(query, connection, Some(find_options))
             .await
         {
             Ok(item) => item,
@@ -945,7 +945,7 @@ impl SuburbEntity {
             .limit(1)
             .build();
         let first_stage_change = match db_functions
-            .collect_one_stage_log(query, Some(connection), Some(find_options))
+            .collect_one_stage_log(query, connection, Some(find_options))
             .await
         {
             Ok(cursor) => cursor,
@@ -1039,8 +1039,18 @@ impl SuburbEntity {
                 .filter(|x| x.stage <= stage.stage)
                 .collect();
             for stage in stages {
-                if stage.groups.get((day - 1) as usize).unwrap().to_owned() == group.id.unwrap() {
-                    return Some(time_slot);
+                let slot = match stage.groups.get((day-1) as usize) {
+                    Some(data) => {
+                        if data.to_owned() == group.id.unwrap() {
+                             Some(time_slot)
+                        } else {
+                            None
+                        }
+                    },
+                    None => None
+                };
+                if let Some(data) = slot  {
+                    return Some(data);
                 }
             }
         }
@@ -1052,7 +1062,7 @@ impl SuburbEntity {
     async fn collect_information(
         &self,
         from_time: &i64,
-        connection: &Database,
+        connection: Option<&Database>,
         db_functions: &dyn DBFunctionsTrait,
     ) -> Result<(GroupEntity, Vec<LoadSheddingStage>, Vec<TimeScheduleEntity>), ApiError<'static>>
     {
@@ -1062,7 +1072,7 @@ impl SuburbEntity {
             }
         };
         let group: GroupEntity = match db_functions
-            .collect_one_group(query, Some(connection), None)
+            .collect_one_group(query, connection, None)
             .await
         {
             Ok(group) => group,
@@ -1074,12 +1084,12 @@ impl SuburbEntity {
         // get all the stage changes from the past week
         let query = doc! {
             "startTime": {
-                "$gte": from_time
+                "$gt": from_time
             }
         };
         let find_options = FindOptions::builder().sort(doc! { "startTime": 1 }).build();
         let mut all_stages = match db_functions
-            .collect_stage_logs(query, Some(connection), Some(find_options))
+            .collect_stage_logs(query, connection, Some(find_options))
             .await
         {
             Ok(item) => item,
@@ -1100,7 +1110,7 @@ impl SuburbEntity {
             .limit(1)
             .build();
         let first_stage_change = match db_functions
-            .collect_one_stage_log(query, Some(connection), Some(find_options))
+            .collect_one_stage_log(query, connection, Some(find_options))
             .await
         {
             Ok(cursor) => cursor,
@@ -1115,7 +1125,7 @@ impl SuburbEntity {
             "municipality" : self.municipality,
         };
         let schedule = match db_functions
-            .collect_schedules(query, Some(connection), None)
+            .collect_schedules(query, connection, None)
             .await
         {
             Ok(item) => item,
