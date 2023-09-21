@@ -29,12 +29,13 @@
         </ion-list>
       </ion-col>
     </ion-row>
-    <ion-row style="justify-content: center;">
+    <ion-row *ngIf="isLocationProvided && isAreaFound; else areaNotAvailable">
+      <ion-col size="12" class="ion-text-center"><h2>{{ suburbName }}</h2></ion-col>
+      <ion-col size="12" class="ion-text-center">
         <ion-chip [color]="chipColor">
           Current Stage: {{ loadsheddingStage }}
         </ion-chip>
-    </ion-row>
-    <ion-row>
+      </ion-col>
       <ion-col>     
         <ion-card *ngFor="let time of loadshedTimes">
           <ion-card-header>
@@ -53,5 +54,24 @@
         </ion-card>
       </ion-col>
     </ion-row>
+    <ng-template #areaNotAvailable>
+      <ion-row>
+        <ion-col size="8" offset="2" size-md="6" offset-md="3" size-xl="4" offset-xl="4">
+          <ion-img
+              src="assets/phoneStats.svg"
+              alt="Address on phone Illustration"
+              class="ion-padding"
+            >
+            </ion-img>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+          <ion-col class="ion-text-center ion-text-md-end">
+          </ion-col>
+          <ion-col size="12" class="ion-text-center">
+            <h3>Search for a suburb inside City of Tshwane.</h3>
+          </ion-col>
+      </ion-row>
+    </ng-template>
   </ion-grid>
 </ion-content>

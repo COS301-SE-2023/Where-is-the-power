@@ -2,7 +2,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { AuthService } from '../authentication/auth.service';
 import { BehaviorSubject, Subscription } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { Place } from './place';
 
@@ -48,6 +48,21 @@ export class SavedPlacesService {
     this.navigateToPlace.next(false);
 
     return this.httpClient.put(`${this.apiUrl}user/savedPlaces`, newPlace, { headers: this.headers })
+  }
+
+  deleteSavedPlace(placeID: string) {
+    let currentPlaces: any = this.place.value;
+    console.log("currentPlaces: ", currentPlaces)
+
+    if (currentPlaces && currentPlaces.result) {
+      const updatedPlaces = currentPlaces.result.filter((place: Place) => {
+        return place.mapboxId !== placeID;
+      });
+      console.log("updatedPlaces: ", updatedPlaces)
+      this.place.next(updatedPlaces);
+    }
+
+    return this.httpClient.delete(`${this.apiUrl}user/savedPlaces/${placeID}`, { headers: this.headers })
   }
 
   goToPlace(place: Place) {

@@ -30,10 +30,12 @@ export class TabSchedulePage {
   suburbDataSubscription: Subscription = new Subscription();
   listSuburbsSubscription: Subscription = new Subscription();
   loadsheddingStageSubscription: Subscription = new Subscription();
+  isLocationAvailableSubscription: Subscription = new Subscription();
 
   constructor(private userLocationService: UserLocationService,
     private scheduleService: ScheduleService,
-    private http: HttpClient) {}
+    private http: HttpClient,
+    ) {}
 
   async ngOnInit() {
     this.listSuburbsSubscription = this.http.get('assets/suburbs.json').subscribe(data => {
@@ -50,6 +52,33 @@ export class TabSchedulePage {
       console.log(stage);
       this.loadsheddingStage = stage;
     });
+  }
+
+  async ionViewWillEnter(){
+    // Attempt to get location
+    await this.userLocationService.getUserLocation();
+
+    this.isLocationAvailableSubscription = this.userLocationService.isLocationAvailable.subscribe((isLocationAvailable) => {
+      this.isLocationProvided = isLocationAvailable;
+      console.log("isLocationAvailable (Schedule page): ", this.isLocationProvided);
+    });
+
+      // Default Schedule: Area schedule on user location
+      let area = await this.userLocationService.getArea();
+      console.log("Area: ", area);
+      if (area != null) {
+        console.log("Area Name: ", area.properties.SP_NAME);
+        console.log("Area ID: ", area.id);
+        this.selectSuburb(
+          {
+            "id": area.id,
+            "name": area.properties.SP_NAME
+          }
+        );
+      }
+      else {
+        console.log("Area is not available outside of City of Tshwane.");
+      }
   }
 
   onSearch(event: any) {
@@ -95,6 +124,8 @@ export class TabSchedulePage {
         this.suburbName = selectedSuburb.name;
         this.searchTerm = selectedSuburb.name;
         
+        this.loadshedTimes = [];
+
         data.result.timesOff.forEach((timeOff: any) => {
           let tempScheduleTimes: IScheduleTime = {
             startTime: this.convertToDateTime(timeOff.start),

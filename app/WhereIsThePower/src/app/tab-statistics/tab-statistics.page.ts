@@ -275,9 +275,5 @@ export class TabStatisticsPage implements OnInit {
     this.suburbDataSubscription.unsubscribe();
     this.listSuburbsSubscription.unsubscribe();
   }
-
-  ionViewDidLeave() {
-    this.searchTerm = '';
-  }
 }
 
