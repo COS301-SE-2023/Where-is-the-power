@@ -18,6 +18,6 @@ export class ScheduleService {
   }
 
   getLoadSheddingStage() {
-    return this.httpClient.get('https://loadshedding.eskom.co.za/LoadShedding/GetStatus');
+    return this.httpClient.get('https://witpa.codelog.co.za/api/fetchCurrentStage');
   }
 }
