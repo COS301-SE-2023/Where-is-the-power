@@ -375,6 +375,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
 
   async getRoute(selectedResult: Place | any) {
+    this.instructions = [];
     this.updateBreakpoint();
     this.emitGetDirections();
     this.gettingRoute = true;
@@ -512,6 +513,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     };
     // get the sidebar and add the instructions
     const steps = data.instructions;
+    console.log("Steps", steps);
     for (const step of steps) {
       this.instructions.push(step);
     }
