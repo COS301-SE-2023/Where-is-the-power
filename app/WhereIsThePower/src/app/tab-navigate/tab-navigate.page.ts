@@ -24,6 +24,9 @@ export class TabNavigatePage {
       console.log('isLocationAvailable', isLocationAvailable);
       this.isLocationProvide = isLocationAvailable;
     });
+
+    if(this.mapModalComponent && this.mapModalComponent.map)
+      this.mapModalComponent.map.resize();
   }
 
   onLocateUser() {
