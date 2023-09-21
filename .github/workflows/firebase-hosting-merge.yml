@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      
       - uses: actions/setup-node@v3
         with:
           node-version: "18"
@@ -22,7 +23,7 @@ jobs:
       
       - name: update Prod ENV file
         run: | 
-          echo ${{ secrets.FRONTEND_PROD_ENV }} > ./app/WhereIsThePower/src/environments/environment.prod.ts 
+          echo ${{ secrets.FRONTEND_PROD_ENV }} > ./app/WhereIsThePower/src/environments/environment.prod.ts  
 
       - name: Build app
         working-directory: ./app/WhereIsThePower
