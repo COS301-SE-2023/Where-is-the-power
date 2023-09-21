@@ -742,7 +742,7 @@ impl MunicipalityEntity {
         // filter schedules to relevant ones
         for schedule in unfiltered_schedules {
             let keep = schedule.is_within_timeslot(&time_to_search);
-            println!("{:?}", time_to_search.hour());
+            //println!("{:?}", time_to_search.hour());
             if keep {
                 schedules.push(schedule);
             }
@@ -850,10 +850,10 @@ impl SuburbEntity {
             .unwrap()
             .with_minute(0)
             .unwrap();
-        println!("{:?}", time_now.timestamp());
+        //println!("{:?}", time_now.timestamp());
         let mut response: Vec<TimeSlot> = Vec::new();
         let day_in_future =
-            get_date_time(Some((Local::now() + chrono::Duration::days(1)).timestamp()));
+            get_date_time(Some((get_date_time(time) + chrono::Duration::days(1)).timestamp()));
 
         let (group, mut all_stages, schedule) = match self
             .collect_information(&time_now.timestamp(), connection, db_functions)
@@ -865,7 +865,7 @@ impl SuburbEntity {
         all_stages.reverse();
 
         let mut time_to_search = time_now;
-        println!("{:?}", time_to_search.timestamp());
+        //println!("{:?}", time_to_search.timestamp());
         while time_to_search < day_in_future {
             let day = time_to_search.day() as i32;
             let time_slots: Vec<TimeScheduleEntity> = schedule
@@ -1326,7 +1326,7 @@ impl<'de> Deserialize<'de> for SASTDateTime {
         // hack for now because library is not being co-operative
         let convert_to_sast = dt.timestamp() - 2*3600;
         let sast = get_date_time(Some(convert_to_sast));
-        println!("{:?}", sast);
+        //println!("{:?}", sast);
         Ok(SASTDateTime(sast))
     }
 }

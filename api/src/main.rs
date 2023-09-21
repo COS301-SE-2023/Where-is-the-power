@@ -235,7 +235,6 @@ async fn build_rocket() -> Rocket<Build> {
                 "/api-docs",
                 FileServer::new("api-docs", rocket::fs::Options::IndexFile),
             )
-            .attach(StageUpdater)
             .attach(cors.clone())
             .manage::<Option<Client>>(None)
     };
