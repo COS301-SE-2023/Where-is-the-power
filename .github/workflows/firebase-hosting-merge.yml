@@ -16,53 +16,25 @@ jobs:
         with:
           node-version: "18"
 
-      # - name: Install Dependencies
-      #   working-directory: ./app/WhereIsThePower
-      #   run: npm install --frozen-lock
+      - name: Install Dependencies
+        working-directory: ./app/WhereIsThePower
+        run: npm install --frozen-lock
       
-      - name: update Prod ENV >>
+      - name: update Prod ENV file
         run: | 
-          echo 'MapboxApiKey: Hello world' > ./app/WhereIsThePower/src/environments/environment.prod.ts  
-
-      - name: Cat PRODENV
-        run: cat ./app/WhereIsThePower/src/environments/environment.prod.ts
-
-      - name: Update Prod Env
-        uses: cschleiden/replace-tokens@v1.2
-        with:
-          tokenPrefix: '{'
-          tokenSuffix: '}'
-          files: './app/WhereIsThePower/src/environments/environment.prod.ts'
-        env:
-          MapboxApiKey: 'Hello WOrld'
-
-      - name: PWD
-        run: ls
-
-      - name: Cat PRODENV
-        # run: ls 
-        run: cat ./app/WhereIsThePower/src/environments/environment.prod.ts
-
-      - name: Update env
-        uses: cschleiden/replace-tokens@v1.2
-        with:
-          tokenPrefix: '{'
-          tokenSuffix: '}'
-          files: './app/WhereIsThePower/src/environments/environment.ts'
-        env:
-          MapboxApiKey: ${{ secrets.MAPBOX_API_KEY }}
+          echo ${{ secrets.FRONTEND_PROD_ENV }} > ./app/WhereIsThePower/src/environments/environment.prod.ts 
 
       - name: Cat ENV
         run: cat ./app/WhereIsThePower/src/environments/environment.ts
 
-      # - name: Build app
-      #   working-directory: ./app/WhereIsThePower
-      #   run: npm run build && cat ./src/environments/environment.ts
+      - name: Build app
+        working-directory: ./app/WhereIsThePower
+        run: npm run build && cat ./src/environments/environment.ts
 
-      # - uses: FirebaseExtended/action-hosting-deploy@v0
-      #   with:
-      #     repoToken: '${{ secrets.GITHUB_TOKEN }}'
-      #     firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_WHEREISTHEPOWER_33A66 }}'
-      #     channelId: live
-      #     projectId: whereisthepower-33a66
-      #     entrypoint: ./app/WhereIsThePower
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_WHEREISTHEPOWER_33A66 }}'
+          channelId: live
+          projectId: whereisthepower-33a66
+          entrypoint: ./app/WhereIsThePower
