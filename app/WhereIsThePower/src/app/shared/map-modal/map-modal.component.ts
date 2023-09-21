@@ -393,7 +393,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       // query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.longitude},${selectedResult.latitude}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
       //coords = [selectedResult.longitude, selectedResult.latitude];
 
-      const query: any = await this.mapSuburbsService.fetchOptimalRoute(this.longitude, this.latitude, selectedResult.longitude, selectedResult.latitude).toPromise();
+      query = await this.mapSuburbsService.fetchOptimalRoute(this.longitude, this.latitude, selectedResult.longitude, selectedResult.latitude).toPromise();
 
       coords = query.result.coordinates;
       this.searchBar.value = `${selectedResult.address}`;
@@ -405,7 +405,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       // coords = [selectedResult.center[0], selectedResult.center[1]];
 
       query = await this.mapSuburbsService.fetchOptimalRoute(this.longitude, this.latitude, selectedResult.center[0], selectedResult.center[1]).toPromise();
-      console.log("query", query);
 
       coords = query.result.coordinates;
       this.searchBar.value = `${selectedResult.place_name}`;
