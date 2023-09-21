@@ -30,10 +30,12 @@ export class TabSchedulePage {
   suburbDataSubscription: Subscription = new Subscription();
   listSuburbsSubscription: Subscription = new Subscription();
   loadsheddingStageSubscription: Subscription = new Subscription();
+  isLocationAvailableSubscription: Subscription = new Subscription();
 
   constructor(private userLocationService: UserLocationService,
     private scheduleService: ScheduleService,
-    private http: HttpClient) {}
+    private http: HttpClient,
+    ) {}
 
   async ngOnInit() {
     this.listSuburbsSubscription = this.http.get('assets/suburbs.json').subscribe(data => {
@@ -49,6 +51,13 @@ export class TabSchedulePage {
     this.loadsheddingStageSubscription = this.scheduleService.getLoadSheddingStage().subscribe((stage: any) => {
       console.log(stage);
       this.loadsheddingStage = stage;
+    });
+  }
+
+  async ionViewWillEnter(){
+    this.isLocationAvailableSubscription = this.userLocationService.isLocationAvailable.subscribe((isLocationAvailable) => {
+      this.isLocationProvided = isLocationAvailable;
+      console.log("isLocationAvailable (Schedule page): ", this.isLocationProvided);
     });
   }
 
@@ -95,6 +104,8 @@ export class TabSchedulePage {
         this.suburbName = selectedSuburb.name;
         this.searchTerm = selectedSuburb.name;
         
+        this.loadshedTimes = [];
+
         data.result.timesOff.forEach((timeOff: any) => {
           let tempScheduleTimes: IScheduleTime = {
             startTime: this.convertToDateTime(timeOff.start),
