@@ -366,6 +366,13 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     }
   }
 
+  onBlur() {
+    console.log("Search Bar Blurred");
+    setTimeout(() => {
+      this.showResultsList = false;
+    }, 200); // 200ms delay
+  }
+
 
   async getRoute(selectedResult: Place | any) {
     this.updateBreakpoint();

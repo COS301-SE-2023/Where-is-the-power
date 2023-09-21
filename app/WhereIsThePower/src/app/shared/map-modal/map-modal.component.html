@@ -8,6 +8,7 @@
         (keyup.enter)="onSearchInput($event)"
         (ionClear)="onSearchBarClear()"
         (ionFocus)="onSearchBarFocus()"
+        (ionBlur)="onBlur()"
         [disabled]="!mapLoaded"
         #searchBar>
       </ion-searchbar>
