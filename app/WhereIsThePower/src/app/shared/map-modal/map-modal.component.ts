@@ -180,11 +180,11 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   }
 
   addMarker(lon: number, lat: number, reportType: string) {
-    console.log("addMarkeraddMarker");
+    console.log("Add Marker");
     const customIcon = document.createElement('ion-icon');
     customIcon.style.width = '30px'; // Set the width of your custom icon
     customIcon.style.height = '30px'; // Set the height of your custom icon
-    customIcon.style.backgroundColor = 'var(--ion-color-primary)'; // Use Ionic primary color variable
+    customIcon.style.backgroundColor = '#00a165'; // Use Ionic primary color variable
     customIcon.style.backgroundImage = `url('assets/${reportType}.svg')`; // Replace with your icon path
     customIcon.style.backgroundSize = 'cover';
     customIcon.style.backgroundPosition = 'center';
@@ -212,7 +212,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       )
       .addTo(this.map);
 
-    // this.markers.push(marker); // Add the marker to the markers array
+      this.closePopup();
   }
   populatePolygons() {
     this.map.on('load', () => {

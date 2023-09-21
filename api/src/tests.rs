@@ -1,9 +1,11 @@
 use super::build_rocket;
+use bson::doc;
+use chrono::{Utc, NaiveDateTime, DateTime};
 use crate::ai::{AiInfoRequest, AiInfoResponse};
 use crate::api::UnifiedResponse;
 use crate::auth::{AuthClaims, AuthRequest, AuthType, JWTAuthToken};
 use crate::loadshedding::{
-    GroupEntity, MockDBFunctionsTrait, MunicipalityEntity, SuburbEntity, TimeScheduleEntity,
+    GroupEntity, MockDBFunctionsTrait, MunicipalityEntity, SuburbEntity, TimeScheduleEntity, LoadSheddingStage, SuburbStatsResponse, PredictiveSuburbStatsResponse, LoadsheddingData, SASTDateTime, DBFunctionsTrait,
 };
 use crate::scraper::convert_to_ints;
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
@@ -158,6 +160,29 @@ async fn polygon_request_test() {
 }
 
 #[rocket::async_test]
+async fn test_buildschedule() {
+    let testing_time = 1694660400;
+    let testing_suburb: SuburbEntity = serde_json::from_str(TEST_SUBURB_DATA).unwrap();
+    let mock = create_mock();
+    let result = testing_suburb.build_schedule(None, &mock, Some(testing_time)).await.unwrap();
+    let expected_output:PredictiveSuburbStatsResponse = serde_json::from_str(TEST_GETSCHEDULE_EXPECTED_RESULT).unwrap();
+    //println!("{:?}" , serde_json::to_string(&result).unwrap());
+    assert_eq!(result,expected_output);
+}
+
+#[rocket::async_test]
+async fn test_getstats() {
+    let testing_time = 1695265200;
+    let testing_suburb: SuburbEntity = serde_json::from_str(TEST_SUBURB_DATA).unwrap();
+    let mock = create_mock();
+    let result = testing_suburb.get_total_time_down_stats(None, &mock, Some(testing_time)).await.unwrap();
+    let expected_output:SuburbStatsResponse = serde_json::from_str(TEST_GETSTATS_EXPECTED_RESULT).unwrap();
+    //println!("{:?}", serde_json::to_string(&result).unwrap());
+    assert_eq!(result,expected_output);
+}
+
+/*
+#[rocket::async_test]
 async fn test_ai_endpoint() {
     let client = Client::tracked(build_rocket().await)
         .await
@@ -178,6 +203,25 @@ async fn test_ai_endpoint() {
     let body = serde_json::from_str::<UnifiedResponse<AiInfoResponse>>(&body).unwrap();
 
     assert!(body.success);
+}
+*/
+
+#[rocket::async_test]
+async fn test_loadshedding_helpers() {
+    let mock = create_mock();
+    let db: &dyn DBFunctionsTrait = &mock;
+    let start = SASTDateTime(DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp_opt(1694660400, 0).unwrap(), Utc).fixed_offset());
+    let end = SASTDateTime(DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp_opt(1694746800, 0).unwrap(), Utc).fixed_offset());
+    let test_schedule_conversion = LoadsheddingData {
+        stage: 0,
+        start: start,
+        end: end
+    };
+    let conversion = test_schedule_conversion.convert_to_loadsheddingstage();
+    let doc = doc! {};
+    let compare = db.collect_one_stage_log(doc, None, None).await.unwrap();
+    assert_eq!(conversion.start_time, compare.start_time);
+    assert_eq!(conversion.end_time, compare.end_time);
 }
 
 // #[rocket::async_test]
@@ -225,10 +269,10 @@ fn create_mock() -> MockDBFunctionsTrait  {
             "stopHour": 22,
             "stopMinute": 30, 
             "stages": [ 
-                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
-                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
-                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
-                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
             ], 
             "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
         },
@@ -239,10 +283,10 @@ fn create_mock() -> MockDBFunctionsTrait  {
             "stopHour": 0,
             "stopMinute": 30, 
             "stages": [ 
-                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
-                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
-                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
-                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
             ], 
             "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
         },
@@ -253,10 +297,10 @@ fn create_mock() -> MockDBFunctionsTrait  {
             "stopHour": 2,
             "stopMinute": 30, 
             "stages": [ 
-                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
-                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
-                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
-                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
             ], 
             "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
         },
@@ -267,10 +311,10 @@ fn create_mock() -> MockDBFunctionsTrait  {
             "stopHour": 4,
             "stopMinute": 30, 
             "stages": [ 
-                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
-                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
-                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
-                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
             ], 
             "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
         },
@@ -281,10 +325,10 @@ fn create_mock() -> MockDBFunctionsTrait  {
             "stopHour": 6,
             "stopMinute": 30, 
             "stages": [ 
-                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
-                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
-                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
-                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
             ], 
             "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
         },
@@ -295,10 +339,10 @@ fn create_mock() -> MockDBFunctionsTrait  {
             "stopHour": 8,
             "stopMinute": 30, 
             "stages": [ 
-                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
-                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
-                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
-                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
             ], 
             "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
         },
@@ -309,10 +353,10 @@ fn create_mock() -> MockDBFunctionsTrait  {
             "stopHour": 10,
             "stopMinute": 30, 
             "stages": [ 
-                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
-                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
-                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
-                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
             ], 
             "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
         },
@@ -323,10 +367,10 @@ fn create_mock() -> MockDBFunctionsTrait  {
             "stopHour": 12,
             "stopMinute": 30, 
             "stages": [ 
-                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
-                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
-                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
-                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
             ], 
             "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
         },
@@ -337,10 +381,10 @@ fn create_mock() -> MockDBFunctionsTrait  {
             "stopHour": 14,
             "stopMinute": 30, 
             "stages": [ 
-                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
-                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
-                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
-                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
             ], 
             "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
         },
@@ -351,10 +395,10 @@ fn create_mock() -> MockDBFunctionsTrait  {
             "stopHour": 16,
             "stopMinute": 30, 
             "stages": [ 
-                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
-                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
-                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
-                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
             ], 
             "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
         },
@@ -365,10 +409,10 @@ fn create_mock() -> MockDBFunctionsTrait  {
             "stopHour": 18,
             "stopMinute": 30, 
             "stages": [ 
-                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
-                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
-                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
-                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
             ], 
             "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
         },
@@ -379,13 +423,13 @@ fn create_mock() -> MockDBFunctionsTrait  {
             "stopHour": 20,
             "stopMinute": 30, 
             "stages": [ 
-                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
-                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }] },
-                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061b00" } ] },
-                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }] }
+                { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
+                { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
+                { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
+                { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
             ], 
             "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
-        },
+        }
     ] "#;
     let test_schedule: Vec<TimeScheduleEntity> = serde_json::from_str(data).unwrap();
     // DO NOT CHANGE ONCE FINALIZED
@@ -436,15 +480,180 @@ fn create_mock() -> MockDBFunctionsTrait  {
         }
     ]"#;
     let test_suburbs: Vec<SuburbEntity> = serde_json::from_str(data).unwrap();
+
+    let data = r#"[
+    {
+        "_id": {
+            "$oid": "650b1a741329313fc8b0c15b"
+        },
+        "startTime": 1694746800,
+        "endTime": 1694779200,
+        "stage": 5
+    },
+    {
+        "_id": {
+            "$oid": "650b1a741329313fc8b0c15a"
+        },
+        "startTime": 1694822400,
+        "endTime": 1694833200,
+        "stage": 0
+    },
+    {
+        "_id": {
+            "$oid": "650b1a741329313fc8b0c159"
+        },
+        "startTime": 1694833200,
+        "endTime": 1694854800,
+        "stage": 2
+    },
+    {
+        "_id": {
+            "$oid": "650b1a741329313fc8b0c158"
+        },
+        "startTime": 1694854800,
+        "endTime": 1694872800,
+        "stage": 0
+    },
+    {
+        "_id": {
+            "$oid": "650b1a741329313fc8b0c157"
+        },
+        "startTime": 1694872800,
+        "endTime": 1694959200,
+        "stage": 0
+    },
+    {
+        "_id": {
+            "$oid": "650b1a741329313fc8b0c156"
+        },
+        "startTime": 1694959200,
+        "endTime": 1695031200,
+        "stage": 2
+    },
+    {
+        "_id": {
+            "$oid": "650b1a741329313fc8b0c155"
+        },
+        "startTime": 1695031200,
+        "endTime": 1695045600,
+        "stage": 1
+    },
+    {
+        "_id": {
+            "$oid": "650b1a741329313fc8b0c154"
+        },
+        "startTime": 1695045600,
+        "endTime": 1695092400,
+        "stage": 3
+    },
+    {
+        "_id": {
+            "$oid": "650b1a741329313fc8b0c153"
+        },
+        "startTime": 1695092400,
+        "endTime": 1695132000,
+        "stage": 0
+    },
+    {
+        "_id": {
+            "$oid": "650b1a741329313fc8b0c152"
+        },
+        "startTime": 1695132000,
+        "endTime": 1695150000,
+        "stage": 3
+    },
+    {
+        "_id": {
+            "$oid": "650b1a741329313fc8b0c151"
+        },
+        "startTime": 1695153600,
+        "endTime": 1695160800,
+        "stage": 1
+    },
+    {
+        "_id": {
+            "$oid": "650b1a741329313fc8b0c150"
+        },
+        "startTime": 1695160800,
+        "endTime": 1695178800,
+        "stage": 0
+    },
+    {
+        "_id": {
+            "$oid": "650b1a741329313fc8b0c14f"
+        },
+        "startTime": 1695178800,
+        "endTime": 1695218400,
+        "stage": 0
+    },
+    {
+        "_id": {
+            "$oid": "650c24c257de8d37915d203c"
+        },
+        "startTime": 1695254400,
+        "endTime": 1695265200,
+        "stage": 1
+    },
+    {
+        "_id": {
+            "$oid": "650b1a741329313fc8b0c14d"
+        },
+        "startTime": 1695265200,
+        "endTime": 1695304800,
+        "stage": 0
+    },
+    {
+        "_id": {
+            "$oid": "650b1a741329313fc8b0c14c"
+        },
+        "startTime": 1695304800,
+        "endTime": 1695351600,
+        "stage": 3
+    }]"#;
+    let test_stage_logs: Vec<LoadSheddingStage> = serde_json::from_str(data).unwrap();
+
+    let data = r#"{
+        "_id": {
+        "$oid": "650b1a741329313fc8b0c15c"
+        },
+        "startTime": 1694660400,
+        "endTime": 1694746800,
+        "stage": 6
+    }"#;
+    let test_stage_log: LoadSheddingStage = serde_json::from_str(data).unwrap();
+
+    let data = r#"{ 
+        "_id": { "$oid": "64b6b9b30d09aa7756061b9d" },
+        "number": 1, 
+        "suburbs": [ 
+            { "$oid": "64b6b9b30d09aa7756061b30" }
+        ]
+    }"#;
+    let test_one_group: GroupEntity = serde_json::from_str(data).unwrap();
+    
     mock.expect_collect_schedules()
         .returning(move |_, _, _| Ok(test_schedule.clone()));
     mock.expect_collect_groups()
         .returning(move |_query, _conn, _opts| Ok(test_groups.clone()));
+    mock.expect_collect_one_group()
+        .returning(move |_query, _conn, _opts| Ok(test_one_group.clone()));
     mock.expect_collect_suburbs()
         .returning(move |_query, _conn, _opts| Ok(test_suburbs.clone()));
+    mock.expect_collect_stage_logs()
+        .returning(move |_query, _conn, _opts| Ok(test_stage_logs.clone()));
+    mock.expect_collect_one_stage_log()
+        .returning(move |_query, _conn, _opts| Ok(test_stage_log.clone()));
     mock
 }
+const TEST_SUBURB_DATA: &'static str = r#"{ 
+    "_id": { "$oid": "64b6b9b30d09aa7756061b30" },
+    "municipality": { "$oid": "64b6b9b30d09aa7756061a47" },
+    "name": "MUCKLENEUK", 
+    "geometry": [ 1 ] 
+}"#;
 
+const TEST_GETSTATS_EXPECTED_RESULT: &'static str = "{\"totalTime\":{\"on\":2520,\"off\":7560},\"perDayTimes\":{\"Sun\":{\"on\":360,\"off\":1080},\"Mon\":{\"on\":360,\"off\":1080},\"Sat\":{\"on\":360,\"off\":1080},\"Tue\":{\"on\":360,\"off\":1080},\"Thu\":{\"on\":360,\"off\":1080},\"Fri\":{\"on\":360,\"off\":1080},\"Wed\":{\"on\":360,\"off\":1080}},\"suburb\":{\"_id\":{\"$oid\":\"64b6b9b30d09aa7756061b30\"},\"municipality\":{\"$oid\":\"64b6b9b30d09aa7756061a47\"},\"name\":\"MUCKLENEUK\",\"geometry\":[1]}}";
+const TEST_GETSCHEDULE_EXPECTED_RESULT: &'static str = "{\"timesOff\":[{\"start\":1694743200,\"end\":1694665800},{\"start\":1694750400,\"end\":1694673000},{\"start\":1694757600,\"end\":1694680200},{\"start\":1694764800,\"end\":1694687400},{\"start\":1694772000,\"end\":1694694600},{\"start\":1694779200,\"end\":1694701800},{\"start\":1694786400,\"end\":1694709000},{\"start\":1694793600,\"end\":1694716200},{\"start\":1694800800,\"end\":1694723400},{\"start\":1694728800,\"end\":1694737800},{\"start\":1694822400,\"end\":1694745000},{\"start\":1694829600,\"end\":1694752200},{\"start\":1694836800,\"end\":1694759400},{\"start\":1694844000,\"end\":1694766600},{\"start\":1694851200,\"end\":1694773800},{\"start\":1694858400,\"end\":1694781000},{\"start\":1694865600,\"end\":1694788200},{\"start\":1694872800,\"end\":1694795400},{\"start\":1694880000,\"end\":1694802600},{\"start\":1694887200,\"end\":1694809800},{\"start\":1694815200,\"end\":1694824200},{\"start\":1694916000,\"end\":1694838600},{\"start\":1694923200,\"end\":1694845800},{\"start\":1695038400,\"end\":1694961000},{\"start\":1694973600,\"end\":1694982600},{\"start\":1695002400,\"end\":1695011400},{\"start\":1695096000,\"end\":1695018600},{\"start\":1695031200,\"end\":1695040200},{\"start\":1695124800,\"end\":1695047400},{\"start\":1695132000,\"end\":1695054600},{\"start\":1695060000,\"end\":1695069000},{\"start\":1695074400,\"end\":1695083400},{\"start\":1695088800,\"end\":1695097800},{\"start\":1695211200,\"end\":1695133800},{\"start\":1695218400,\"end\":1695141000},{\"start\":1695146400,\"end\":1695155400},{\"start\":1695261600,\"end\":1695270600},{\"start\":1695384000,\"end\":1695306600},{\"start\":1695391200,\"end\":1695313800},{\"start\":1695319200,\"end\":1695328200},{\"start\":1695333600,\"end\":1695342600},{\"start\":1695348000,\"end\":1695357000},{\"start\":1695441600,\"end\":1695364200},{\"start\":1695448800,\"end\":1695371400},{\"start\":1695376800,\"end\":1695385800},{\"start\":1695470400,\"end\":1695393000}]}";
 const POLYGON_DATA: &'static str = r#"{ 
     "_id": { "$oid": "64b6b9b30d09aa7756061a47" }, 
     "name": "tshwane", 
