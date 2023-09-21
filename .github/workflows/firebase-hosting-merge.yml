@@ -22,7 +22,7 @@ jobs:
       
       - name: update Prod ENV >>
         run: | 
-          echo 'MapboxApiKey: Hello world' >> ./app/WhereIsThePower/src/environments/environment.prod.ts  
+          echo 'MapboxApiKey: Hello world' > ./app/WhereIsThePower/src/environments/environment.prod.ts  
 
       - name: Cat PRODENV
         run: cat ./app/WhereIsThePower/src/environments/environment.prod.ts
