@@ -32,7 +32,14 @@
       <!-- SEARCH BAR -->
       <ion-row class="justify-content-center">
         <ion-col class="searchbar-container">
-          <ion-searchbar animated="true" placeholder="Search for a place..." (ionInput)="onSearchInput($event)" (keyup.enter)="onSearchInput($event)" (ionClear)="onSearchBarClear()" (ionFocus)="onSearchBarFocus()" #searchBar></ion-searchbar>
+          <ion-searchbar animated="true" placeholder="Search for a place..." 
+            (ionInput)="onSearchInput($event)" 
+            (keyup.enter)="onSearchInput($event)"
+            (ionClear)="onSearchBarClear()" 
+            (ionFocus)="onSearchBarFocus()"         
+            (ionBlur)="onBlur()"
+            #searchBar>
+          </ion-searchbar>
           <ion-list *ngIf="showResultsList; else elseBlock">
             <ion-item *ngFor="let result of searchResults" (click)="savePlace(result)"  button>
               <ion-icon slot="start" name="{{ getFeatureType(result.place_type[0]) }}"></ion-icon>
@@ -42,17 +49,6 @@
               </ion-label>
               <!-- TEMP ADD PLACE -->
               <ion-icon name="add-circle" color="primary" size="large"></ion-icon>
-              <!-- BOOKMARK -->
-              <!-- <div *ngIf="isPlaceSaved(result) === false; else elseBlock"> -->
-                <!-- ADD -->
-                    <!-- <ion-icon color="success" style="font-size: 24px;" slot="icon-only" name="bookmark-outline"></ion-icon> -->
-              <!-- </div> -->
-              <!-- <ng-template #elseBlock> -->
-                <!-- <div> -->
-                  <!-- DELETE -->
-                    <!-- <ion-icon slot="icon-only" name="bookmark"></ion-icon> -->
-                <!-- </div> -->
-              <!-- </ng-template> -->
             </ion-item>
           </ion-list>
         </ion-col>

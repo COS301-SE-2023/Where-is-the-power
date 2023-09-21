@@ -212,6 +212,12 @@ export class TabSavedPage {
     this.showResultsList = false;
   }
 
+  onBlur() {
+    console.log("Search Bar Blurred");
+    setTimeout(() => {
+      this.showResultsList = false;
+    }, 200); // 200ms delay
+  }
 
   async sucessToast(message: string) {
     const toast = await this.toastController.create({
