@@ -32,7 +32,14 @@
       <!-- SEARCH BAR -->
       <ion-row class="justify-content-center">
         <ion-col class="searchbar-container">
-          <ion-searchbar animated="true" placeholder="Search for a place..." (ionInput)="onSearchInput($event)" (keyup.enter)="onSearchInput($event)" (ionClear)="onSearchBarClear()" (ionFocus)="onSearchBarFocus()" #searchBar></ion-searchbar>
+          <ion-searchbar animated="true" placeholder="Search for a place..." 
+            (ionInput)="onSearchInput($event)" 
+            (keyup.enter)="onSearchInput($event)"
+            (ionClear)="onSearchBarClear()" 
+            (ionFocus)="onSearchBarFocus()"         
+            (ionBlur)="onBlur()"
+            #searchBar>
+          </ion-searchbar>
           <ion-list *ngIf="showResultsList; else elseBlock">
             <ion-item *ngFor="let result of searchResults" (click)="savePlace(result)"  button>
               <ion-icon slot="start" name="{{ getFeatureType(result.place_type[0]) }}"></ion-icon>
