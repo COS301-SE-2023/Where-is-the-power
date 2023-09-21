@@ -390,20 +390,25 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
     if (!selectedResult.hasOwnProperty('center')) {
       console.log("Selected directions (saved places) ", selectedResult);
+      const response: any = await this.mapSuburbsService.fetchOptimalRoute(this.longitude, this.latitude, selectedResult.longitude, selectedResult.latitude).toPromise();
 
+      coords = response.result.coordinates;
       this.searchBar.value = `${selectedResult.address}`;
       query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.longitude},${selectedResult.latitude}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
-      coords = [selectedResult.longitude, selectedResult.latitude];
+      //coords = [selectedResult.longitude, selectedResult.latitude];
     }
     else {
       console.log("Search directions (searchbar) ", selectedResult);
+      const response: any = await this.mapSuburbsService.fetchOptimalRoute(this.longitude, this.latitude, selectedResult.center[0], selectedResult.center[1]).toPromise();
+
+      coords = response.result.coordinates;
 
       this.searchBar.value = `${selectedResult.place_name}`;
       query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.center[0]},${selectedResult.center[1]}?alternatives=true&geometries=geojson&language=en&steps=true&access_token=${environment.MapboxApiKey}`)
-      coords = [selectedResult.center[0], selectedResult.center[1]];
+      console.log("query", query);
+      // coords = [selectedResult.center[0], selectedResult.center[1]];
     }
     console.log("Directions query: ", query);
-    console.log(coords);
     // Add a marker for the start point
 
     const start = {
@@ -479,7 +484,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
                 properties: {},
                 geometry: {
                   type: 'Point',
-                  coordinates: coords
+                  coordinates:  [coords[coords.length - 1][0], coords[coords.length - 1][1]]
                 }
               }
             ]
@@ -491,7 +496,6 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         }
       });
     }
-
     const json = await query.json();
 
     const data = json.routes[0]; // Pick 1st route in list of route recommendations
