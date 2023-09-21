@@ -389,14 +389,14 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     let query: any;
 
     if (!selectedResult.hasOwnProperty('center')) {
-      console.log("SELECTED DIRECTION", selectedResult);
+      console.log("Selected directions (saved places) ", selectedResult);
 
       this.searchBar.value = `${selectedResult.address}`;
       query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.longitude},${selectedResult.latitude}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
-      coords = [selectedResult[0], selectedResult[1]];
+      coords = [selectedResult.longitude, selectedResult.latitude];
     }
     else {
-      console.log("SEARCH DIRECTION", selectedResult);
+      console.log("Search directions (searchbar) ", selectedResult);
 
       this.searchBar.value = `${selectedResult.place_name}`;
       query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.center[0]},${selectedResult.center[1]}?alternatives=true&geometries=geojson&language=en&steps=true&access_token=${environment.MapboxApiKey}`)
