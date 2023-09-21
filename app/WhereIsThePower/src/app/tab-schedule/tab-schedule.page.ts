@@ -55,10 +55,30 @@ export class TabSchedulePage {
   }
 
   async ionViewWillEnter(){
+    // Attempt to get location
+    await this.userLocationService.getUserLocation();
+
     this.isLocationAvailableSubscription = this.userLocationService.isLocationAvailable.subscribe((isLocationAvailable) => {
       this.isLocationProvided = isLocationAvailable;
       console.log("isLocationAvailable (Schedule page): ", this.isLocationProvided);
     });
+
+      // Default Schedule: Area schedule on user location
+      let area = await this.userLocationService.getArea();
+      console.log("Area: ", area);
+      if (area != null) {
+        console.log("Area Name: ", area.properties.SP_NAME);
+        console.log("Area ID: ", area.id);
+        this.selectSuburb(
+          {
+            "id": area.id,
+            "name": area.properties.SP_NAME
+          }
+        );
+      }
+      else {
+        console.log("Area is not available outside of City of Tshwane.");
+      }
   }
 
   onSearch(event: any) {
