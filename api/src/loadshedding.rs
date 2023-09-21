@@ -117,7 +117,7 @@ pub async fn fetch_suburb_stats<'a>(
     };
     let db_functions = DBFunctions {};
     match suburb
-        .get_total_time_down_stats(Some(&connection), &db_functions)
+        .get_total_time_down_stats(Some(&connection), &db_functions, None)
         .await
     {
         Ok(data) => return ApiResponse::Ok(data),
@@ -353,7 +353,7 @@ pub struct GroupEntity {
     // consider a small refactor to add groups associated municipalities for better efficiency
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Entity)]
+#[derive(Debug, Serialize, Deserialize, Clone, Entity,PartialEq)]
 #[serde(rename_all = "camelCase")]
 #[collection_name = "suburbs"]
 pub struct SuburbEntity {
@@ -431,7 +431,7 @@ pub struct SuburbStatsRequest {
     pub suburb_id: u32,
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, ToSchema,PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct SuburbStatsResponse {
     pub total_time: TotalTime,
@@ -439,19 +439,19 @@ pub struct SuburbStatsResponse {
     pub suburb: SuburbEntity,
 }
 
-#[derive(Serialize, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct PredictiveSuburbStatsResponse {
     times_off: Vec<TimeSlot>,
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct TimeSlot {
     start: i64,
     end: i64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug,PartialEq)]
 pub struct TotalTime {
     pub on: i32,
     pub off: i32,
@@ -913,58 +913,16 @@ impl SuburbEntity {
         self,
         connection: Option<&Database>,
         db_functions: &dyn DBFunctionsTrait,
+        time: Option<i64>
     ) -> Result<SuburbStatsResponse, ApiError<'static>> {
-        // queries
-        // get all the stage changes from the past week
-        let one_week_ago = (Local::now() - chrono::Duration::weeks(1)).timestamp();
-        let query = doc! {
-            "startTime": {
-                "$gte": one_week_ago
-            }
-        };
-        let find_options = FindOptions::builder().sort(doc! { "startTime": 1 }).build();
-        let mut all_stages = match db_functions
-            .collect_stage_logs(query, connection, Some(find_options))
-            .await
-        {
-            Ok(item) => item,
-            Err(err) => {
-                return Err(err);
-            }
-        };
-        all_stages.reverse();
-
-        // find first timestamp after one week ago
-        let query = doc! {
-            "startTime": {
-                "$lte": one_week_ago
-            }
-        };
-        let find_options = FindOptions::builder()
-            .sort(doc! { "startTime": -1 })
-            .limit(1)
-            .build();
-        let first_stage_change = match db_functions
-            .collect_one_stage_log(query, connection, Some(find_options))
-            .await
-        {
-            Ok(cursor) => cursor,
-            Err(err) => {
-                return Err(err);
-            }
-        };
-        all_stages.push(first_stage_change);
-
-        // queries are over
-
         // Time
         let mut down_time = 0;
         let mut daily_stats: HashMap<String, TotalTime> = HashMap::new();
 
         // get the relevant data
-        let time_now = get_date_time(None);
+        let time_now = get_date_time(time);
         let one_week_ago = get_date_time(Some(
-            (Local::now() - chrono::Duration::weeks(1)).timestamp(),
+            (get_date_time(time) - chrono::Duration::weeks(1)).timestamp(),
         ));
         let (group, mut all_stages, schedule) = match self
             .collect_information(&one_week_ago.timestamp(), connection, db_functions)
