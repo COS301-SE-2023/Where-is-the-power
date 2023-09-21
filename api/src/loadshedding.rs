@@ -1099,30 +1099,32 @@ impl SuburbEntity {
 impl LoadSheddingStage {
     pub async fn set_stage(&mut self) {
         // get the next thing from db
-        let con = &self.db.as_ref().unwrap().database("production");
-        let now = get_date_time(None).timestamp();
-        let query = doc! {
-            "startTime" : {
-                "$lte" : now
-            }
-        };
-        let filter = doc! {
-            "startTime" : -1
-        };
-        let find_options = FindOneOptions::builder().sort(filter).build();
-        let new_status: LoadSheddingStage = con
-            .collection("stage_log")
-            .find_one(query, find_options)
-            .await
-            .unwrap()
-            .unwrap();
-        println!("self is: {:?}", self);
-        println!("new is: {:?}", new_status);
-        self.end_time = new_status.end_time;
-        self.start_time = new_status.start_time;
-        self.stage = new_status.stage;
-        println!("self is after operation: {:?}", self);
-        //println!("{:?}", self);
+        if let Some(client) = &self.db.as_ref() {
+            let con = client.database("production");
+            let now = get_date_time(None).timestamp();
+            let query = doc! {
+                "startTime" : {
+                    "$lte" : now
+                }
+            };
+            let filter = doc! {
+                "startTime" : -1
+            };
+            let find_options = FindOneOptions::builder().sort(filter).build();
+            let new_status: LoadSheddingStage = con
+                .collection("stage_log")
+                .find_one(query, find_options)
+                .await
+                .unwrap()
+                .unwrap();
+            println!("self is: {:?}", self);
+            println!("new is: {:?}", new_status);
+            self.end_time = new_status.end_time;
+            self.start_time = new_status.start_time;
+            self.stage = new_status.stage;
+            println!("self is after operation: {:?}", self);
+            //println!("{:?}", self);
+        }
     }
 
     pub async fn request_stage_data_update(&mut self) -> Result<i32, reqwest::Error> {
