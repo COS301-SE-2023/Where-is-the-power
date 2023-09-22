@@ -21,19 +21,19 @@ jobs:
       - name: Remove consolelogs from production site  
         run: echo "if(window) { window.console.log = function() {}; }" >> app/WhereIsThePower/src/main.ts
     
-    #   - name: update Prod ENV file
-    #     run: | 
-    #       sed -i 's/HelloAPIKey/${{ secrets.MAPBOX_API_KEY }}/g' app/WhereIsThePower/src/environments/environment.prod.ts
+      - name: update Prod ENV file
+        run: | 
+          sed -i 's/HelloAPIKey/${{ secrets.MAPBOX_API_KEY }}/g' app/WhereIsThePower/src/environments/environment.prod.ts
 
-    #   - name: Build app
-    #     working-directory: ./app/WhereIsThePower
-    #     run: npm run build
+      - name: Build app
+        working-directory: ./app/WhereIsThePower
+        run: npm run build
 
-    #   - uses: FirebaseExtended/action-hosting-deploy@v0
-    #     with:
-    #       repoToken: '${{ secrets.GITHUB_TOKEN }}'
-    #       firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_WHEREISTHEPOWER_33A66 }}'
-    #       channelId: live
-    #       projectId: whereisthepower-33a66
-    #       target: prod
-    #       entrypoint: ./app/WhereIsThePower
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_WHEREISTHEPOWER_33A66 }}'
+          channelId: live
+          projectId: whereisthepower-33a66
+          target: prod
+          entrypoint: ./app/WhereIsThePower
