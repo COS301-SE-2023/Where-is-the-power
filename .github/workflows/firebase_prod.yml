@@ -20,6 +20,8 @@ jobs:
       
       - name: Remove consolelogs from production site   
         run: | 
+            ls
+            pwd
             echo "{{ if(window) { window.console.log = function() {}; } }}" >> app/WhereIsThePower/src/main.ts
     
     #   - name: update Prod ENV file
