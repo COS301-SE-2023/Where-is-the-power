@@ -19,7 +19,7 @@ jobs:
     #     run: npm install --frozen-lock
       
       - name: Remove consolelogs from production site
-        working-directory: ./app/WhereIsThePower   
+        working-directory: app/WhereIsThePower   
         run: echo "if(window) { window.console.log = function() {}; }" >> src/main.ts
     
     #   - name: update Prod ENV file
