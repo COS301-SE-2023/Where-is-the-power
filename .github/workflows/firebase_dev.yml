@@ -3,7 +3,7 @@ name: Build and Deploy app to DEV site
   push:
     branches:
       - dev
-      - WIP-61-ISSUE-multisite-host-for-pre-release
+
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
