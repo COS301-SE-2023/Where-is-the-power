@@ -8,18 +8,18 @@ jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
-    #   - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
       
-    #   - uses: actions/setup-node@v3
-    #     with:
-    #       node-version: "18"
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18"
 
-    #   - name: Install Dependencies
-    #     working-directory: ./app/WhereIsThePower
-    #     run: npm install --frozen-lock
+      - name: Install Dependencies
+        working-directory: ./app/WhereIsThePower
+        run: npm install --frozen-lock
       
       - name: Remove consolelogs from production site  
-        run: ls
+        run: echo "if(window) { window.console.log = function() {}; }" >> app/WhereIsThePower/src/main.ts
     
     #   - name: update Prod ENV file
     #     run: | 
