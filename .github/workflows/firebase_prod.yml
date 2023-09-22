@@ -19,7 +19,7 @@ jobs:
     #     run: npm install --frozen-lock
       
       - name: Remove consolelogs from production site  
-        run: echo "if(window) { window.console.log = function() {}; }" >> ./app/WhereIsThePower/src/main.ts
+        run: pwd
     
     #   - name: update Prod ENV file
     #     run: | 
