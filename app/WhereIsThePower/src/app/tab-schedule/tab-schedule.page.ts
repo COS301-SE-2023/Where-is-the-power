@@ -50,7 +50,8 @@ export class TabSchedulePage {
 
     this.loadsheddingStageSubscription = this.scheduleService.getLoadSheddingStage().subscribe((stage: any) => {
       console.log(stage);
-      this.loadsheddingStage = stage;
+      this.loadsheddingStage = stage.result;
+      this.chipColor = this.setChipColor(this.loadsheddingStage);
     });
   }
 
@@ -155,6 +156,12 @@ export class TabSchedulePage {
   formatTime(unformattedTime: number) {
     if(unformattedTime < 10) return '0' + unformattedTime;
     return unformattedTime;
+  }
+
+  setChipColor(loadshedStage: number) {
+    if(loadshedStage > 0 && loadshedStage < 4) return "warning";
+    if(loadshedStage >= 4) return "danger";
+    return "success";
   }
 
   ngOnDestroy() {
