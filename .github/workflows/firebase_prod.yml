@@ -1,8 +1,8 @@
-name: Build and Deploy app to DEV site
+name: Build and Deploy app to PROD site
 'on':
   push:
     branches:
-      - dev
+      - main
       - WIP-61-ISSUE-multisite-host-for-pre-release
 jobs:
   build_and_deploy:
@@ -18,12 +18,10 @@ jobs:
         working-directory: ./app/WhereIsThePower
         run: npm install --frozen-lock
       
-      - name: Inject Developer tags    
+      - name: Remove consolelogs from production site   
         run: | 
-          sed -i 's|<!-- DEVELOPER SITE INJECTION -->|<ion-item><ion-title style="background-color: red; color: white;">DEVELOPER SITE</ion-title></ion-item>|g' app/WhereIsThePower/src/app/app.component.html
-          sed -i 's|<title>Where Is The Power|<title>WITP-DEV|g' app/WhereIsThePower/src/index.html
-          sed -i 's|href="assets/icon/favicon.ico"|href="assets/Ramp.svg"|g' app/WhereIsThePower/src/index.html
-
+            if(window){window.console.log = function(){};} >> ./app/WhereIsThePower/src/main.ts
+    
       - name: update Prod ENV file
         run: | 
           sed -i 's/HelloAPIKey/${{ secrets.MAPBOX_API_KEY }}/g' app/WhereIsThePower/src/environments/environment.prod.ts
@@ -38,5 +36,5 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_WHEREISTHEPOWER_33A66 }}'
           channelId: live
           projectId: whereisthepower-33a66
-          target: dev
+          target: prod
           entrypoint: ./app/WhereIsThePower
