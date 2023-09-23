@@ -1,3 +1,21 @@
 .map {
   width: 100%;
 }
+
+.loadsheddingBanner{
+  background-color: yellow;
+}
+
+.search-container {
+  position: relative;
+}
+
+.search-results {
+  position: absolute;
+  top: 100%;  /* Display results directly below the search bar */
+  left: 0;
+  right: 0;
+  z-index: 999;  /* Ensure results are displayed above other elements */
+  max-height: 300px;
+  overflow-y: auto;  /* Allow scrolling for long lists */
+}

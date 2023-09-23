@@ -8,11 +8,12 @@
         (keyup.enter)="onSearchInput($event)"
         (ionClear)="onSearchBarClear()"
         (ionFocus)="onSearchBarFocus()"
+        (ionBlur)="onBlur()"
         [disabled]="!mapLoaded"
         #searchBar>
       </ion-searchbar>
       <ion-list *ngIf="searchResults.length > 0 && showResultsList">
-        <ion-item *ngFor="let result of searchResults" (click)="getRoute(result)" (click)="openModal(result)" button>
+        <ion-item *ngFor="let result of searchResults" (click)="getRoute(result)" button>
           <ion-label>
             <h3><strong>{{ result.text }}</strong></h3>
             <ion-note>{{ result.place_name }}</ion-note>
@@ -21,13 +22,48 @@
       </ion-list>
     </ion-col>
   </ion-row>
+
+
+
   <ion-fab slot="fixed" *ngIf="!gettingRoute || screenWidth > 768" vertical="bottom" horizontal="end" >
-    <ion-fab-button (click) = "pin()" [disabled]="!mapLoaded">
+    <ion-fab-button class="ion-margin-bottom reportFab" [disabled]="!mapLoaded" (click)="goToReport()" button>
+      <ion-icon name="megaphone-outline" size="large"></ion-icon>
+    </ion-fab-button>
+    <ion-fab-button (click) = "pin()" [disabled]="!mapLoaded" class="locateFab">
       <ion-icon name="locate-outline" size="large"></ion-icon>
     </ion-fab-button>
   </ion-fab>
+
   <ion-row id="map"></ion-row>
-  <ion-modal #myModal *ngIf="searchResults.length > 0"
+
+  <ion-modal #navigateModal
+    [initialBreakpoint]="currentBreakpoint"
+    [breakpoints]="[0, currentBreakpoint]"
+    [backdropDismiss]="true"
+    >
+    <ng-template>
+      <ion-content class="ion-padding">
+        <h3><ion-text color="primary">{{ goToPlace.name }}</ion-text></h3>
+        <ion-text color="medium">{{ modifiedAddress }}</ion-text>
+
+        <ion-grid class="ion-no-padding ion-margin-top">
+          <ion-row>
+            <ion-col>
+              <ion-button *ngIf = "!isPlaceSaved" shape="round" (click)="savePlace()">
+                <ion-icon slot="start" src="assets/bookmarks.svg"></ion-icon>
+                Save
+              </ion-button>
+              <ion-button shape="round" fill="outline" (click)="getRoute(goToPlace)" (click)="cancelNavigateModal()">
+                <ion-icon slot="start" name="navigate-outline"></ion-icon>
+                Directions
+              </ion-button>
+            </ion-col>
+          </ion-row>
+      </ion-grid>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+  <ion-modal #myModal
     class="ion-hide-md-up"
     [initialBreakpoint]="currentBreakpoint"
     [breakpoints]="[0.12, currentBreakpoint, 0.5 , 0.75, 1]"
@@ -69,7 +105,7 @@
                 <h4>{{tripETAH}}:{{tripETAM}}</h4>
               </ion-col>
             </ion-row>
-            
+
             <ion-button expand="block" class="ion-margin-top" (click)="beginTrip()"style="text-transform: none;">
               <ion-icon slot="start" name="navigate-circle-outline"></ion-icon>
               <ion-text>Begin Trip</ion-text>
@@ -101,7 +137,7 @@
               </h3>
               <ion-text>{{ tripDuration}} min</ion-text>
               <ion-text style="padding-left: 8px; padding-right: 8px;">&#8226;</ion-text>
-              <ion-text>13:00</ion-text>
+              <ion-text>{{tripETAH}}:{{tripETAM}}</ion-text>
             </ion-col>
             <ion-col size="4" class="ion-text-end ion-align-items-center" style="
               display: flex;

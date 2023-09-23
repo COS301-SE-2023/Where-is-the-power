@@ -16,6 +16,7 @@ use rocket::{
     fairing::{self, Fairing, Info, Kind},
     futures::{future::try_join_all, TryStreamExt},
     post,
+    get,
     serde::json::Json,
     Orbit, Rocket, State,
 };
@@ -116,10 +117,97 @@ pub async fn fetch_suburb_stats<'a>(
         None => return ApiError::ServerError("Document not found").into(),
     };
     let db_functions = DBFunctions {};
-    match suburb.get_stats(&connection, &db_functions).await {
+    match suburb
+        .get_total_time_down_stats(Some(&connection), &db_functions, None)
+        .await
+    {
         Ok(data) => return ApiResponse::Ok(data),
         Err(err) => return err.into(),
     }
+}
+
+#[utoipa::path(post, tag = "Schedule Data", path = "/api/fetchScheduleData", request_body = SuburbStatsRequest)]
+#[post("/fetchScheduleData", format = "application/json", data = "<request>")]
+pub async fn fetch_schedule<'a>(
+    db: &State<Option<Client>>,
+    request: Json<SuburbStatsRequest>,
+) -> ApiResponse<'a, PredictiveSuburbStatsResponse> {
+    let oid = &request.suburb_id;
+    let connection = db.as_ref().unwrap().database("production");
+    let query = doc! {"geometry" : {"$in" : [oid]}};
+    let suburb: SuburbEntity = match connection
+        .collection("suburbs")
+        .find_one(query, None)
+        .await
+        .unwrap()
+    {
+        Some(result) => result,
+        None => return ApiError::ServerError("Document not found").into(),
+    };
+    let db_functions = DBFunctions {};
+    match suburb.build_schedule(Some(&connection), &db_functions, None).await {
+        Ok(data) => return ApiResponse::Ok(data),
+        Err(err) => return err.into(),
+    }
+}
+
+#[utoipa::path(post, tag = "Schedule Data", path = "/api/fetchTimeForPolygon", request_body = SuburbStatsRequest)]
+#[post(
+    "/fetchTimeForPolygon",
+    format = "application/json",
+    data = "<request>"
+)]
+pub async fn fetch_time_for_polygon<'a>(
+    db: &State<Option<Client>>,
+    request: Json<SuburbStatsRequest>,
+) -> ApiResponse<'a, PredictiveSuburbStatsResponse> {
+    let oid = &request.suburb_id;
+    let connection = db.as_ref().unwrap().database("production");
+    let query = doc! {"geometry" : {"$in" : [oid]}};
+    let suburb: SuburbEntity = match connection
+        .collection("suburbs")
+        .find_one(query, None)
+        .await
+        .unwrap()
+    {
+        Some(result) => result,
+        None => return ApiError::ServerError("Document not found").into(),
+    };
+    let db_functions = DBFunctions {};
+    let time_now = get_date_time(None);
+    match suburb.build_schedule(Some(&connection), &db_functions, None).await {
+        Ok(data) => {
+            let relevant: Vec<TimeSlot> = data
+                .times_off
+                .into_iter()
+                .filter(|time| time.time_slot_bound_validation(&time_now))
+                .collect();
+            if let Some(to_return) = relevant.get(0) {
+                return ApiResponse::Ok(PredictiveSuburbStatsResponse {
+                    times_off: vec![to_return.clone()],
+                });
+            } else {
+                return ApiResponse::Ok(PredictiveSuburbStatsResponse { times_off: vec![] });
+            }
+        }
+        Err(err) => err.into(),
+    }
+}
+
+#[utoipa::path(get, path = "/api/fetchCurrentStage")]
+#[get("/fetchCurrentStage")]
+pub async fn get_current_stage<'a>(
+    loadshedding_stage: &State<Option<Arc<RwLock<LoadSheddingStage>>>>,
+) -> ApiResponse<'a, i32> {
+    // query end
+    ApiResponse::Ok(loadshedding_stage
+        .inner()
+        .as_ref()
+        .clone()
+        .unwrap()
+        .read()
+        .await
+        .stage)
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Entity)]
@@ -282,7 +370,7 @@ pub struct GroupEntity {
     // consider a small refactor to add groups associated municipalities for better efficiency
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Entity)]
+#[derive(Debug, Serialize, Deserialize, Clone, Entity,PartialEq)]
 #[serde(rename_all = "camelCase")]
 #[collection_name = "suburbs"]
 pub struct SuburbEntity {
@@ -360,7 +448,7 @@ pub struct SuburbStatsRequest {
     pub suburb_id: u32,
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, ToSchema,PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct SuburbStatsResponse {
     pub total_time: TotalTime,
@@ -368,7 +456,19 @@ pub struct SuburbStatsResponse {
     pub suburb: SuburbEntity,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct PredictiveSuburbStatsResponse {
+    times_off: Vec<TimeSlot>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct TimeSlot {
+    start: i64,
+    end: i64,
+}
+
+#[derive(Serialize, Deserialize, Debug,PartialEq)]
 pub struct TotalTime {
     pub on: i32,
     pub off: i32,
@@ -562,6 +662,75 @@ impl DBFunctionsTrait for DBFunctions {
     }
 }
 // db functions end
+impl LoadsheddingData {
+    pub fn convert_to_loadsheddingstage(&self) -> LoadSheddingStage {
+        return LoadSheddingStage {
+            id: None,
+            start_time: self.start.0.timestamp(),
+            end_time: self.end.0.timestamp(),
+            db: None,
+            stage: self.stage,
+        }
+    }
+}
+
+
+impl TimeSlot {
+    fn time_slot_bound_validation(&self, time_to_search: &DateTime<FixedOffset>) -> bool {
+        let stamp = time_to_search.timestamp();
+        if self.start <= stamp {
+            if self.end > stamp {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+impl TimeScheduleEntity {
+    pub fn timestamp_from_slot_times(
+        &self,
+        time_to_search: DateTime<FixedOffset>,
+        start: bool,
+    ) -> DateTime<FixedOffset> {
+        let mut time = time_to_search
+            .with_hour(if start {
+                self.start_hour as u32
+            } else {
+                self.stop_hour as u32
+            })
+            .unwrap()
+            .with_minute(if start {
+                self.start_minute as u32
+            } else {
+                self.stop_minute as u32
+            })
+            .unwrap();
+        if time < time_to_search {
+            time = time.checked_add_signed(chrono::Duration::days(1)).unwrap();
+        }
+        time
+    }
+    fn is_within_timeslot(&self, time_to_search: &DateTime<FixedOffset>) -> bool {
+        let mut maybe = false;
+        if self.start_hour <= time_to_search.hour() as i32 {
+            if self.stop_hour >= time_to_search.hour() as i32 {
+                maybe = true;
+                if self.stop_minute <= time_to_search.minute() as i32
+                    && self.stop_hour == time_to_search.hour() as i32
+                {
+                    return false;
+                }
+                if self.start_minute > time_to_search.minute() as i32
+                    && self.start_hour == time_to_search.hour() as i32
+                {
+                    return false;
+                }
+            }
+        }
+        return maybe;
+    }
+}
 
 impl MunicipalityEntity {
     pub async fn get_regions_at_time(
@@ -589,23 +758,8 @@ impl MunicipalityEntity {
         let mut schedules: Vec<TimeScheduleEntity> = Vec::new();
         // filter schedules to relevant ones
         for schedule in unfiltered_schedules {
-            let mut keep = false;
+            let keep = schedule.is_within_timeslot(&time_to_search);
             println!("{:?}", time_to_search.hour());
-            if schedule.start_hour <= time_to_search.hour() as i32 {
-                if schedule.stop_hour >= time_to_search.hour() as i32 {
-                    keep = true;
-                    if schedule.stop_minute <= time_to_search.minute() as i32
-                        && schedule.stop_hour == time_to_search.hour() as i32
-                    {
-                        keep = false;
-                    }
-                    if schedule.start_minute > time_to_search.minute() as i32
-                        && schedule.start_hour == time_to_search.hour() as i32
-                    {
-                        keep = false;
-                    }
-                }
-            }
             if keep {
                 schedules.push(schedule);
             }
@@ -702,110 +856,114 @@ impl MunicipalityEntity {
 }
 
 impl SuburbEntity {
-    pub async fn get_stats(
+    pub async fn build_schedule(
         self,
-        connection: &Database,
+        connection: Option<&Database>,
         db_functions: &dyn DBFunctionsTrait,
-    ) -> Result<SuburbStatsResponse, ApiError<'static>> {
-        // queries
-        // get the relevant group
-        let query = doc! {
-            "suburbs" : {
-                "$in" : [self.id.unwrap()]
-            }
-        };
-        let group: GroupEntity = match db_functions
-            .collect_one_group(query, Some(connection), None)
-            .await
-        {
-            Ok(group) => group,
-            Err(err) => {
-                return Err(err);
-            }
-        };
+        time: Option<i64>,
+    ) -> Result<PredictiveSuburbStatsResponse, ApiError<'static>> {
+        let time_now = get_date_time(time)
+            .with_second(0)
+            .unwrap()
+            .with_minute(0)
+            .unwrap();
+        println!("{:?}", time_now.timestamp());
+        let mut response: Vec<TimeSlot> = Vec::new();
+        let day_in_future =
+            get_date_time(Some((Local::now() + chrono::Duration::days(1)).timestamp()));
 
-        // get all the stage changes from the past week
-        let time_now = Local::now();
-        let one_week_ago = (Local::now() - chrono::Duration::weeks(1)).timestamp();
-        let query = doc! {
-            "startTime": {
-                "$gte": one_week_ago
-            }
-        };
-        let find_options = FindOptions::builder().sort(doc! { "startTime": 1 }).build();
-        let mut all_stages = match db_functions
-            .collect_stage_logs(query, Some(connection), Some(find_options))
+        let (group, mut all_stages, schedule) = match self
+            .collect_information(&time_now.timestamp(), connection, db_functions)
             .await
         {
-            Ok(item) => item,
-            Err(err) => {
-                return Err(err);
-            }
+            Ok(data) => data,
+            Err(err) => return Err(err),
         };
         all_stages.reverse();
 
-        // find first timestamp after one week ago
-        let query = doc! {
-            "startTime": {
-                "$lte": one_week_ago
+        let mut time_to_search = time_now;
+        println!("{:?}", time_to_search.timestamp());
+        while time_to_search < day_in_future {
+            let day = time_to_search.day() as i32;
+            let time_slots: Vec<TimeScheduleEntity> = schedule
+                .clone()
+                .into_iter()
+                .filter(|time| {
+                    // check what time it falls under
+                    time.is_within_timeslot(&time_to_search)
+                })
+                .collect();
+            if all_stages.len() >= 2 {
+                if all_stages[1].start_time <= time_to_search.timestamp() {
+                    all_stages.remove(0);
+                }
             }
-        };
-        let find_options = FindOptions::builder()
-            .sort(doc! { "startTime": -1 })
-            .limit(1)
-            .build();
-        let first_stage_change = match db_functions
-            .collect_one_stage_log(query, Some(connection), Some(find_options))
-            .await
-        {
-            Ok(cursor) => cursor,
-            Err(err) => {
-                return Err(err);
+            if let Some(slot) = self.add_time_checker(&all_stages[0], &time_slots, &group, &day) {
+                let end_time = slot.timestamp_from_slot_times(time_to_search, false);
+                time_to_search = slot.timestamp_from_slot_times(time_to_search, true);
+                match response.last_mut() {
+                    Some(time) => {
+                        if time.end >= time_to_search.timestamp() {
+                            time.end = end_time.timestamp();
+                        } else {
+                            response.push(TimeSlot {
+                                start: time_to_search.timestamp(),
+                                end: end_time.timestamp(),
+                            });
+                        }
+                    }
+                    None => response.push(TimeSlot {
+                        start: time_to_search.timestamp(),
+                        end: end_time.timestamp(),
+                    }),
+                }
+                time_to_search = end_time;
+            } else {
+                time_to_search += chrono::Duration::minutes(30);
             }
-        };
-        all_stages.push(first_stage_change);
-
-        // get the timeschedules
-        let query = doc! {
-            "municipality" : self.municipality,
-        };
-        let schedule = match db_functions
-            .collect_schedules(query, Some(connection), None)
-            .await
-        {
-            Ok(item) => item,
-            Err(err) => {
-                return Err(err);
-            }
-        };
-        // queries are over
-
+        }
+        return Ok(PredictiveSuburbStatsResponse {
+            times_off: response,
+        });
+    }
+    pub async fn get_total_time_down_stats(
+        self,
+        connection: Option<&Database>,
+        db_functions: &dyn DBFunctionsTrait,
+        time: Option<i64>
+    ) -> Result<SuburbStatsResponse, ApiError<'static>> {
         // Time
-        let mut time_to_search: DateTime<FixedOffset> = get_date_time(Some(one_week_ago));
-        time_to_search = time_to_search.with_minute(0).unwrap();
         let mut down_time = 0;
         let mut daily_stats: HashMap<String, TotalTime> = HashMap::new();
 
+        // get the relevant data
+        let time_now = get_date_time(time);
+        let one_week_ago = get_date_time(Some(
+            (get_date_time(time) - chrono::Duration::weeks(1)).timestamp(),
+        ));
+        let (group, mut all_stages, schedule) = match self
+            .collect_information(&one_week_ago.timestamp(), connection, db_functions)
+            .await
+        {
+            Ok(data) => data,
+            Err(err) => return Err(err),
+        };
+
+        // Time
+        let mut time_to_search: DateTime<FixedOffset> = one_week_ago;
+        time_to_search = time_to_search.with_minute(0).unwrap();
+
         // main logic loop
         while time_to_search <= time_now {
-            let hour = time_to_search.hour() as i32;
-            let minute = time_to_search.minute() as i32;
             let day = time_to_search.day() as i32;
+
             // get the timeslots for the current time interval
             let time_slots: Vec<TimeScheduleEntity> = schedule
                 .clone()
                 .into_iter()
                 .filter(|time| {
                     // check what time it falls under
-                    if time.stop_hour >= hour
-                        && time.stop_minute >= minute
-                        && time.start_hour <= hour
-                        && time.start_minute <= minute
-                    {
-                        true
-                    } else {
-                        false
-                    }
+                    time.is_within_timeslot(&time_to_search)
                 })
                 .collect();
             // check next to see if its less than the current TTS
@@ -815,27 +973,10 @@ impl SuburbEntity {
                 }
             }
 
-            let mut add_time = false;
-
             // check if there exists a timeslot during which we have loadshedding, if there is, add time
-            for time_slot in time_slots {
-                let mut count: usize = 0;
-                let stage = &all_stages[0];
-                while (count as i32) < stage.stage {
-                    if time_slot.stages.get(count).unwrap().groups[(day - 1) as usize]
-                        == group.id.unwrap()
-                    {
-                        // adding time after the loop
-                        add_time = true;
-                        break;
-                    }
-                    count = count + 1;
-                }
-                if add_time {
-                    break;
-                }
-            }
-            if add_time {
+            let add_time = self.add_time_checker(&all_stages[0], &time_slots, &group, &day);
+
+            if let Some(_) = add_time {
                 down_time += 30;
                 let day = daily_stats
                     .entry(time_to_search.weekday().to_string())
@@ -857,6 +998,117 @@ impl SuburbEntity {
             per_day_times: daily_stats,
             suburb: self,
         })
+    }
+
+    fn add_time_checker<'a>(
+        &self,
+        stage: &LoadSheddingStage,
+        time_slots: &'a Vec<TimeScheduleEntity>,
+        group: &GroupEntity,
+        day: &i32,
+    ) -> Option<&'a TimeScheduleEntity> {
+        for time_slot in time_slots {
+            let stages: Vec<&StageTimes> = time_slot
+                .stages
+                .iter()
+                .filter(|x| x.stage <= stage.stage)
+                .collect();
+            for stage in stages {
+                let slot = match stage.groups.get((day-1) as usize) {
+                    Some(data) => {
+                        if data.to_owned() == group.id.unwrap() {
+                             Some(time_slot)
+                        } else {
+                            None
+                        }
+                    },
+                    None => None
+                };
+                if let Some(data) = slot  {
+                    return Some(data);
+                }
+            }
+        }
+        None
+    }
+    // returns the group accociated with this suburb,
+    //  the stage_logs from and greater than a given time,
+    //  and the timeschedules for the municpality of the suburb
+    async fn collect_information(
+        &self,
+        from_time: &i64,
+        connection: Option<&Database>,
+        db_functions: &dyn DBFunctionsTrait,
+    ) -> Result<(GroupEntity, Vec<LoadSheddingStage>, Vec<TimeScheduleEntity>), ApiError<'static>>
+    {
+        let query = doc! {
+            "suburbs" : {
+                "$in" : [self.id.unwrap()]
+            }
+        };
+        let group: GroupEntity = match db_functions
+            .collect_one_group(query, connection, None)
+            .await
+        {
+            Ok(group) => group,
+            Err(err) => {
+                return Err(err);
+            }
+        };
+
+        // get all the stage changes from the past week
+        let query = doc! {
+            "startTime": {
+                "$gt": from_time
+            }
+        };
+        let find_options = FindOptions::builder().sort(doc! { "startTime": 1 }).build();
+        let mut all_stages = match db_functions
+            .collect_stage_logs(query, connection, Some(find_options))
+            .await
+        {
+            Ok(item) => item,
+            Err(err) => {
+                return Err(err);
+            }
+        };
+        all_stages.reverse();
+
+        // find first timestamp after one week ago
+        let query = doc! {
+            "startTime": {
+                "$lte": from_time
+            }
+        };
+        let find_options = FindOptions::builder()
+            .sort(doc! { "startTime": -1 })
+            .limit(1)
+            .build();
+        let first_stage_change = match db_functions
+            .collect_one_stage_log(query, connection, Some(find_options))
+            .await
+        {
+            Ok(cursor) => cursor,
+            Err(err) => {
+                return Err(err);
+            }
+        };
+        all_stages.push(first_stage_change);
+
+        // get the timeschedules
+        let query = doc! {
+            "municipality" : self.municipality,
+        };
+        let schedule = match db_functions
+            .collect_schedules(query, connection, None)
+            .await
+        {
+            Ok(item) => item,
+            Err(err) => {
+                return Err(err);
+            }
+        };
+        Ok((group, all_stages, schedule))
     }
 }
 
@@ -933,27 +1185,17 @@ impl LoadSheddingStage {
                     db: None,
                 },
             };
-            let latest_info = times.last().unwrap().start.0.naive_local();
-            let latest_in_db = NaiveDateTime::from_timestamp_opt(result.start_time, 0).unwrap();
-            if latest_info > latest_in_db {
-                // find point where we must update and update the rest
-                loop {
-                    let next = times.pop();
-                    if let Some(data) = next {
-                        if latest_in_db >= data.start.0.naive_local() {
-                            break;
-                        }
-                        let to_insert = LoadSheddingStage {
-                            id: None,
-                            start_time: data.start.0.timestamp(),
-                            end_time: data.end.0.timestamp(),
-                            db: None,
-                            stage: data.stage,
-                        };
-                        let _ = to_insert.insert(db_con).await;
+            let latest_in_db = result.start_time;
+            loop {
+                let next = times.pop();
+                if let Some(new_data) = next {
+                    if latest_in_db >= new_data.start.0.timestamp() {
+                        let _ = self.update_db_with_changes(new_data, db_con).await;
                     } else {
-                        break;
+                        let _ = new_data.convert_to_loadsheddingstage().insert(db_con).await;
                     }
+                } else {
+                    break;
                 }
             }
             self.set_stage().await;
@@ -961,6 +1203,62 @@ impl LoadSheddingStage {
             return ();
         }
     }
+
+    async fn update_db_with_changes(&self, new_data:LoadsheddingData, db_con:&Database) {
+        // findone that matches our times.
+        let query = doc! {
+            "startTime" : new_data.start.0.timestamp(),
+            "endTime" : new_data.end.0.timestamp()
+        };
+        //match LoadSheddingStage::find_one(query, db_con, None).await {
+        match db_con
+        .collection::<LoadSheddingStage>("stage_log")
+        .find_one(query, None)
+        .await
+        .unwrap() {
+            // if match
+            // check similarities
+            // if stage change: update
+            Some(mut db_data) => {
+                if db_data.stage != new_data.stage {
+                    let update =
+                        mongodb::options::UpdateModifications::Document(doc! {
+                            "$set" : {"stage" : new_data.stage}
+                        });
+                    let _ = db_data.update(update, db_con).await;
+                }
+            }
+            // else if no match
+            // find all that encapsulate this new time.
+            // delete all of them
+            // insert
+            None => {
+                let filter = doc! {
+                    "startTime" : {"$lt" : new_data.end.0.timestamp()},
+                    "endTime" : {"$gt" : new_data.start.0.timestamp()}
+                };
+                // Can be optimized into a delete many
+                match LoadSheddingStage::find(filter, db_con, None).await {
+                    Ok(data) => {
+                        for stage in data {
+                            let _ = stage.delete(db_con).await;
+                        }
+                        let _ = new_data
+                            .convert_to_loadsheddingstage()
+                            .insert(db_con)
+                            .await;
+                    }
+                    Err(_) => {
+                        let _ = new_data
+                            .convert_to_loadsheddingstage()
+                            .insert(db_con)
+                            .await;
+                    }
+                }
+            }
+        };
+    }
+
     pub fn set_db(&mut self, db: &Client) {
         self.db = Some(db.to_owned());
     }
@@ -1031,7 +1329,7 @@ impl Fairing for StageUpdater {
 }
 
 #[derive(Debug, Clone)]
-pub struct SASTDateTime(DateTime<FixedOffset>);
+pub struct SASTDateTime(pub DateTime<FixedOffset>);
 
 const FORMAT: &str = "%Y-%m-%dT%H:%M";
 impl<'de> Deserialize<'de> for SASTDateTime {
@@ -1040,13 +1338,13 @@ impl<'de> Deserialize<'de> for SASTDateTime {
         D: Deserializer<'de>,
     {
         // get search time
-        let sast = FixedOffset::east_opt(2 * 3600).unwrap();
         let s = String::deserialize(deserializer)?;
         let dt = NaiveDateTime::parse_from_str(&s, FORMAT).unwrap();
-        let sast = DateTime::<Utc>::from_utc(dt, Utc).with_timezone(&sast);
+        // hack for now because library is not being co-operative
+        let convert_to_sast = dt.timestamp() - 2*3600;
+        let sast = get_date_time(Some(convert_to_sast));
         println!("{:?}", sast);
         Ok(SASTDateTime(sast))
-        // DateTime::<FixedOffset>::from_str(&s).map_err(serde::de::Error::custom)
     }
 }
 

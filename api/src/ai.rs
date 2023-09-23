@@ -9,7 +9,7 @@ use utoipa::ToSchema;
 #[utoipa::path(post, tag = "AI", path = "/api/ai/info", request_body = AiInfoRequest)]
 #[post("/ai/info", format = "application/json", data = "<request>")]
 pub async fn get_ai_info<'a>(request: Json<AiInfoRequest>) -> ApiResponse<'a, AiInfoResponse> {
-    let mapbox_api_key = if let Ok(key) = env::var("MAPBOX_API_KEY") {
+    let mapbox_api_key = if let Ok(key) = dbg!(env::var("MAPBOX_API_KEY")) {
         key
     } else {
         log::error!("We couldn't get the mapbox api key. The environment variable was not set!");
@@ -21,11 +21,12 @@ pub async fn get_ai_info<'a>(request: Json<AiInfoRequest>) -> ApiResponse<'a, Ai
 
     match Command::new("python3")
         .args([
-            "src/avoid_cords.py",
+            "route.py",
             serde_json::to_string(&request.into_inner())
                 .unwrap()
                 .as_ref(),
         ])
+        .current_dir("src")
         .stdout(Stdio::piped())
         .env("MAPBOX_API_KEY", mapbox_api_key)
         .output()
@@ -56,19 +57,21 @@ pub async fn get_ai_info<'a>(request: Json<AiInfoRequest>) -> ApiResponse<'a, Ai
 #[derive(Clone, Deserialize, Serialize, ToSchema)]
 #[schema(example = json! {
     AiInfoRequest {
-        polygon: vec![
-            [0.0, 0.0],
-            [90.0, -90.0],
-            [-90.0, 90.0],
-        ]
+        origin: Box::new([28.3, -27.73]),
+        destination: Box::new([28.2651, -25.7597])
     }
 })]
 pub struct AiInfoRequest {
-    pub polygon: Vec<[f64; 2]>,
+    pub origin: Box<[f64; 2]>,
+    pub destination: Box<[f64; 2]>,
 }
 
 #[derive(Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct AiInfoResponse {
-    pub coords_to_avoid: Vec<[f64; 2]>,
+    pub duration: f32,
+    pub distance: f32,
+    pub traffic_lights_avoided: Vec<[f32; 2]>,
+    pub instructions: Vec<String>,
+    pub coordinates: Vec<[f32; 2]>,
 }

@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  MapboxApiKey: 'replace'
+  MapboxApiKey: 'HelloAPIKey'
 };
