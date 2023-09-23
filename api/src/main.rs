@@ -4,6 +4,7 @@ mod auth;
 mod db;
 mod dns;
 mod loadshedding;
+mod reporting;
 mod scraper;
 #[cfg(test)]
 mod tests;
@@ -39,13 +40,18 @@ const DB_NAME: &'static str = "wip";
 #[openapi(
     paths(
         user::create_user,
+        loadshedding::get_current_stage,
         loadshedding::fetch_map_data,
+        loadshedding::fetch_schedule,
         loadshedding::fetch_suburb_stats,
+        loadshedding::fetch_time_for_polygon,
         auth::authenticate,
         ai::get_ai_info,
         user::get_saved_places,
         user::add_saved_place,
-        user::delete_saved_place
+        user::delete_saved_place,
+        reporting::create_report,
+        reporting::get_reports
     ),
     components(schemas(
         auth::AuthRequest,
@@ -54,11 +60,14 @@ const DB_NAME: &'static str = "wip";
         user::UserLocation,
         loadshedding::MapDataRequest,
         loadshedding::MapDataDefaultResponse,
+        loadshedding::PredictiveSuburbStatsResponse,
         loadshedding::SuburbStatsRequest,
         api::ResponseString,
         api::ApiError,
         ai::AiInfoRequest,
-        user::SavedPlace
+        user::SavedPlace,
+        reporting::NewUserReport,
+        reporting::ReportType
     )),
     info(title = "Where Is The Power API Specification"),
     modifiers(&SecurityAddon)
@@ -174,6 +183,10 @@ async fn get_config() -> Figment {
 }
 
 async fn build_rocket() -> Rocket<Build> {
+    if let Err(err) = dotenvy::dotenv() {
+        warn!("Couldn't read .env file! {err:?}");
+    }
+
     let figment = get_config().await;
     let db_uri = env::var("DATABASE_URI").unwrap_or(String::from(""));
     // Cors Options, we should modify to our needs but leave as default for now.
@@ -210,12 +223,17 @@ async fn build_rocket() -> Rocket<Build> {
                 routes!(
                     auth::authenticate,
                     user::create_user,
+                    loadshedding::get_current_stage,
                     loadshedding::fetch_map_data,
                     loadshedding::fetch_suburb_stats,
+                    loadshedding::fetch_schedule,
+                    loadshedding::fetch_time_for_polygon,
                     user::add_saved_place,
                     user::get_saved_places,
                     ai::get_ai_info,
-                    user::delete_saved_place
+                    user::delete_saved_place,
+                    reporting::create_report,
+                    reporting::get_reports
                 ),
             )
             .mount("/upload", routes![upload_data])
@@ -241,12 +259,17 @@ async fn build_rocket() -> Rocket<Build> {
                     routes!(
                         auth::authenticate,
                         user::create_user,
+                        loadshedding::get_current_stage,
                         loadshedding::fetch_map_data,
                         loadshedding::fetch_suburb_stats,
+                        loadshedding::fetch_schedule,
+                        loadshedding::fetch_time_for_polygon,
                         user::add_saved_place,
                         user::get_saved_places,
                         ai::get_ai_info,
-                        user::delete_saved_place
+                        user::delete_saved_place,
+                        reporting::create_report,
+                        reporting::get_reports
                     ),
                 )
                 .mount("/upload", routes![upload_data])
@@ -269,9 +292,6 @@ async fn build_rocket() -> Rocket<Build> {
 async fn main() -> Result<(), rocket::Error> {
     setup_logger().expect("Couldn't setup logger!");
 
-    if let Err(err) = dotenvy::dotenv() {
-        warn!("Couldn't read .env file! {err:?}");
-    }
     if let Err(err) = dns::update_dns().await {
         warn!("Couldn't setup DNS: {err:?}");
     }
