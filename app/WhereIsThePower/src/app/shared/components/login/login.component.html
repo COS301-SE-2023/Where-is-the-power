@@ -14,19 +14,43 @@
 
 
 <ion-content [fullscreen]="true">
-  <div class="ion-padding">
-    <form class="form" [formGroup]="loginForm" (ngSubmit)="login()">
-      <ion-item data-cy="login-email-input">
-        <ion-label position="floating">Email</ion-label>
-        <ion-input type="email" formControlName="email" aria-label="Input for email"></ion-input>
-      </ion-item>
+  <ion-grid>
+    <ion-row class="ion-text-center ion-padding-top">
+      <ion-col size = "3" offset = "4.5" size-md = "2" offset-md = "5" class="ion-text-center">
+        <ion-avatar class="ion-no-margin" class="ion-text-center" style="display:inline">
+          <ion-img src="assets/WhereIsThePower.png"></ion-img>
+        </ion-avatar>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col class="ion-text-center">
+        <form class="form" [formGroup]="loginForm" (ngSubmit)="login()" class="ion-text-center">
+          <h3 class="ion-padding-start"><ion-text color="primary">Where Is the Power?</ion-text></h3>
 
-      <ion-item data-cy="login-password-input">
-        <ion-label position="floating" >Password</ion-label>
-        <ion-input type="password" formControlName="password" aria-label="Input for password"></ion-input>
-      </ion-item>
+          <ion-item>
+            <ion-input
+            label = "Email"
+            labelPlacement="floating"
+            placeholder="Email"
+            formControlName = "email"
+            ></ion-input>
+          </ion-item>
 
-      <ion-button expand="full" type="submit" data-cy="btn-login-confirm">Login</ion-button>
-    </form>
-  </div>
+          <ion-item class="ion-padding-top">
+            <ion-input
+            type = "password"
+            label = "Password"
+            labelPlacement="floating"
+            placeholder="Password"
+            formControlName = "password"
+            autocomplete="off"
+            ></ion-input>
+          </ion-item>
+          <div class="ion-padding-top">
+            <ion-button expand="block" type="submit" class="ion-margin-top ion-margin-start" data-cy="btn-login-confirm">Login</ion-button>
+          </div>
+        </form>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 </ion-content>

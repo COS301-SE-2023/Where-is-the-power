@@ -20,6 +20,7 @@ import { Subscribable } from 'rxjs';
 import { Place } from '../../tab-saved/place';
 import { Router } from '@angular/router';
 import { ReportService } from '../../report/report.service';
+import { LoadingController } from '@ionic/angular';
 declare let MapboxDirections: any;
 declare let mapboxgl: any;
 declare let MapboxGeocoder: any;
@@ -39,7 +40,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     private changeDetectorRef: ChangeDetectorRef,
     private savedPlacesService: SavedPlacesService,
     private router: Router,
-    private reportService: ReportService
+    private reportService: ReportService,
+    private loadingController: LoadingController
   ) { }
   map: any;
   dat: any;
@@ -156,11 +158,11 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         this.reportService.getReports().subscribe((data) => {
           console.log("getReports: ", data);
         });
-    
-        this.reportService.reports.subscribe((reports: any) => {    
+
+        this.reportService.reports.subscribe((reports: any) => {
           if (reports) {
             console.log("Reports (Map Page)", reports);
-    
+
             // Add marker on map for each report
             reports.forEach((report: any) => {
               this.addMarker(report.longitude, report.latitude, report.report_type);
@@ -212,7 +214,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       )
       .addTo(this.map);
 
-      this.closePopup();
+    this.closePopup();
   }
   populatePolygons() {
     this.map.on('load', () => {
@@ -389,15 +391,15 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
     let query: any;
     let fallback = false;
+    const loading = await this.presentLoading(); // Show loading spinner
 
     if (!selectedResult.hasOwnProperty('center')) {
-      try{     
+      try {
         console.log("Selected directions (saved places) ", selectedResult);
         query = await this.mapSuburbsService.fetchOptimalRoute(this.longitude, this.latitude, selectedResult.longitude, selectedResult.latitude).toPromise();
         coords = query.result.coordinates;
       }
-      catch(error)
-      {
+      catch (error) {
         console.error("Error in the first query:", error);
         fallback = true;
         query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.longitude},${selectedResult.latitude}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`);
@@ -425,7 +427,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     console.log("_________________________");
     console.log("Directions query", query);
     console.log("_________________________");
-
+    loading.dismiss(); // Dismiss loading spinner when response is received
 
     // Add a marker for the start point
     const start = {
@@ -500,7 +502,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
                 properties: {},
                 geometry: {
                   type: 'Point',
-                  coordinates:  [coords[coords.length - 1][0], coords[coords.length - 1][1]]
+                  coordinates: [coords[coords.length - 1][0], coords[coords.length - 1][1]]
                 }
               }
             ]
@@ -516,7 +518,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     let geojson: any;
     let route: any;
 
-    if(!fallback) // Optimised route
+    if (!fallback) // Optimised route
     {
       const data = query.result; // Pick 1st route in list of route recommendations
       route = coords; // list of coordinates forming route
@@ -618,6 +620,16 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       padding: 100, // Adjust padding as needed
       maxZoom: 12 // Adjust the maximum zoom level as needed
     });
+  }
+
+  private async presentLoading() {
+    const loading = await this.loadingController.create({
+      message: 'Calculating Route...',
+      spinner: 'crescent', // spinner style
+      duration: 20000,
+    });
+    await loading.present();
+    return loading;
   }
 
   delay(ms: number) {
