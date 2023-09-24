@@ -6,6 +6,7 @@ import { RegisterUser } from '../../models/register-user';
 import { AuthService } from '../../../authentication/auth.service';
 import { ModalController } from '@ionic/angular';
 import { User } from '../../models/user';
+import { LoadingController } from '@ionic/angular';
 
 @Component({
   selector: 'app-signup',
@@ -33,7 +34,8 @@ export class SignupComponent implements OnInit {
     private formBuilder: FormBuilder,
     private toastController: ToastController,
     private authService: AuthService,
-    public modalController: ModalController
+    public modalController: ModalController,
+    private loadingController: LoadingController
   ) { }
 
 
@@ -54,13 +56,15 @@ export class SignupComponent implements OnInit {
       this.authService.signupUser(this.newUser).subscribe(async (response: any) => {
         console.log(response);
         let createNewUser = new User("User", this.newUser.email, this.newUser.password, this.newUser.firstName, this.newUser.lastName);
+        const loading = await this.presentLoading(); // Show loading spinner
 
         console.log(createNewUser);
         this.authService.loginUser(createNewUser).subscribe(async (response: any) => {
           createNewUser.token = response.token;
           await this.authService.saveUserData('Token', JSON.stringify(createNewUser.token));
+          loading.dismiss(); // Dismiss loading spinner when response is received
 
-           //console.log("RES" + response);
+          //console.log("RES" + response);
           this.authService.user.next(createNewUser);
           this.dismissModal();
         });
@@ -90,4 +94,15 @@ export class SignupComponent implements OnInit {
     });
     toast.present();
   }
+
+  private async presentLoading() {
+    const loading = await this.loadingController.create({
+      message: 'Signing up...',
+      spinner: 'crescent', // spinner style
+      duration: 20000,
+    });
+    await loading.present();
+    return loading;
+  }
 }
+
