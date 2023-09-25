@@ -1150,7 +1150,7 @@ impl LoadSheddingStage {
         if let Some(client) = &self.db.as_ref() {
             let db_con = &client.database("production");
             let query = doc! {
-                "start_time" : -1
+                "startTime" : -1
             };
             let find_options = FindOneOptions::builder().sort(query).build();
 
