@@ -1,6 +1,6 @@
 {
   "extends": "../tsconfig.json",
-  "compileOnSave": false,
+  "compileOnSave": true,
   "compilerOptions": {
     "sourceMap": false,
     "target": "es5",
