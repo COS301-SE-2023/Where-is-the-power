@@ -65,6 +65,7 @@ export class TabProfilePage implements OnInit {
   async logout() {
     this.isLoggedIn = false;
     await this.authService.signOutUser();
+    this.toggleTheme('light');
   }
 
   ngOnDestroy() {

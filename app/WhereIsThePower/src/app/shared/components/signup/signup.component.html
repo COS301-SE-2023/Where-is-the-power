@@ -15,7 +15,16 @@
 
 <ion-content [fullscreen]="true">
   <div class="ion-padding">
-    <form class="form" [formGroup]="signupForm" (ngSubmit)="signup()">
+    <ion-row class="ion-text-center ion-padding-top">
+      <ion-col size = "3" offset = "4.5" size-md = "2" offset-md = "5" class="ion-text-center">
+        <ion-avatar class="ion-no-margin" class="ion-text-center" style="display:inline">
+          <ion-img src="assets/WhereIsThePower.png"></ion-img>
+        </ion-avatar>
+      </ion-col>
+    </ion-row>
+    <form class="form" [formGroup]="signupForm" (ngSubmit)="signup()" class="ion-text-center">
+      <h3 class="ion-padding-start"><ion-text color="primary">Where Is the Power?</ion-text></h3>
+
       <ion-item  data-cy="input-fn">
         <ion-label position="floating">First Name</ion-label>
         <ion-input type="firstName" formControlName="firstName" aria-label="Input for First Name"></ion-input>
@@ -30,13 +39,20 @@
         <ion-label position="floating">Email</ion-label>
         <ion-input type="email" formControlName="email" aria-label="Input for email" ></ion-input>
       </ion-item>
+      <ion-text color="danger" *ngIf="signupForm.get('email')!.hasError('email')" class="ion-padding-start">
+        Invalid email.
+      </ion-text>
 
       <ion-item data-cy="input-password">
         <ion-label position="floating">Password</ion-label>
         <ion-input type="password" formControlName="password" aria-label="Input for password" ></ion-input>
       </ion-item>
-
-      <ion-button expand="full" type="submit" data-cy="btn-confirm-signup">Signup</ion-button>
+      <ion-text color="danger" *ngIf="signupForm.get('password')!.hasError('minlength')" class="ion-padding-start">
+        Password must be at least 8 characters
+      </ion-text>
+      <div class="ion-padding-top">
+        <ion-button expand="block" type="submit" data-cy="btn-confirm-signup" class="ion-margin-top ion-margin-start">Signup</ion-button>
+      </div>
     </form>
   </div>
 </ion-content>

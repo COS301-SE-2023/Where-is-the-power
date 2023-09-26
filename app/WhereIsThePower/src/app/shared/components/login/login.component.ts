@@ -5,6 +5,7 @@ import { ToastController } from '@ionic/angular';
 import { User } from '../../models/user';
 import { AuthService } from '../../../authentication/auth.service';
 import { ModalController } from '@ionic/angular';
+import { LoadingController } from '@ionic/angular';
 
 @Component({
   selector: 'app-login',
@@ -24,7 +25,7 @@ export class LoginComponent implements OnInit {
 
   loginForm: FormGroup = this.formBuilder.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(8)]],
+    password: ['', [Validators.required]],
   });
 
   constructor(
@@ -32,7 +33,8 @@ export class LoginComponent implements OnInit {
     private formBuilder: FormBuilder,
     private toastController: ToastController,
     private authService: AuthService,
-    public modalController: ModalController
+    public modalController: ModalController,
+    private loadingController: LoadingController
   ) { }
 
 
@@ -42,11 +44,12 @@ export class LoginComponent implements OnInit {
     this.modalController.dismiss();
   }
 
-  login() {
+  async login() {
     if (this.loginForm.valid) {
       this.User.authType = "User";
       this.User.email = this.loginForm.value.email;
       this.User.password = this.loginForm.value.password;
+      const loading = await this.presentLoading(); // Show loading spinner
 
       console.log(this.User)
       this.authService.loginUser(this.User).subscribe(async (response: any) => {
@@ -57,13 +60,14 @@ export class LoginComponent implements OnInit {
           this.User.lastName = response.lastName;
           this.authService.user.next(this.User);
           await this.authService.saveUserData('Token', JSON.stringify(this.User.token));
-          this.sucessToast('Welcome back ' + this.User.firstName)
+          //this.sucessToast('Welcome back ' + this.User.firstName)
           //const userData = await this.authService.getUserData();
           //console.log("TOKEN " + userData);
         }
         else {
           this.failToast('Please ensure all details are correct');
         }
+        loading.dismiss(); // Dismiss loading spinner when response is received
       });
     } else {
       this.failToast('Please ensure all details are correct');
@@ -84,9 +88,19 @@ export class LoginComponent implements OnInit {
     const toast = await this.toastController.create({
       message: message,
       color: 'success',
-      duration: 3000,
-      position: 'bottom',
+      duration: 2000,
+      position: 'top',
     });
     toast.present();
+  }
+
+  private async presentLoading() {
+    const loading = await this.loadingController.create({
+      message: 'Logging in...',
+      spinner: 'crescent', // spinner style
+      duration: 20000,
+    });
+    await loading.present();
+    return loading;
   }
 }

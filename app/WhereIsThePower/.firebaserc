@@ -1,5 +1,18 @@
 {
   "projects": {
     "default": "whereisthepower-33a66"
-  }
+  },
+  "targets": {
+    "whereisthepower-33a66": {
+      "hosting": {
+        "prod": [
+          "whereisthepower-33a66"
+        ],
+        "dev": [
+          "whereisthepowerdev"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

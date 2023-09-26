@@ -9,20 +9,84 @@
 <ion-content [fullscreen]="true">
   <ion-content>
     <ion-grid>
-      <ion-row class="ion-justify-content-center ion-padding-bottom">
-        <ion-col size="10" offset="1" size-md="4" offset-md="0" class="ion-text-center">
-          <ion-text><h2>Loadshedding for Today</h2></ion-text>
-          <div class="doughnutChart-container ion-justify-content-center">
-            <canvas #doughnutChartRef id="doughnutChart"></canvas>
-          </div>
-        </ion-col>
-        <ion-col size="12" size-md="7" offset-md="1" class="ion-text-center ion-padding-vertical ion-justify-content-center ion-padding-vertical">
-          <ion-text><h2>Loadshedding for this Week</h2></ion-text>
-          <div class="chart-container">
-            <canvas #barChartRef id="barChart"></canvas>
-          </div>
+      <ion-row>
+        <ion-col class="searchbar-container" size-xs="12" size-md="4" offset-md="7.8">
+          <ion-searchbar
+          [(ngModel)]="searchTerm"
+          animated="true"
+          placeholder="Search for a place..."
+          (ionInput)="onSearch($event)"
+          (keyup.enter)="onSearch($event)"
+          (ionFocus)="onSearch($event)"
+          (ionBlur)="onBlur()"
+          >
+          </ion-searchbar>
+          <ion-list *ngIf="filteredItems.length > 0 && showResultsList" class="search-results">
+            <ion-item *ngFor="let result of filteredItems" (click)="selectSuburb(result)" button>
+              <ion-label>
+                <h3><strong>{{ result.name }}</strong></h3>
+              </ion-label>
+            </ion-item>
+          </ion-list>
         </ion-col>
       </ion-row>
+      <div *ngIf="isLocationProvided && isAreaFound; else areaNotAvailable">
+        <ion-row
+        class="ion-justify-content-center">
+          <ion-col size="12" class="ion-text-start ion-padding-start">
+            <h2>{{ suburbName }}</h2>
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col size="12" size-md="4" class="ion-text-center">
+            <ion-card class="graph ion-padding-bottom ion-padding-start ion-padding-end">
+              <ion-card-header>
+                <ion-card-title>
+                  <ion-text><h3>Loadshedding for Today</h3></ion-text>
+                </ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                <div class="doughnutChart-container ion-justify-content-center">
+                  <canvas #doughnutChartRef id="doughnutChart"></canvas>
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+          <ion-col size="12" size-md="8" class="ion-text-center ion-justify-content-center">
+            <ion-card class="graph">
+              <ion-card-header>
+                <ion-card-title>
+                  <ion-text><h3>Loadshedding for this Week</h3></ion-text>
+                </ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                <div class="chart-container">
+                  <canvas #barChart id="barChart"></canvas>
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+        </ion-row>
+      </div>
+      <ng-template #areaNotAvailable>
+        <ion-row>
+          <ion-col size="8" offset="2" size-md="6" offset-md="3" size-xl="4" offset-xl="4">
+            <ion-img
+                src="assets/phoneStats.svg"
+                alt="Address on phone Illustration"
+                class="ion-padding"
+              >
+              </ion-img>
+          </ion-col>
+        </ion-row>
+        <ion-row>
+            <ion-col class="ion-text-center ion-text-md-end">
+            </ion-col>
+            <ion-col size="12" class="ion-text-center">
+              <h3>Search for a suburb inside City of Tshwane.</h3>
+            </ion-col>
+        </ion-row>
+      </ng-template>
     </ion-grid>
   </ion-content>
 </ion-content>
