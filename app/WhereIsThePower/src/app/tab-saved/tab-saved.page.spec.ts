@@ -99,23 +99,23 @@ describe('TabSavedPage', () => {
 
   it('should run #gotoProfileRoute()', async () => {
     component.router = component.router || {};
-    component.router.navigate = jest.fn();
+    spyOn(component.router, 'navigate');
     component.gotoProfileRoute();
     // expect(component.router.navigate).toHaveBeenCalled();
   });
 
   it('should run #ionViewDidEnter()', async () => {
     component.authService = component.authService || {};
-    component.authService.isUserLoggedIn = jest.fn();
+    spyOn(component.authService, 'isUserLoggedIn');
     component.savedPlaceService = component.savedPlaceService || {};
-    component.savedPlaceService.getPlaces = jest.fn().mockReturnValue(observableOf({
+    spyOn(component.savedPlaceService, 'getPlaces').and.returnValue(observableOf({
       result: {}
     }));
     component.savedPlaceService.savePlace = observableOf({});
     component.savedPlaceService.savedPlace = 'savedPlace';
     component.router = component.router || {};
-    component.router.navigate = jest.fn();
-    component.addSavedPlace = jest.fn();
+    spyOn(component.router, 'navigate');
+    spyOn(component, 'addSavedPlace');
     await component.ionViewDidEnter();
     // expect(component.authService.isUserLoggedIn).toHaveBeenCalled();
     // expect(component.savedPlaceService.getPlaces).toHaveBeenCalled();
@@ -131,7 +131,7 @@ describe('TabSavedPage', () => {
 
   it('should run #goToPlace()', async () => {
     component.savedPlaceService = component.savedPlaceService || {};
-    component.savedPlaceService.goToPlace = jest.fn();
+    spyOn(component.savedPlaceService, 'goToPlace');
     component.goToPlace({});
     // expect(component.savedPlaceService.goToPlace).toHaveBeenCalled();
   });
@@ -141,13 +141,13 @@ describe('TabSavedPage', () => {
     component.savedPlaceService.navigateToSavedPlace = {
       next: function() {}
     };
-    component.savedPlaceService.goToPlace = jest.fn();
+    spyOn(component.savedPlaceService, 'goToPlace');
     component.goToSavedPlace({});
     // expect(component.savedPlaceService.goToPlace).toHaveBeenCalled();
   });
 
   it('should run #savePlace()', async () => {
-    component.goToPlace = jest.fn();
+    spyOn(component, 'goToPlace');
     component.savePlace({
       id: {},
       text: {},
@@ -161,9 +161,9 @@ describe('TabSavedPage', () => {
   });
 
   it('should run #addSavedPlace()', async () => {
-    component.isPlaceSaved = jest.fn();
+    spyOn(component, 'isPlaceSaved');
     component.savedPlaceService = component.savedPlaceService || {};
-    component.savedPlaceService.addSavedPlace = jest.fn().mockReturnValue(observableOf({}));
+    spyOn(component.savedPlaceService, 'addSavedPlace').and.returnValue(observableOf({}));
     component.savedPlaceService.place = {
       next: function() {}
     };
@@ -175,7 +175,7 @@ describe('TabSavedPage', () => {
 
   it('should run #deleteSavedPlace()', async () => {
     component.savedPlaceService = component.savedPlaceService || {};
-    component.savedPlaceService.deleteSavedPlace = jest.fn().mockReturnValue(observableOf({}));
+    spyOn(component.savedPlaceService, 'deleteSavedPlace').and.returnValue(observableOf({}));
     component.places = component.places || {};
     component.places = ['places'];
     component.deleteSavedPlace({
@@ -242,14 +242,14 @@ describe('TabSavedPage', () => {
 
   it('should run #sucessToast()', async () => {
     component.toastController = component.toastController || {};
-    component.toastController.create = jest.fn();
+    spyOn(component.toastController, 'create');
     await component.sucessToast({});
     // expect(component.toastController.create).toHaveBeenCalled();
   });
 
   it('should run #ngOnDestroy()', async () => {
     component.placesSubscription = component.placesSubscription || {};
-    component.placesSubscription.unsubscribe = jest.fn();
+    spyOn(component.placesSubscription, 'unsubscribe');
     component.ngOnDestroy();
     // expect(component.placesSubscription.unsubscribe).toHaveBeenCalled();
   });

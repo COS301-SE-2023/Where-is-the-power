@@ -160,4 +160,5 @@ describe('TabSchedulePage', () => {
     // expect(component.listSuburbsSubscription.unsubscribe).toHaveBeenCalled();
   });
 
-});Error: ERROR this JS code is invalid, "data.result.timesOff.forEach((timeOff)"
+});
+// Error: ERROR this JS code is invalid, "data.result.timesOff.forEach((timeOff)"

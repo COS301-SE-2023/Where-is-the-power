@@ -12,6 +12,8 @@ import { StatisticsService } from './statistics.service';
 import { HttpClient } from '@angular/common/http';
 import { UserLocationService } from '../user-location.service';
 
+
+
 @Injectable()
 class MockStatisticsService {}
 
