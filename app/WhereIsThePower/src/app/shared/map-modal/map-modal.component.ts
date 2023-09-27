@@ -195,7 +195,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
     const formattedReportType = reportType.replace(/([A-Z])/g, ' $1');
 
-    const marker = new mapboxgl.Marker({
+    const reportMarker = new mapboxgl.Marker({
       element: customIcon,
     })
       .setLngLat([lon, lat])
@@ -274,9 +274,14 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           this.mapSuburbsService.fetchTimeForPolygon(suburbId).subscribe(
             (response: any) => {
               // Handle the response here
+              
+              
               console.log('Time response:', response);
-              const timesOff = response.result.timesOff; // Assuming "response" holds your API response
+              console.log("success", response.success);
 
+              if(response.success === true)
+              {
+              const timesOff = response.result.timesOff; // Assuming "response" holds your API response
               if (timesOff && timesOff.length > 0) {
                 const formattedTimes = timesOff.map((time: any) => {
                   const start = new Date(time.start * 1000); // Convert seconds to milliseconds
@@ -289,6 +294,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
                   const endMinutes = end.getMinutes().toString().padStart(2, '0');
 
                   this.currentSuburbSchedule = `${startHours}:${startMinutes} - ${endHours}:${endMinutes}`;
+                
                 });
 
                 console.log('Formatted Time Ranges:', formattedTimes);
@@ -313,6 +319,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
                 .setLngLat(e.lngLat)
                 .setHTML(popupContent)
                 .addTo(this.map);
+              }
             },
             (error) => {
               // Handle errors here
