@@ -1,53 +1,441 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { MapModalComponent } from "./map-modal.component";
-import { CUSTOM_ELEMENTS_SCHEMA,ChangeDetectorRef} from '@angular/core';
+// @ts-nocheck
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { Pipe, PipeTransform, Injectable, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, Directive, Input, Output } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { By } from '@angular/platform-browser';
+import { Observable, of as observableOf, throwError } from 'rxjs';
+
+import { Component, ChangeDetectorRef } from '@angular/core';
+import { MapModalComponent } from './map-modal.component';
 import { MapSuburbsService } from './map-suburbs.service';
-import { HttpClientModule } from '@angular/common/http'; // Import HttpClientModule
-import { IonContent, ModalController, AngularDelegate} from '@ionic/angular';
-
-
 import { UserLocationService } from '../../user-location.service';
+import { ModalController, LoadingController } from '@ionic/angular';
+import { SavedPlacesService } from '../../tab-saved/saved-places.service';
+import { Router } from '@angular/router';
+import { ReportService } from '../../report/report.service';
 
+@Injectable()
+class MockMapSuburbsService {}
 
-// import { environment } from 'src/environments/environment';
-// declare let mapboxgl: any;
+@Injectable()
+class MockUserLocationService {}
 
-describe("MapModalComponent", () =>{
-    let component: MapModalComponent;
-    let fixture: ComponentFixture<MapModalComponent>;
+@Injectable()
+class MockSavedPlacesService {}
 
-    beforeEach(() => {
-        // Initialize the testing environment and create the component fixture
-        TestBed.configureTestingModule({
-            declarations: [MapModalComponent],
-            schemas: [CUSTOM_ELEMENTS_SCHEMA],
-            providers: [MapSuburbsService, ModalController, UserLocationService,ChangeDetectorRef, AngularDelegate], // Provide the MapSuburbsService if needed
-            imports: [HttpClientModule], // Import HttpClientModule
-        }).compileComponents();
-        fixture = TestBed.createComponent(MapModalComponent);
-        component = fixture.componentInstance;
-    });
-
-    it('should create the MapModalComponent', () => {
-        expect(component).toBeTruthy();
-    });
-
-    // it("should render the map", () =>{
-        // component.ngOnInit();
-
-        // let map = new mapboxgl.Map({
-        //     container: 'map', // container ID
-        //     style: 'mapbox://styles/mapbox/streets-v12', // style URL
-        //     center: [28.261181, -25.771179], // starting position [lng, lat]
-        //     zoom: 12 // starting zoom
-        //   });
-        
-        // Check if the map container has been created
-        // const mapContainer = fixture.nativeElement.querySelector('#map');
-        // expect(mapContainer).toBeTruthy();
-
-        // Check if the map object is initialized and is an instance of mapboxgl.Map
-        // expect(component.map).toBeTruthy();
-    // });
+@Injectable()
+class MockRouter {
+  navigate() {};
 }
-);
+
+@Injectable()
+class MockReportService {}
+
+@Directive({ selector: '[myCustom]' })
+class MyCustomDirective {
+  @Input() myCustom;
+}
+
+@Pipe({name: 'translate'})
+class TranslatePipe implements PipeTransform {
+  transform(value) { return value; }
+}
+
+@Pipe({name: 'phoneNumber'})
+class PhoneNumberPipe implements PipeTransform {
+  transform(value) { return value; }
+}
+
+@Pipe({name: 'safeHtml'})
+class SafeHtmlPipe implements PipeTransform {
+  transform(value) { return value; }
+}
+
+describe('MapModalComponent', () => {
+  let fixture;
+  let component;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [ FormsModule, ReactiveFormsModule ],
+      declarations: [
+        MapModalComponent,
+        TranslatePipe, PhoneNumberPipe, SafeHtmlPipe,
+        MyCustomDirective
+      ],
+      schemas: [ CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA ],
+      providers: [
+        { provide: MapSuburbsService, useClass: MockMapSuburbsService },
+        { provide: UserLocationService, useClass: MockUserLocationService },
+        ModalController,
+        ChangeDetectorRef,
+        { provide: SavedPlacesService, useClass: MockSavedPlacesService },
+        { provide: Router, useClass: MockRouter },
+        { provide: ReportService, useClass: MockReportService },
+        LoadingController
+      ]
+    }).overrideComponent(MapModalComponent, {
+
+    }).compileComponents();
+    fixture = TestBed.createComponent(MapModalComponent);
+    component = fixture.debugElement.componentInstance;
+  });
+
+  afterEach(() => {
+    component.ngOnDestroy = function() {};
+    fixture.destroy();
+  });
+
+  it('should run #constructor()', async () => {
+    expect(component).toBeTruthy();
+  });
+
+  it('should run #ngOnInit()', async () => {
+    component.savedPlacesService = component.savedPlacesService || {};
+    component.savedPlacesService.navigateToPlace = observableOf({});
+    component.savedPlacesService.selectedPlace = {
+      address: {
+        substring: function() {
+          return 'ngentest';
+        },
+        indexOf: function() {}
+      },
+      hasOwnProperty: function() {},
+      longitude: {},
+      latitude: {},
+      center: {
+        0: {},
+        1: {}
+      }
+    };
+    component.savedPlacesService.navigateToSavedPlace = observableOf({});
+    component.map = component.map || {};
+    component.map.flyTo = jest.fn();
+    component.openNavigateModal = jest.fn();
+    component.ngOnInit();
+    // expect(component.map.flyTo).toHaveBeenCalled();
+    // expect(component.openNavigateModal).toHaveBeenCalled();
+  });
+
+  it('should run #undefined()', async () => {
+    // Error: ERROR this JS code is invalid, "reports.forEach((report)"
+    //     at Function.getFuncReturn (C:\Users\tumis\Documents\Where-is-the-power\app\WhereIsThePower\node_modules\ngentest\lib\util.js:325:13)
+    //     at C:\Users\tumis\Documents\Where-is-the-power\app\WhereIsThePower\node_modules\ngentest\lib\util.js:413:30
+    //     at Array.forEach (<anonymous>)
+    //     at Function.getFuncParamObj (C:\Users\tumis\Documents\Where-is-the-power\app\WhereIsThePower\node_modules\ngentest\lib\util.js:396:26)
+    //     at Function.getFuncArguments (C:\Users\tumis\Documents\Where-is-the-power\app\WhereIsThePower\node_modules\ngentest\lib\util.js:347:30)
+    //     at Function.getFuncReturn (C:\Users\tumis\Documents\Where-is-the-power\app\WhereIsThePower\node_modules\ngentest\lib\util.js:332:34)
+    //     at FuncTestGen.setMockData (C:\Users\tumis\Documents\Where-is-the-power\app\WhereIsThePower\node_modules\ngentest\lib\func-test-gen.js:159:31)
+    //     at FuncTestGen.setMockData (C:\Users\tumis\Documents\Where-is-the-power\app\WhereIsThePower\node_modules\ngentest\lib\func-test-gen.js:90:12)
+    //     at C:\Users\tumis\Documents\Where-is-the-power\app\WhereIsThePower\node_modules\ngentest\lib\func-test-gen.js:80:14
+    //     at Array.forEach (<anonymous>)
+  });
+
+  it('should run #addMarker()', async () => {
+    component.closePopup = jest.fn();
+    component.addMarker({}, {}, 'reportType');
+    // expect(component.closePopup).toHaveBeenCalled();
+  });
+
+  it('should run #populatePolygons()', async () => {
+    component.map = component.map || {};
+    component.map.on = jest.fn();
+    component.map.addSource = jest.fn();
+    component.map.addLayer = jest.fn();
+    component.mapSuburbsService = component.mapSuburbsService || {};
+    component.mapSuburbsService.fetchTimeForPolygon = jest.fn().mockReturnValue(observableOf({
+      success: {},
+      result: {
+        timesOff: {}
+      }
+    }));
+    component.mapSuburbsService.getSuburbData = jest.fn();
+    component.populatePolygons();
+    // expect(component.map.on).toHaveBeenCalled();
+    // expect(component.map.addSource).toHaveBeenCalled();
+    // expect(component.map.addLayer).toHaveBeenCalled();
+    // expect(component.mapSuburbsService.fetchTimeForPolygon).toHaveBeenCalled();
+    // expect(component.mapSuburbsService.getSuburbData).toHaveBeenCalled();
+  });
+
+  it('should run #onSearchBarFocus()', async () => {
+    component.searchBar = component.searchBar || {};
+    component.searchBar.value = {
+      length: {}
+    };
+    component.onSearchBarFocus();
+
+  });
+
+  it('should run #undefined()', async () => {
+    // Error: ERROR this JS code is invalid, "data.features.map((feature)"
+    //     at Function.getFuncReturn (C:\Users\tumis\Documents\Where-is-the-power\app\WhereIsThePower\node_modules\ngentest\lib\util.js:325:13)
+    //     at C:\Users\tumis\Documents\Where-is-the-power\app\WhereIsThePower\node_modules\ngentest\lib\util.js:413:30
+    //     at Array.forEach (<anonymous>)
+    //     at Function.getFuncParamObj (C:\Users\tumis\Documents\Where-is-the-power\app\WhereIsThePower\node_modules\ngentest\lib\util.js:396:26)
+    //     at Function.getFuncArguments (C:\Users\tumis\Documents\Where-is-the-power\app\WhereIsThePower\node_modules\ngentest\lib\util.js:347:30)
+    //     at Function.getFuncReturn (C:\Users\tumis\Documents\Where-is-the-power\app\WhereIsThePower\node_modules\ngentest\lib\util.js:332:34)
+    //     at FuncTestGen.setMockData (C:\Users\tumis\Documents\Where-is-the-power\app\WhereIsThePower\node_modules\ngentest\lib\func-test-gen.js:159:31)
+    //     at FuncTestGen.setMockData (C:\Users\tumis\Documents\Where-is-the-power\app\WhereIsThePower\node_modules\ngentest\lib\func-test-gen.js:172:12)
+    //     at FuncTestGen.setMockData (C:\Users\tumis\Documents\Where-is-the-power\app\WhereIsThePower\node_modules\ngentest\lib\func-test-gen.js:163:12)
+    //     at FuncTestGen.setMockData (C:\Users\tumis\Documents\Where-is-the-power\app\WhereIsThePower\node_modules\ngentest\lib\func-test-gen.js:90:12)
+  });
+
+  it('should run #onBlur()', async () => {
+
+    component.onBlur();
+
+  });
+
+  it('should run #getRoute()', async () => {
+    component.instructions = component.instructions || {};
+    component.instructions.push = jest.fn();
+    component.updateBreakpoint = jest.fn();
+    component.emitGetDirections = jest.fn();
+    component.closePopup = jest.fn();
+    component.cancelNavigateModal = jest.fn();
+    component.openModal = jest.fn();
+    component.presentLoading = jest.fn();
+    component.mapSuburbsService = component.mapSuburbsService || {};
+    component.mapSuburbsService.fetchOptimalRoute = jest.fn().mockReturnValue(observableOf({}));
+    component.searchBar = component.searchBar || {};
+    component.searchBar.value = 'value';
+    component.map = component.map || {};
+    component.map.getLayer = jest.fn();
+    component.map.getSource = jest.fn().mockReturnValue({
+      setData: function() {}
+    });
+    component.map.addLayer = jest.fn();
+    component.map.fitBounds = jest.fn();
+    component.calculateETA = jest.fn();
+    await component.getRoute({
+      hasOwnProperty: function() {},
+      longitude: {},
+      latitude: {},
+      address: {},
+      center: {
+        0: {},
+        1: {}
+      },
+      place_name: {}
+    });
+    // expect(component.instructions.push).toHaveBeenCalled();
+    // expect(component.updateBreakpoint).toHaveBeenCalled();
+    // expect(component.emitGetDirections).toHaveBeenCalled();
+    // expect(component.closePopup).toHaveBeenCalled();
+    // expect(component.cancelNavigateModal).toHaveBeenCalled();
+    // expect(component.openModal).toHaveBeenCalled();
+    // expect(component.presentLoading).toHaveBeenCalled();
+    // expect(component.mapSuburbsService.fetchOptimalRoute).toHaveBeenCalled();
+    // expect(component.map.getLayer).toHaveBeenCalled();
+    // expect(component.map.getSource).toHaveBeenCalled();
+    // expect(component.map.addLayer).toHaveBeenCalled();
+    // expect(component.map.fitBounds).toHaveBeenCalled();
+    // expect(component.calculateETA).toHaveBeenCalled();
+  });
+
+  it('should run #presentLoading()', async () => {
+    component.loadingController = component.loadingController || {};
+    component.loadingController.create = jest.fn();
+    await component.presentLoading();
+    // expect(component.loadingController.create).toHaveBeenCalled();
+  });
+
+  it('should run #delay()', async () => {
+
+    component.delay({});
+
+  });
+
+  it('should run #onSearchBarClear()', async () => {
+    component.myModal = component.myModal || {};
+    component.myModal.dismiss = jest.fn();
+    component.emitCancelDirections = jest.fn();
+    component.updateBreakpoint = jest.fn();
+    component.map = component.map || {};
+    component.map.getSource = jest.fn();
+    component.map.removeLayer = jest.fn();
+    component.map.removeSource = jest.fn();
+    component.map.getLayer = jest.fn();
+    component.onSearchBarClear();
+    // expect(component.myModal.dismiss).toHaveBeenCalled();
+    // expect(component.emitCancelDirections).toHaveBeenCalled();
+    // expect(component.updateBreakpoint).toHaveBeenCalled();
+    // expect(component.map.getSource).toHaveBeenCalled();
+    // expect(component.map.removeLayer).toHaveBeenCalled();
+    // expect(component.map.removeSource).toHaveBeenCalled();
+    // expect(component.map.getLayer).toHaveBeenCalled();
+  });
+
+  it('should run #centerOnStartPoint()', async () => {
+    component.map = component.map || {};
+    component.map.flyTo = jest.fn();
+    component.closePopup = jest.fn();
+    component.centerOnStartPoint();
+    // expect(component.map.flyTo).toHaveBeenCalled();
+    // expect(component.closePopup).toHaveBeenCalled();
+  });
+
+  it('should run #openModal()', async () => {
+    component.myModal = component.myModal || {};
+    component.myModal.present = jest.fn();
+    component.openModal({});
+    // expect(component.myModal.present).toHaveBeenCalled();
+  });
+
+  it('should run #openNavigateModal()', async () => {
+    component.navigateModal = component.navigateModal || {};
+    component.navigateModal.present = jest.fn();
+    component.updateBreakpoint = jest.fn();
+    component.openNavigateModal();
+    // expect(component.navigateModal.present).toHaveBeenCalled();
+    // expect(component.updateBreakpoint).toHaveBeenCalled();
+  });
+
+  it('should run #calculateETA()', async () => {
+    component.tripETA = component.tripETA || {};
+    component.tripETA.setHours = jest.fn();
+    component.tripETA.getHours = jest.fn();
+    component.tripETA.setMinutes = jest.fn();
+    component.tripETA.getMinutes = jest.fn();
+    component.calculateETA();
+    // expect(component.tripETA.setHours).toHaveBeenCalled();
+    // expect(component.tripETA.getHours).toHaveBeenCalled();
+    // expect(component.tripETA.setMinutes).toHaveBeenCalled();
+    // expect(component.tripETA.getMinutes).toHaveBeenCalled();
+  });
+
+  it('should run #getIconForInstruction()', async () => {
+
+    component.getIconForInstruction({});
+
+  });
+
+  it('should run #beginTrip()', async () => {
+    component.centerOnStartPoint = jest.fn();
+    component.updateBreakpoint = jest.fn();
+    component.userMarker = component.userMarker || {};
+    component.userMarker.remove = jest.fn();
+    component.beginTrip();
+    // expect(component.centerOnStartPoint).toHaveBeenCalled();
+    // expect(component.updateBreakpoint).toHaveBeenCalled();
+    // expect(component.userMarker.remove).toHaveBeenCalled();
+  });
+
+  it('should run #pin()', async () => {
+    component.centerOnStartPoint = jest.fn();
+    component.userMarker = component.userMarker || {};
+    component.userMarker.remove = jest.fn();
+    component.pin();
+    // expect(component.centerOnStartPoint).toHaveBeenCalled();
+    // expect(component.userMarker.remove).toHaveBeenCalled();
+  });
+
+  it('should run #onModalDismiss()', async () => {
+    component.onSearchBarClear = jest.fn();
+    component.onModalDismiss();
+    // expect(component.onSearchBarClear).toHaveBeenCalled();
+  });
+
+  it('should run #emitCancelDirections()', async () => {
+    component.mapSuburbsService = component.mapSuburbsService || {};
+    component.mapSuburbsService.gettingDirections = {
+      next: function() {}
+    };
+    component.map = component.map || {};
+    component.map.resize = jest.fn();
+    component.emitCancelDirections();
+    // expect(component.map.resize).toHaveBeenCalled();
+  });
+
+  it('should run #emitGetDirections()', async () => {
+    component.mapSuburbsService = component.mapSuburbsService || {};
+    component.mapSuburbsService.gettingDirections = {
+      next: function() {}
+    };
+    component.delay = jest.fn();
+    component.map = component.map || {};
+    component.map.resize = jest.fn();
+    await component.emitGetDirections();
+    // expect(component.delay).toHaveBeenCalled();
+    // expect(component.map.resize).toHaveBeenCalled();
+  });
+
+  it('should run #onResize()', async () => {
+    component.updateBreakpoint = jest.fn();
+    component.onResize();
+    // expect(component.updateBreakpoint).toHaveBeenCalled();
+  });
+
+  it('should run #updateBreakpoint()', async () => {
+    component.myModal = component.myModal || {};
+    component.myModal.setCurrentBreakpoint = jest.fn();
+    component.updateBreakpoint();
+    // expect(component.myModal.setCurrentBreakpoint).toHaveBeenCalled();
+  });
+
+  it('should run #closePopup()', async () => {
+    component.popup = component.popup || {};
+    component.popup.remove = jest.fn();
+    component.closePopup();
+    // expect(component.popup.remove).toHaveBeenCalled();
+  });
+
+  it('should run #savePlace()', async () => {
+    component.savedPlacesService = component.savedPlacesService || {};
+    component.savedPlacesService.savedPlace = 'savedPlace';
+    component.savedPlacesService.savePlace = {
+      next: function() {}
+    };
+    component.cancelNavigateModal = jest.fn();
+    component.savePlace();
+    // expect(component.cancelNavigateModal).toHaveBeenCalled();
+  });
+
+  it('should run #cancelNavigateModal()', async () => {
+    component.navigateModal = component.navigateModal || {};
+    component.navigateModal.dismiss = jest.fn();
+    component.cancelNavigateModal();
+    // expect(component.navigateModal.dismiss).toHaveBeenCalled();
+  });
+
+  it('should run #ngOnDestroy()', async () => {
+    component.navigateToPlaceSubscription = component.navigateToPlaceSubscription || {};
+    component.navigateToPlaceSubscription.unsubscribe = jest.fn();
+    component.savedPlacesService = component.savedPlacesService || {};
+    component.savedPlacesService.navigateToPlace = {
+      next: function() {}
+    };
+    component.MapSubscription = component.MapSubscription || {};
+    component.MapSubscription.unsubscribe = jest.fn();
+    component.ngOnDestroy();
+    // expect(component.navigateToPlaceSubscription.unsubscribe).toHaveBeenCalled();
+    // expect(component.MapSubscription.unsubscribe).toHaveBeenCalled();
+  });
+
+  it('should run #goToReport()', async () => {
+    component.router = component.router || {};
+    component.router.navigate = jest.fn();
+    component.goToReport();
+    // expect(component.router.navigate).toHaveBeenCalled();
+  });
+
+  it('should run #isPointInsidePolygon()', async () => {
+
+    component.isPointInsidePolygon({
+      coordinates: {
+        0: {},
+        1: {}
+      }
+    }, {
+      coordinates: {
+        0: {}
+      }
+    });
+
+  });
+
+});
+// Error: ERROR this JS code is invalid, "reports.forEach((report)"
+// Error: ERROR this JS code is invalid, "data.features.map((feature)"
