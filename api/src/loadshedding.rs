@@ -205,6 +205,7 @@ pub struct LoadSheddingStage {
     #[serde(skip_serializing, skip_deserializing)]
     db: Option<Client>,
     stage: i32,
+    pub update: Option<bool>
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -653,6 +654,7 @@ impl LoadsheddingData {
             end_time: self.end.0.timestamp(),
             db: None,
             stage: self.stage,
+            update: Some(true)
         }
     }
 }
@@ -1168,6 +1170,7 @@ impl LoadSheddingStage {
                     start_time: 0,
                     end_time: 0,
                     db: None,
+                    update: Some(true)
                 },
             };
             let latest_in_db = result.start_time;
@@ -1210,7 +1213,11 @@ impl LoadSheddingStage {
                         mongodb::options::UpdateModifications::Document(doc! {
                             "$set" : {"stage" : new_data.stage}
                         });
-                    let _ = db_data.update(update, db_con).await;
+                    if let Some(update_value) = db_data.update {
+                        if update_value {
+                            let _ = db_data.update(update, db_con).await;
+                        }
+                    }
                 }
             }
             // else if no match
@@ -1265,6 +1272,7 @@ impl Fairing for StageUpdater {
             start_time: 0,
             end_time: 0,
             db: None,
+            update: Some(true)
         }));
         let rocket = rocket.manage(Some(stage_info));
         Ok(rocket)
