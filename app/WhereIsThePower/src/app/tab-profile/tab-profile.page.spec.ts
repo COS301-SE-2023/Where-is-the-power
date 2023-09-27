@@ -75,29 +75,29 @@ describe('TabProfilePage', () => {
       }
     });
     component.authService.isLoggedin = 'isLoggedin';
-    component.getInitialDataURL = jest.fn();
+    spyOn(component, 'getInitialDataURL');
     component.ngOnInit();
     // expect(component.getInitialDataURL).toHaveBeenCalled();
   });
 
   it('should run #showSignupComponent()', async () => {
     component.modalController = component.modalController || {};
-    component.modalController.create = jest.fn();
+    spyOn(component.modalController, 'create');
     await component.showSignupComponent();
     // expect(component.modalController.create).toHaveBeenCalled();
   });
 
   it('should run #showLoginComponent()', async () => {
     component.modalController = component.modalController || {};
-    component.modalController.create = jest.fn();
+    spyOn(component.modalController, 'create');
     await component.showLoginComponent();
     // expect(component.modalController.create).toHaveBeenCalled();
   });
 
   it('should run #logout()', async () => {
     component.authService = component.authService || {};
-    component.authService.signOutUser = jest.fn();
-    component.toggleTheme = jest.fn();
+    spyOn(component.authService, 'signOutUser');
+    spyOn(component, 'toggleTheme');
     await component.logout();
     // expect(component.authService.signOutUser).toHaveBeenCalled();
     // expect(component.toggleTheme).toHaveBeenCalled();
@@ -105,7 +105,7 @@ describe('TabProfilePage', () => {
 
   it('should run #ngOnDestroy()', async () => {
     component.userSubscription = component.userSubscription || {};
-    component.userSubscription.unsubscribe = jest.fn();
+    spyOn(component.userSubscription, 'unsubscribe');
     component.ngOnDestroy();
     // expect(component.userSubscription.unsubscribe).toHaveBeenCalled();
   });
