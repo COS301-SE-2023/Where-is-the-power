@@ -97,7 +97,22 @@ export class TabProfilePage implements OnInit {
     document.body.setAttribute('witp-color-theme', systemTheme);
   }
 
-  userManual() {
+  downloadUserManual(type: string) {
+    // Determine the URL of the user manual based on the 'type'
+    let userManualURL = '';
 
+    if (type === 'mobile') {
+      userManualURL = 'assets/pdf/user-manual-mobile.pdf';
+    } else if (type === 'desktop') {
+      userManualURL = 'assets/pdf/user-manual-desktop.pdf';
+    }
+    // Add more 'if' conditions for other user manual types if needed
+
+    // Trigger the download
+    const link = document.createElement('a');
+    link.href = userManualURL;
+    link.target = '_blank'; // Open the link in a new tab (optional)
+    link.download = `user-manual-${type}.pdf`; // Specify the filename
+    link.click();
   }
 }

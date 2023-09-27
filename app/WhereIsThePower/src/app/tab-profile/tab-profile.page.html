@@ -20,20 +20,38 @@
           </ion-img>
         </ion-col>
       </ion-row>
+      <ion-row class="ion-padding-start">
+        <h5 style="margin: 0;">
+          <ion-label>Account</ion-label>
+        </h5>
+      </ion-row>
+      <ion-item button detail="true" (click)="showLoginComponent()">
+        <ion-icon name="log-in-outline" class="ion-padding-end"></ion-icon>
+        <ion-label>Login to my account</ion-label>
+      </ion-item>
+      <ion-item button detail="true" (click)="showSignupComponent()">
+        <ion-icon name="person-add-outline" class="ion-padding-end"></ion-icon>
+        <ion-label>Sign up for an account</ion-label>
+      </ion-item>
+
+      <ion-row class="ion-padding-start ion-padding-top ion-margin-top">
+        <h5>
+          <ion-label>User Manual</ion-label>
+        </h5>
+      </ion-row>
+
+      <!-- Download links for "Mobile" and "Desktop" user manuals -->
+      <ion-item button (click)="downloadUserManual('mobile')">
+        <ion-icon name="phone-portrait-outline" class="ion-padding-end"></ion-icon>
+        <ion-label>Mobile</ion-label>
+      </ion-item>
+
+      <ion-item button (click)="downloadUserManual('desktop')">
+        <ion-icon name="desktop-outline" class="ion-padding-end"></ion-icon>
+        <ion-label>Desktop</ion-label>
+      </ion-item>
       <ion-row>
-        <ion-col size="12" size-md="11" offset-md="0.5" size-xl="10" offset-xl="1">
-          <ion-list>
-            <ion-item button detail="true" (click)="showLoginComponent()">
-              <ion-icon name="log-in-outline" class="ion-padding-end"></ion-icon>
-              <ion-label>Login to my account</ion-label>
-            </ion-item>
-            <ion-item button detail="true" (click)="showSignupComponent()">
-              <ion-icon name="person-add-outline" class="ion-padding-end"></ion-icon>
-              <ion-label>Sign up for an account</ion-label>
-            </ion-item>
-          </ion-list>
-        </ion-col>
-        <ion-col size="12" size-md="11" offset-md="0.5" size-xl="10" offset-xl="1">
+        <ion-col size="12" size-md="11" offset-md="0.5" size-xl="10" offset-xl="1" class="ion-padding-top">
           <ion-item>
             <ion-label color="primary" style="text-align: center;">Terms of Service</ion-label>
           </ion-item>
@@ -52,7 +70,7 @@
       <h1 data-cy="Welcome-text"> Welcome {{user?.firstName}} !</h1>
     </ion-text>
     <ion-row class="ion-padding-start">
-      <h5 style="margin: 0;">
+      <h5>
         <ion-label>Settings</ion-label>
       </h5>
     </ion-row>
@@ -75,15 +93,18 @@
         <ion-label color="danger">Logout</ion-label>
       </ion-item>
     <ion-row class="ion-padding-start ion-padding-top ion-margin-top">
-      <h5 style="margin: 4px;">
+      <h5 style="margin-bottom: 4px;">
         <ion-label>User Manual</ion-label>
       </h5>
     </ion-row>
-    <ion-item button (click)="userManual()">
+
+    <!-- Download links for "Mobile" and "Desktop" user manuals -->
+    <ion-item button (click)="downloadUserManual('mobile')">
       <ion-icon name="phone-portrait-outline" class="ion-padding-end"></ion-icon>
       <ion-label>Mobile</ion-label>
     </ion-item>
-    <ion-item button (click)="userManual()">
+
+    <ion-item button (click)="downloadUserManual('desktop')">
       <ion-icon name="desktop-outline" class="ion-padding-end"></ion-icon>
       <ion-label>Desktop</ion-label>
     </ion-item>
