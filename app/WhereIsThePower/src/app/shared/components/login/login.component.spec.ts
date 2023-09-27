@@ -86,7 +86,7 @@ describe('LoginComponent', () => {
 
   it('should run #dismissModal()', async () => {
     component.modalController = component.modalController || {};
-    component.modalController.dismiss = jest.fn();
+    spyOn(component.modalController, 'dismiss');
     component.dismissModal();
     // expect(component.modalController.dismiss).toHaveBeenCalled();
   });
@@ -105,9 +105,9 @@ describe('LoginComponent', () => {
     component.User.token = 'token';
     component.User.firstName = 'firstName';
     component.User.lastName = 'lastName';
-    component.presentLoading = jest.fn();
+    spyOn(component, 'presentLoading');
     component.authService = component.authService || {};
-    component.authService.loginUser = jest.fn().mockReturnValue(observableOf({
+    spyOn(component.authService, 'loginUser').and.returnValue(observableOf({
       token: {},
       firstName: {},
       lastName: {}
@@ -115,9 +115,9 @@ describe('LoginComponent', () => {
     component.authService.user = {
       next: function() {}
     };
-    component.authService.saveUserData = jest.fn();
-    component.dismissModal = jest.fn();
-    component.failToast = jest.fn();
+    spyOn(component.authService, 'saveUserData');
+    spyOn(component, 'dismissModal');
+    spyOn(component, 'failToast');
     await component.login();
     // expect(component.presentLoading).toHaveBeenCalled();
     // expect(component.authService.loginUser).toHaveBeenCalled();
@@ -128,21 +128,21 @@ describe('LoginComponent', () => {
 
   it('should run #failToast()', async () => {
     component.toastController = component.toastController || {};
-    component.toastController.create = jest.fn();
+    spyOn(component.toastController, 'create');
     await component.failToast({});
     // expect(component.toastController.create).toHaveBeenCalled();
   });
 
   it('should run #sucessToast()', async () => {
     component.toastController = component.toastController || {};
-    component.toastController.create = jest.fn();
+    spyOn(component.toastController, 'create');
     await component.sucessToast({});
     // expect(component.toastController.create).toHaveBeenCalled();
   });
 
   it('should run #presentLoading()', async () => {
     component.loadingController = component.loadingController || {};
-    component.loadingController.create = jest.fn();
+    spyOn(component.loadingController, 'create');
     await component.presentLoading();
     // expect(component.loadingController.create).toHaveBeenCalled();
   });
