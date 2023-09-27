@@ -12,8 +12,6 @@ import { StatisticsService } from './statistics.service';
 import { HttpClient } from '@angular/common/http';
 import { UserLocationService } from '../user-location.service';
 
-
-
 @Injectable()
 class MockStatisticsService {}
 
@@ -82,17 +80,17 @@ describe('TabStatisticsPage', () => {
 
   it('should run #ngOnInit()', async () => {
     component.http = component.http || {};
-    component.http.get = jest.fn().mockReturnValue(observableOf({}));
+    spyOn(component.http, 'get').and.returnValue(observableOf({}));
     await component.ngOnInit();
     // expect(component.http.get).toHaveBeenCalled();
   });
 
   it('should run #ionViewWillEnter()', async () => {
     component.userLocationService = component.userLocationService || {};
-    component.userLocationService.getUserLocation = jest.fn();
+    spyOn(component.userLocationService, 'getUserLocation');
     component.userLocationService.isLocationAvailable = observableOf({});
-    component.userLocationService.getArea = jest.fn();
-    component.selectSuburb = jest.fn();
+    spyOn(component.userLocationService, 'getArea');
+    spyOn(component, 'selectSuburb');
     await component.ionViewWillEnter();
     // expect(component.userLocationService.getUserLocation).toHaveBeenCalled();
     // expect(component.userLocationService.getArea).toHaveBeenCalled();
@@ -100,7 +98,7 @@ describe('TabStatisticsPage', () => {
   });
 
   it('should run #processDoughnutChart()', async () => {
-    component.populateDoughnutChart = jest.fn();
+    spyOn(component, 'populateDoughnutChart');
     component.processDoughnutChart({
       result: {
         perDayTimes: {
@@ -116,15 +114,15 @@ describe('TabStatisticsPage', () => {
 
   it('should run #populateDoughnutChart()', async () => {
     component.doughnutChart = component.doughnutChart || {};
-    component.doughnutChart.clear = jest.fn();
-    component.doughnutChart.destroy = jest.fn();
+    spyOn(component.doughnutChart, 'clear');
+    spyOn(component.doughnutChart, 'destroy');
     component.populateDoughnutChart({});
     // expect(component.doughnutChart.clear).toHaveBeenCalled();
     // expect(component.doughnutChart.destroy).toHaveBeenCalled();
   });
 
   it('should run #processBarChart()', async () => {
-    component.populateBarChart = jest.fn();
+    spyOn(component, 'populateBarChart');
     component.processBarChart({
       result: {
         perDayTimes: {
@@ -140,8 +138,8 @@ describe('TabStatisticsPage', () => {
 
   it('should run #populateBarChart()', async () => {
     component.barChart = component.barChart || {};
-    component.barChart.clear = jest.fn();
-    component.barChart.destroy = jest.fn();
+    spyOn(component.barChart, 'clear');
+    spyOn(component.barChart, 'destroy');
     component.barChartRef = component.barChartRef || {};
     component.barChartRef.nativeElement = 'nativeElement';
     component.populateBarChart({});
@@ -162,8 +160,8 @@ describe('TabStatisticsPage', () => {
   });
 
   it('should run #clearAllCharts()', async () => {
-    component.clearBarChart = jest.fn();
-    component.clearDoughnutChart = jest.fn();
+    spyOn(component, 'clearBarChart');
+    spyOn(component, 'clearDoughnutChart');
     component.clearAllCharts();
     // expect(component.clearBarChart).toHaveBeenCalled();
     // expect(component.clearDoughnutChart).toHaveBeenCalled();
@@ -171,7 +169,7 @@ describe('TabStatisticsPage', () => {
 
   it('should run #onSearch()', async () => {
     component.searchTerm = component.searchTerm || {};
-    component.searchTerm.toLowerCase = jest.fn();
+    spyOn(component.searchTerm, 'toLowerCase');
     component.searchItems = component.searchItems || {};
     component.searchItems = ['searchItems'];
     component.onSearch({});
@@ -186,11 +184,11 @@ describe('TabStatisticsPage', () => {
 
   it('should run #selectSuburb()', async () => {
     component.statisticsService = component.statisticsService || {};
-    component.statisticsService.getSuburbData = jest.fn().mockReturnValue(observableOf({
+    spyOn(component.statisticsService, 'getSuburbData').and.returnValue(observableOf({
       result: {}
     }));
-    component.processDoughnutChart = jest.fn();
-    component.processBarChart = jest.fn();
+    spyOn(component, 'processDoughnutChart');
+    spyOn(component, 'processBarChart');
     component.selectSuburb({
       name: {},
       id: {}
@@ -202,11 +200,11 @@ describe('TabStatisticsPage', () => {
 
   it('should run #ngOnDestroy()', async () => {
     component.isLocationAvailableSubscription = component.isLocationAvailableSubscription || {};
-    component.isLocationAvailableSubscription.unsubscribe = jest.fn();
+    spyOn(component.isLocationAvailableSubscription, 'unsubscribe');
     component.suburbDataSubscription = component.suburbDataSubscription || {};
-    component.suburbDataSubscription.unsubscribe = jest.fn();
+    spyOn(component.suburbDataSubscription, 'unsubscribe');
     component.listSuburbsSubscription = component.listSuburbsSubscription || {};
-    component.listSuburbsSubscription.unsubscribe = jest.fn();
+    spyOn(component.listSuburbsSubscription, 'unsubscribe');
     component.ngOnDestroy();
     // expect(component.isLocationAvailableSubscription.unsubscribe).toHaveBeenCalled();
     // expect(component.suburbDataSubscription.unsubscribe).toHaveBeenCalled();
