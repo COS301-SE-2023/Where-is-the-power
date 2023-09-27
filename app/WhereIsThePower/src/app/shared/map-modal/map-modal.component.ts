@@ -70,6 +70,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   currentSuburbSchedule: any;
   modifiedAddress: string = "";
   isPlaceSaved: boolean = false;
+  currentPopup: string | null = null;
+  isReportMarker: boolean = false;
 
   @ViewChild('myModal') myModal: any; // Reference to the ion-modal element
   modalResult: any; // To store the selected result data
@@ -192,10 +194,12 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     customIcon.style.backgroundPosition = 'center';
     customIcon.style.borderRadius = '50%';
     customIcon.style.padding = '8px';
+    customIcon.style.pointerEvents = 'none';
+    customIcon.setAttribute('class', 'report-icon');
 
     const formattedReportType = reportType.replace(/([A-Z])/g, ' $1');
 
-    const reportMarker = new mapboxgl.Marker({
+    new mapboxgl.Marker({
       element: customIcon,
     })
       .setLngLat([lon, lat])
@@ -207,15 +211,30 @@ export class MapModalComponent implements OnInit, AfterViewInit {
               <ion-card-title color="primary">${formattedReportType}</ion-card-title>
             </ion-card-header>
             <ion-card-content>
-              <h4><ion-icon src="assets/schedule.svg"></ion-icon><ion-text>Reported at 14:00</ion-text></h4>
+              <h4><ion-icon src="assets/schedule.svg"></ion-icon><ion-text>Reported at ${this.formatTime(new Date())}</ion-text></h4>
             </ion-card-content>
           </ion-card>`
           )
       )
       .addTo(this.map);
+    customIcon.addEventListener('click', this.handleReportIconClick.bind(this));
 
-    this.closePopup();
+    console.log("this.popup", this.popup);
+    // Close the other popup if it's open
   }
+
+  formatTime(date: any) {
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
+  // Define a separate function to handle the click event
+  handleReportIconClick() {
+    console.log("Report Icon Clicked");
+    this.isReportMarker = true;
+  }
+
   populatePolygons() {
     this.map.on('load', () => {
       // Add a data source containing GeoJSON data.
@@ -259,10 +278,14 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
       // Listen for the click event on the map
       this.map.on('click', 'polygons-layer', (e: any) => {
+        setTimeout(() => {
+          this.isReportMarker = false;
+        }, 20);
+
         const clickedFeature = e.features[0];
         //console.log(e);
 
-        if (clickedFeature) {
+        if (clickedFeature && this.isReportMarker == false) {
           let suburbId = clickedFeature.id;
           console.log("Suburb ID =" + suburbId)
           // Get the properties of the clicked feature (suburb information)
@@ -274,36 +297,36 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           this.mapSuburbsService.fetchTimeForPolygon(suburbId).subscribe(
             (response: any) => {
               // Handle the response here
-              
-              
+
+
               console.log('Time response:', response);
               console.log("success", response.success);
 
-              if(response.success === true)
-              {
-              const timesOff = response.result.timesOff; // Assuming "response" holds your API response
-              if (timesOff && timesOff.length > 0) {
-                const formattedTimes = timesOff.map((time: any) => {
-                  const start = new Date(time.start * 1000); // Convert seconds to milliseconds
-                  const end = new Date(time.end * 1000); // Convert seconds to milliseconds
+              if (response.success === true) {
+                const timesOff = response.result.timesOff; // Assuming "response" holds your API response
+                if (timesOff && timesOff.length > 0) {
+                  const formattedTimes = timesOff.map((time: any) => {
+                    const start = new Date(time.start * 1000); // Convert seconds to milliseconds
+                    const end = new Date(time.end * 1000); // Convert seconds to milliseconds
 
-                  const startHours = start.getHours().toString().padStart(2, '0');
-                  const startMinutes = start.getMinutes().toString().padStart(2, '0');
+                    const startHours = start.getHours().toString().padStart(2, '0');
+                    const startMinutes = start.getMinutes().toString().padStart(2, '0');
 
-                  const endHours = end.getHours().toString().padStart(2, '0');
-                  const endMinutes = end.getMinutes().toString().padStart(2, '0');
+                    const endHours = end.getHours().toString().padStart(2, '0');
+                    const endMinutes = end.getMinutes().toString().padStart(2, '0');
 
-                  this.currentSuburbSchedule = `${startHours}:${startMinutes} - ${endHours}:${endMinutes}`;
-                
-                });
+                    this.currentSuburbSchedule = `${startHours}:${startMinutes} - ${endHours}:${endMinutes}`;
 
-                console.log('Formatted Time Ranges:', formattedTimes);
-              } else {
-                console.log('No time ranges available.');
-                this.currentSuburbSchedule = "unavailable";
-              }
-              const showSchedule = suburbInfo?.PowerStatus !== 'on';
-              const popupContent = `
+                  });
+
+                  console.log('Formatted Time Ranges:', formattedTimes);
+                } else {
+                  console.log('No time ranges available.');
+                  this.currentSuburbSchedule = "unavailable";
+                }
+
+                const showSchedule = suburbInfo?.PowerStatus !== 'on';
+                const popupContent = `
               <ion-card class="popup-ion-card">
                 <ion-card-header class="popup-ion-card-header">
                   <ion-card-title color="primary">${suburbInfo?.SP_NAME}</ion-card-title>
@@ -314,11 +337,14 @@ export class MapModalComponent implements OnInit, AfterViewInit {
                   </ion-card-content>
               </ion-card>
               `;
-              // Create a new popup and set its HTML content
-              this.popup = new mapboxgl.Popup()
-                .setLngLat(e.lngLat)
-                .setHTML(popupContent)
-                .addTo(this.map);
+                // Create a new popup and set its HTML content
+                this.popup = new mapboxgl.Popup()
+                  .setLngLat(e.lngLat)
+                  .setHTML(popupContent)
+                  .addTo(this.map);
+
+                this.currentPopup = popupContent;
+
               }
             },
             (error) => {
