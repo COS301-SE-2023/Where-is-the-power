@@ -72,7 +72,7 @@ describe('TabNavigatePage', () => {
 
   it('should run #ionViewDidEnter()', async () => {
     component.UserLocationService = component.UserLocationService || {};
-    component.UserLocationService.getUserLocation = jest.fn();
+    spyOn(component.UserLocationService, 'getUserLocation');
     component.UserLocationService.isLocationAvailable = observableOf({});
     component.mapModalComponent = component.mapModalComponent || {};
     component.mapModalComponent = ['mapModalComponent'];
@@ -82,7 +82,7 @@ describe('TabNavigatePage', () => {
 
   it('should run #onLocateUser()', async () => {
     component.UserLocationService = component.UserLocationService || {};
-    component.UserLocationService.getUserLocation = jest.fn();
+    spyOn(component.UserLocationService, 'getUserLocation');
     component.onLocateUser();
     // expect(component.UserLocationService.getUserLocation).toHaveBeenCalled();
   });
