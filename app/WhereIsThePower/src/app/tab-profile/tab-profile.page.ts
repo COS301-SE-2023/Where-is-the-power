@@ -21,7 +21,7 @@ export class TabProfilePage implements OnInit {
 
   isLoggedIn: boolean = false;
   constructor(private authService: AuthService,
-              private modalController: ModalController) { }
+    private modalController: ModalController) { }
 
   ngOnInit() {
     //this.isLoggedIn = this.authService.isLoggedin;
@@ -95,5 +95,9 @@ export class TabProfilePage implements OnInit {
 
   toggleTheme(systemTheme: string) {
     document.body.setAttribute('witp-color-theme', systemTheme);
+  }
+
+  userManual() {
+
   }
 }

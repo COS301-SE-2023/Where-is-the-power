@@ -17,23 +17,21 @@
             alt="Traffic Jam Illustration"
             class="ion-padding"
           >
-          </ion-img>  
+          </ion-img>
         </ion-col>
       </ion-row>
       <ion-row>
         <ion-col size="12" size-md="11" offset-md="0.5" size-xl="10" offset-xl="1">
-          <ion-toolbar>
-            <ion-list>
-              <ion-item button detail="true" (click)="showLoginComponent()">
-                <ion-icon name="log-in-outline" class="ion-padding-end"></ion-icon>
-                <ion-label>Login to my account</ion-label>
-              </ion-item>
-              <ion-item button detail="true" (click)="showSignupComponent()">
-                <ion-icon name="person-add-outline" class="ion-padding-end"></ion-icon>
-                <ion-label>Sign up for an account</ion-label>
-              </ion-item>
-            </ion-list>
-          </ion-toolbar>
+          <ion-list>
+            <ion-item button detail="true" (click)="showLoginComponent()">
+              <ion-icon name="log-in-outline" class="ion-padding-end"></ion-icon>
+              <ion-label>Login to my account</ion-label>
+            </ion-item>
+            <ion-item button detail="true" (click)="showSignupComponent()">
+              <ion-icon name="person-add-outline" class="ion-padding-end"></ion-icon>
+              <ion-label>Sign up for an account</ion-label>
+            </ion-item>
+          </ion-list>
         </ion-col>
         <ion-col size="12" size-md="11" offset-md="0.5" size-xl="10" offset-xl="1">
           <ion-item>
@@ -41,7 +39,7 @@
           </ion-item>
         </ion-col>
       </ion-row>
-    </ion-grid> 
+    </ion-grid>
   </div>
 
   <ng-template #UserLoggedIn>
@@ -53,25 +51,41 @@
     <ion-text class="ion-text-center">
       <h1 data-cy="Welcome-text"> Welcome {{user?.firstName}} !</h1>
     </ion-text>
-    <ion-list>
+    <ion-row class="ion-padding-start">
+      <h5 style="margin: 0;">
+        <ion-label>Settings</ion-label>
+      </h5>
+    </ion-row>
       <ion-item button>
         <ion-icon name="moon-outline" class="ion-padding-end"></ion-icon>
         <ion-select #systemTheme
-                    label="Theme" 
+                    label="Theme"
                     interface="popover"
                     toggleIcon="add"
                     expandedIcon="remove"
                     aria-label="Theme"
-                    placeholder="Select Theme"
+                    placeholder="Light"
                     (ionChange)="toggleTheme(systemTheme.value)">
           <ion-select-option value="light">Light</ion-select-option>
           <ion-select-option value="dark" >Dark</ion-select-option>
         </ion-select>
       </ion-item>
       <ion-item button (click)="logout()" data-cy="logout-button">
-        <ion-icon name="log-out-outline" class="ion-padding-end"></ion-icon>
-        <ion-label>Logout</ion-label>
+        <ion-icon name="log-out-outline" class="ion-padding-end" color="danger"></ion-icon>
+        <ion-label color="danger">Logout</ion-label>
       </ion-item>
-    </ion-list>
+    <ion-row class="ion-padding-start ion-padding-top ion-margin-top">
+      <h5 style="margin: 4px;">
+        <ion-label>User Manual</ion-label>
+      </h5>
+    </ion-row>
+    <ion-item button (click)="userManual()">
+      <ion-icon name="phone-portrait-outline" class="ion-padding-end"></ion-icon>
+      <ion-label>Mobile</ion-label>
+    </ion-item>
+    <ion-item button (click)="userManual()">
+      <ion-icon name="desktop-outline" class="ion-padding-end"></ion-icon>
+      <ion-label>Desktop</ion-label>
+    </ion-item>
   </ng-template>
 </ion-content>
