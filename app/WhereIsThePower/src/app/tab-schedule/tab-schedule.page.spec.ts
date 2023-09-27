@@ -79,12 +79,12 @@ describe('TabSchedulePage', () => {
 
   it('should run #ngOnInit()', async () => {
     component.http = component.http || {};
-    component.http.get = jest.fn().mockReturnValue(observableOf({}));
+    spyOn(component.http, 'get').and.returnValue(observableOf({}));
     component.scheduleService = component.scheduleService || {};
-    component.scheduleService.getLoadSheddingStage = jest.fn().mockReturnValue(observableOf({
+    spyOn(component.scheduleService, 'getLoadSheddingStage').and.returnValue(observableOf({
       result: {}
     }));
-    component.setChipColor = jest.fn();
+    spyOn(component, 'setChipColor');
     await component.ngOnInit();
     // expect(component.http.get).toHaveBeenCalled();
     // expect(component.scheduleService.getLoadSheddingStage).toHaveBeenCalled();
@@ -93,10 +93,10 @@ describe('TabSchedulePage', () => {
 
   it('should run #ionViewWillEnter()', async () => {
     component.userLocationService = component.userLocationService || {};
-    component.userLocationService.getUserLocation = jest.fn();
+    spyOn(component.userLocationService, 'getUserLocation');
     component.userLocationService.isLocationAvailable = observableOf({});
-    component.userLocationService.getArea = jest.fn();
-    component.selectSuburb = jest.fn();
+    spyOn(component.userLocationService, 'getArea');
+    spyOn(component, 'selectSuburb');
     await component.ionViewWillEnter();
     // expect(component.userLocationService.getUserLocation).toHaveBeenCalled();
     // expect(component.userLocationService.getArea).toHaveBeenCalled();
@@ -105,7 +105,7 @@ describe('TabSchedulePage', () => {
 
   it('should run #onSearch()', async () => {
     component.searchTerm = component.searchTerm || {};
-    component.searchTerm.toLowerCase = jest.fn();
+    spyOn(component.searchTerm, 'toLowerCase');
     component.searchItems = component.searchItems || {};
     component.searchItems = ['searchItems'];
     component.onSearch({});
@@ -152,13 +152,12 @@ describe('TabSchedulePage', () => {
 
   it('should run #ngOnDestroy()', async () => {
     component.suburbDataSubscription = component.suburbDataSubscription || {};
-    component.suburbDataSubscription.unsubscribe = jest.fn();
+    spyOn(component.suburbDataSubscription, 'unsubscribe');
     component.listSuburbsSubscription = component.listSuburbsSubscription || {};
-    component.listSuburbsSubscription.unsubscribe = jest.fn();
+    spyOn(component.listSuburbsSubscription, 'unsubscribe');
     component.ngOnDestroy();
     // expect(component.suburbDataSubscription.unsubscribe).toHaveBeenCalled();
     // expect(component.listSuburbsSubscription.unsubscribe).toHaveBeenCalled();
   });
 
-});
-// Error: ERROR this JS code is invalid, "data.result.timesOff.forEach((timeOff)"
+});Error: ERROR this JS code is invalid, "data.result.timesOff.forEach((timeOff)"
