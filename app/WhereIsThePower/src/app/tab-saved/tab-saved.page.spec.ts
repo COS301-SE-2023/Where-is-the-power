@@ -254,4 +254,5 @@ describe('TabSavedPage', () => {
     // expect(component.placesSubscription.unsubscribe).toHaveBeenCalled();
   });
 
-});Error: ERROR this JS code is invalid, "data.features.map((feature)"
+});
+// Error: ERROR this JS code is invalid, "data.features.map((feature)"

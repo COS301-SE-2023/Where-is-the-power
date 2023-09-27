@@ -85,16 +85,16 @@ describe('ReportPage', () => {
 
   it('should run #ionViewWillEnter()', async () => {
     component.authService = component.authService || {};
-    component.authService.isUserLoggedIn = jest.fn();
+    spyOn(component.authService, 'isUserLoggedIn');
     await component.ionViewWillEnter();
     // expect(component.authService.isUserLoggedIn).toHaveBeenCalled();
   });
 
   it('should run #report()', async () => {
     component.reportService = component.reportService || {};
-    component.reportService.reportIssue = jest.fn().mockReturnValue(observableOf({}));
+    spyOn(component.reportService, 'reportIssue').and.returnValue(observableOf({}));
     component.router = component.router || {};
-    component.router.navigate = jest.fn();
+    spyOn(component.router, 'navigate');
     component.report({});
     // expect(component.reportService.reportIssue).toHaveBeenCalled();
     // expect(component.router.navigate).toHaveBeenCalled();
@@ -102,7 +102,7 @@ describe('ReportPage', () => {
 
   it('should run #ngOnDestroy()', async () => {
     component.createReportSubscription = component.createReportSubscription || {};
-    component.createReportSubscription.unsubscribe = jest.fn();
+    spyOn(component.createReportSubscription, 'unsubscribe');
     component.ngOnDestroy();
     // expect(component.createReportSubscription.unsubscribe).toHaveBeenCalled();
   });
