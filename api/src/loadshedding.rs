@@ -222,6 +222,7 @@ pub struct LoadSheddingStage {
     #[serde(skip_serializing, skip_deserializing)]
     db: Option<Client>,
     stage: i32,
+    pub update: Option<bool>
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -670,6 +671,7 @@ impl LoadsheddingData {
             end_time: self.end.0.timestamp(),
             db: None,
             stage: self.stage,
+            update: Some(true)
         }
     }
 }
@@ -759,7 +761,7 @@ impl MunicipalityEntity {
         // filter schedules to relevant ones
         for schedule in unfiltered_schedules {
             let keep = schedule.is_within_timeslot(&time_to_search);
-            println!("{:?}", time_to_search.hour());
+            //println!("{:?}", time_to_search.hour());
             if keep {
                 schedules.push(schedule);
             }
@@ -867,10 +869,10 @@ impl SuburbEntity {
             .unwrap()
             .with_minute(0)
             .unwrap();
-        println!("{:?}", time_now.timestamp());
+        //println!("{:?}", time_now.timestamp());
         let mut response: Vec<TimeSlot> = Vec::new();
         let day_in_future =
-            get_date_time(Some((Local::now() + chrono::Duration::days(1)).timestamp()));
+            get_date_time(Some((get_date_time(time) + chrono::Duration::days(1)).timestamp()));
 
         let (group, mut all_stages, schedule) = match self
             .collect_information(&time_now.timestamp(), connection, db_functions)
@@ -882,7 +884,7 @@ impl SuburbEntity {
         all_stages.reverse();
 
         let mut time_to_search = time_now;
-        println!("{:?}", time_to_search.timestamp());
+        //println!("{:?}", time_to_search.timestamp());
         while time_to_search < day_in_future {
             let day = time_to_search.day() as i32;
             let time_slots: Vec<TimeScheduleEntity> = schedule
@@ -1116,30 +1118,32 @@ impl SuburbEntity {
 impl LoadSheddingStage {
     pub async fn set_stage(&mut self) {
         // get the next thing from db
-        let con = &self.db.as_ref().unwrap().database("production");
-        let now = get_date_time(None).timestamp();
-        let query = doc! {
-            "startTime" : {
-                "$lte" : now
-            }
-        };
-        let filter = doc! {
-            "startTime" : -1
-        };
-        let find_options = FindOneOptions::builder().sort(filter).build();
-        let new_status: LoadSheddingStage = con
-            .collection("stage_log")
-            .find_one(query, find_options)
-            .await
-            .unwrap()
-            .unwrap();
-        println!("self is: {:?}", self);
-        println!("new is: {:?}", new_status);
-        self.end_time = new_status.end_time;
-        self.start_time = new_status.start_time;
-        self.stage = new_status.stage;
-        println!("self is after operation: {:?}", self);
-        //println!("{:?}", self);
+        if let Some(client) = &self.db.as_ref() {
+            let con = client.database("production");
+            let now = get_date_time(None).timestamp();
+            let query = doc! {
+                "startTime" : {
+                    "$lte" : now
+                }
+            };
+            let filter = doc! {
+                "startTime" : -1
+            };
+            let find_options = FindOneOptions::builder().sort(filter).build();
+            let new_status: LoadSheddingStage = con
+                .collection("stage_log")
+                .find_one(query, find_options)
+                .await
+                .unwrap()
+                .unwrap();
+            println!("self is: {:?}", self);
+            println!("new is: {:?}", new_status);
+            self.end_time = new_status.end_time;
+            self.start_time = new_status.start_time;
+            self.stage = new_status.stage;
+            println!("self is after operation: {:?}", self);
+            //println!("{:?}", self);
+        }
     }
 
     pub async fn request_stage_data_update(&mut self) -> Result<i32, reqwest::Error> {
@@ -1165,7 +1169,7 @@ impl LoadSheddingStage {
         if let Some(client) = &self.db.as_ref() {
             let db_con = &client.database("production");
             let query = doc! {
-                "start_time" : -1
+                "startTime" : -1
             };
             let find_options = FindOneOptions::builder().sort(query).build();
 
@@ -1183,6 +1187,7 @@ impl LoadSheddingStage {
                     start_time: 0,
                     end_time: 0,
                     db: None,
+                    update: Some(true)
                 },
             };
             let latest_in_db = result.start_time;
@@ -1225,7 +1230,11 @@ impl LoadSheddingStage {
                         mongodb::options::UpdateModifications::Document(doc! {
                             "$set" : {"stage" : new_data.stage}
                         });
-                    let _ = db_data.update(update, db_con).await;
+                    if let Some(update_value) = db_data.update {
+                        if update_value {
+                            let _ = db_data.update(update, db_con).await;
+                        }
+                    }
                 }
             }
             // else if no match
@@ -1280,6 +1289,7 @@ impl Fairing for StageUpdater {
             start_time: 0,
             end_time: 0,
             db: None,
+            update: Some(true)
         }));
         let rocket = rocket.manage(Some(stage_info));
         Ok(rocket)
@@ -1343,7 +1353,7 @@ impl<'de> Deserialize<'de> for SASTDateTime {
         // hack for now because library is not being co-operative
         let convert_to_sast = dt.timestamp() - 2*3600;
         let sast = get_date_time(Some(convert_to_sast));
-        println!("{:?}", sast);
+        //println!("{:?}", sast);
         Ok(SASTDateTime(sast))
     }
 }
