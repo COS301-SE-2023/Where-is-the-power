@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  MapboxApiKey: 'pk.eyJ1IjoiZG9jdG9yYnVpbGRlciIsImEiOiJjbGtjZGtzYWQwMDdtM3Bsdm90bDJ6dmFpIn0.Z3CBinZUO0h3Pi96_8wBPw'
+  MapboxApiKey: 'pk.eyJ1IjoidTE4MDA0ODc0IiwiYSI6ImNsajMzdWh5ZzAwcHAzZXMxc3lveXJmNDgifQ.7P_tuuiC4M_Q1_H5ZF1rTA'
 };
