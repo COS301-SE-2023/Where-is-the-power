@@ -38,7 +38,7 @@ export class TabSavedPage {
     this.savePlaceSubscription = new Subscription();
   }
 
-  ngOnInit() { }
+  ngOnInit() {}
 
   gotoProfileRoute() {
     this.router.navigate(['tabs/tab-profile']);
@@ -118,11 +118,12 @@ export class TabSavedPage {
     }
   }
 
-  removeSavedPlace(place: any) {
-    this.savedPlaces = this.savedPlaces.filter((sPlace: any) => {
-      if (sPlace.id !== place.id) return sPlace;
+  deleteSavedPlace(savedPlace: any) {
+    console.log("deleteSavedPlace", savedPlace);
+    this.savedPlaceService.deleteSavedPlace(savedPlace.mapboxId).subscribe(data => {
+      console.log("deleteSavedPlace: ", data);
+      this.places = this.places.filter((place: Place) => place.mapboxId !== savedPlace.mapboxId);
     });
-    console.log("removeSavedPlace: ", this.savedPlaces);
   }
 
   isPlaceSaved(place: any) {
@@ -212,6 +213,12 @@ export class TabSavedPage {
     this.showResultsList = false;
   }
 
+  onBlur() {
+    console.log("Search Bar Blurred");
+    setTimeout(() => {
+      this.showResultsList = false;
+    }, 200); // 200ms delay
+  }
 
   async sucessToast(message: string) {
     const toast = await this.toastController.create({

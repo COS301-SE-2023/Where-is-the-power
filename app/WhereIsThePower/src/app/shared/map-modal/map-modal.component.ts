@@ -20,6 +20,7 @@ import { Subscribable } from 'rxjs';
 import { Place } from '../../tab-saved/place';
 import { Router } from '@angular/router';
 import { ReportService } from '../../report/report.service';
+import { LoadingController } from '@ionic/angular';
 declare let MapboxDirections: any;
 declare let mapboxgl: any;
 declare let MapboxGeocoder: any;
@@ -39,7 +40,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     private changeDetectorRef: ChangeDetectorRef,
     private savedPlacesService: SavedPlacesService,
     private router: Router,
-    private reportService: ReportService
+    private reportService: ReportService,
+    private loadingController: LoadingController
   ) { }
   map: any;
   dat: any;
@@ -68,6 +70,8 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   currentSuburbSchedule: any;
   modifiedAddress: string = "";
   isPlaceSaved: boolean = false;
+  currentPopup: string | null = null;
+  isReportMarker: boolean = false;
 
   @ViewChild('myModal') myModal: any; // Reference to the ion-modal element
   modalResult: any; // To store the selected result data
@@ -108,9 +112,11 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       console.log("navigateToSavedPlace: ", isNavigate);
       this.isPlaceSaved = isNavigate;
     });
+
+
   }
 
-  ngAfterViewInit() {
+  async ngAfterViewInit() {
     this.MapSubscription = this.mapSuburbsService.getSuburbData().subscribe(async (data: any) => {
       console.log(data.result.mapPolygons[0]);
       console.log("Data: ", data);
@@ -150,6 +156,21 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
       this.map.on('load', () => {
         this.map.resize(); // Trigger map resize after the initial rendering
+        // Reporting
+        this.reportService.getReports().subscribe((data) => {
+          console.log("getReports: ", data);
+        });
+
+        this.reportService.reports.subscribe((reports: any) => {
+          if (reports) {
+            console.log("Reports (Map Page)", reports);
+
+            // Add marker on map for each report
+            reports.forEach((report: any) => {
+              this.addMarker(report.longitude, report.latitude, report.report_type);
+            });
+          }
+        });
       });
 
       // Populate Map(suburbs) with Polygons
@@ -160,36 +181,25 @@ export class MapModalComponent implements OnInit, AfterViewInit {
         console.log(error);
       }
     );
-
-    // Reporting
-    this.reportService.reports.subscribe((reports: any) => {
-      console.log("reports", reports.result);
-      // console.log("reports.length", reports.size);
-
-      if (reports) {
-        console.log("reports??");
-        reports.result.forEach((report: any) => {
-          this.addMarker(report.longitude, report.latitude, report.report_type);
-        });
-      }
-    });
   }
 
   addMarker(lon: number, lat: number, reportType: string) {
-    console.log("addMarkeraddMarker");
+    console.log("Add Marker");
     const customIcon = document.createElement('ion-icon');
     customIcon.style.width = '30px'; // Set the width of your custom icon
     customIcon.style.height = '30px'; // Set the height of your custom icon
-    customIcon.style.backgroundColor = 'var(--ion-color-primary)'; // Use Ionic primary color variable
+    customIcon.style.backgroundColor = '#00a165'; // Use Ionic primary color variable
     customIcon.style.backgroundImage = `url('assets/${reportType}.svg')`; // Replace with your icon path
     customIcon.style.backgroundSize = 'cover';
     customIcon.style.backgroundPosition = 'center';
     customIcon.style.borderRadius = '50%';
     customIcon.style.padding = '8px';
+    customIcon.style.pointerEvents = 'none';
+    customIcon.setAttribute('class', 'report-icon');
 
     const formattedReportType = reportType.replace(/([A-Z])/g, ' $1');
 
-    const marker = new mapboxgl.Marker({
+    new mapboxgl.Marker({
       element: customIcon,
     })
       .setLngLat([lon, lat])
@@ -201,15 +211,30 @@ export class MapModalComponent implements OnInit, AfterViewInit {
               <ion-card-title color="primary">${formattedReportType}</ion-card-title>
             </ion-card-header>
             <ion-card-content>
-              <h4><ion-icon src="assets/schedule.svg"></ion-icon><ion-text>Reported at 14:00</ion-text></h4>
+              <h4><ion-icon src="assets/schedule.svg"></ion-icon><ion-text>Reported at ${this.formatTime(new Date())}</ion-text></h4>
             </ion-card-content>
           </ion-card>`
           )
       )
       .addTo(this.map);
+    customIcon.addEventListener('click', this.handleReportIconClick.bind(this));
 
-    // this.markers.push(marker); // Add the marker to the markers array
+    console.log("this.popup", this.popup);
+    // Close the other popup if it's open
   }
+
+  formatTime(date: any) {
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
+  // Define a separate function to handle the click event
+  handleReportIconClick() {
+    console.log("Report Icon Clicked");
+    this.isReportMarker = true;
+  }
+
   populatePolygons() {
     this.map.on('load', () => {
       // Add a data source containing GeoJSON data.
@@ -253,10 +278,14 @@ export class MapModalComponent implements OnInit, AfterViewInit {
 
       // Listen for the click event on the map
       this.map.on('click', 'polygons-layer', (e: any) => {
+        setTimeout(() => {
+          this.isReportMarker = false;
+        }, 20);
+
         const clickedFeature = e.features[0];
         //console.log(e);
 
-        if (clickedFeature) {
+        if (clickedFeature && this.isReportMarker == false) {
           let suburbId = clickedFeature.id;
           console.log("Suburb ID =" + suburbId)
           // Get the properties of the clicked feature (suburb information)
@@ -268,30 +297,36 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           this.mapSuburbsService.fetchTimeForPolygon(suburbId).subscribe(
             (response: any) => {
               // Handle the response here
+
+
               console.log('Time response:', response);
-              const timesOff = response.result.timesOff; // Assuming "response" holds your API response
+              console.log("success", response.success);
 
-              if (timesOff && timesOff.length > 0) {
-                const formattedTimes = timesOff.map((time: any) => {
-                  const start = new Date(time.start * 1000); // Convert seconds to milliseconds
-                  const end = new Date(time.end * 1000); // Convert seconds to milliseconds
+              if (response.success === true) {
+                const timesOff = response.result.timesOff; // Assuming "response" holds your API response
+                if (timesOff && timesOff.length > 0) {
+                  const formattedTimes = timesOff.map((time: any) => {
+                    const start = new Date(time.start * 1000); // Convert seconds to milliseconds
+                    const end = new Date(time.end * 1000); // Convert seconds to milliseconds
 
-                  const startHours = start.getHours().toString().padStart(2, '0');
-                  const startMinutes = start.getMinutes().toString().padStart(2, '0');
+                    const startHours = start.getHours().toString().padStart(2, '0');
+                    const startMinutes = start.getMinutes().toString().padStart(2, '0');
 
-                  const endHours = end.getHours().toString().padStart(2, '0');
-                  const endMinutes = end.getMinutes().toString().padStart(2, '0');
+                    const endHours = end.getHours().toString().padStart(2, '0');
+                    const endMinutes = end.getMinutes().toString().padStart(2, '0');
 
-                  this.currentSuburbSchedule = `${startHours}:${startMinutes} - ${endHours}:${endMinutes}`;
-                });
+                    this.currentSuburbSchedule = `${startHours}:${startMinutes} - ${endHours}:${endMinutes}`;
 
-                console.log('Formatted Time Ranges:', formattedTimes);
-              } else {
-                console.log('No time ranges available.');
-                this.currentSuburbSchedule = "unavailable";
-              }
-              const showSchedule = suburbInfo?.PowerStatus !== 'on';
-              const popupContent = `
+                  });
+
+                  console.log('Formatted Time Ranges:', formattedTimes);
+                } else {
+                  console.log('No time ranges available.');
+                  this.currentSuburbSchedule = "unavailable";
+                }
+
+                const showSchedule = suburbInfo?.PowerStatus !== 'on';
+                const popupContent = `
               <ion-card class="popup-ion-card">
                 <ion-card-header class="popup-ion-card-header">
                   <ion-card-title color="primary">${suburbInfo?.SP_NAME}</ion-card-title>
@@ -302,11 +337,15 @@ export class MapModalComponent implements OnInit, AfterViewInit {
                   </ion-card-content>
               </ion-card>
               `;
-              // Create a new popup and set its HTML content
-              this.popup = new mapboxgl.Popup()
-                .setLngLat(e.lngLat)
-                .setHTML(popupContent)
-                .addTo(this.map);
+                // Create a new popup and set its HTML content
+                this.popup = new mapboxgl.Popup()
+                  .setLngLat(e.lngLat)
+                  .setHTML(popupContent)
+                  .addTo(this.map);
+
+                this.currentPopup = popupContent;
+
+              }
             },
             (error) => {
               // Handle errors here
@@ -362,8 +401,16 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     }
   }
 
+  onBlur() {
+    console.log("Search Bar Blurred");
+    setTimeout(() => {
+      this.showResultsList = false;
+    }, 200); // 200ms delay
+  }
+
 
   async getRoute(selectedResult: Place | any) {
+    this.instructions = [];
     this.updateBreakpoint();
     this.emitGetDirections();
     this.gettingRoute = true;
@@ -376,25 +423,46 @@ export class MapModalComponent implements OnInit, AfterViewInit {
     console.log("selected Result for directions", selectedResult);
 
     let query: any;
+    let fallback = false;
+    const loading = await this.presentLoading(); // Show loading spinner
 
     if (!selectedResult.hasOwnProperty('center')) {
-      console.log("SELECTED DIRECTION", selectedResult);
-
+      try {
+        console.log("Selected directions (saved places) ", selectedResult);
+        query = await this.mapSuburbsService.fetchOptimalRoute(this.longitude, this.latitude, selectedResult.longitude, selectedResult.latitude).toPromise();
+        coords = query.result.coordinates;
+      }
+      catch (error) {
+        console.error("Error in the first query:", error);
+        fallback = true;
+        query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.longitude},${selectedResult.latitude}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`);
+        coords = [selectedResult.longitude, selectedResult.latitude];
+      }
       this.searchBar.value = `${selectedResult.address}`;
-      query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.longitude},${selectedResult.latitude}?alternatives=true&geometries=geojson&language=en&overview=full&steps=true&access_token=${environment.MapboxApiKey}`)
-      coords = [selectedResult[0], selectedResult[1]];
+
     }
     else {
-      console.log("SEARCH DIRECTION", selectedResult);
+      try {
+        console.log("Searched directions (searchbar) ", selectedResult);
 
+        query = await this.mapSuburbsService.fetchOptimalRoute(this.longitude, this.latitude, selectedResult.center[0], selectedResult.center[1]).toPromise();
+        coords = query.result.coordinates;
+
+      } catch (error) {
+        // Handle the error from the first query
+        console.error("Error in the first query:", error);
+        fallback = true;
+        query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${this.longitude},${this.latitude};${selectedResult.center[0]},${selectedResult.center[1]}?alternatives=true&geometries=geojson&language=en&steps=true&access_token=${environment.MapboxApiKey}`);
+        coords = [selectedResult.center[0], selectedResult.center[1]];
+      }
       this.searchBar.value = `${selectedResult.place_name}`;
-      query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.longitude},${this.latitude};${selectedResult.center[0]},${selectedResult.center[1]}?alternatives=true&geometries=geojson&language=en&steps=true&access_token=${environment.MapboxApiKey}`)
-      coords = [selectedResult.center[0], selectedResult.center[1]];
     }
-    console.log("Directions query: ", query);
-    console.log(coords);
-    // Add a marker for the start point
+    console.log("_________________________");
+    console.log("Directions query", query);
+    console.log("_________________________");
+    loading.dismiss(); // Dismiss loading spinner when response is received
 
+    // Add a marker for the start point
     const start = {
       type: 'FeatureCollection',
       features: [
@@ -446,7 +514,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
           properties: {},
           geometry: {
             type: 'Point',
-            coordinates: coords
+            coordinates: [coords[coords.length - 1][0], coords[coords.length - 1][1]]
           }
         }
       ]
@@ -467,7 +535,7 @@ export class MapModalComponent implements OnInit, AfterViewInit {
                 properties: {},
                 geometry: {
                   type: 'Point',
-                  coordinates: coords
+                  coordinates: [coords[coords.length - 1][0], coords[coords.length - 1][1]]
                 }
               }
             ]
@@ -480,30 +548,62 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       });
     }
 
-    const json = await query.json();
+    let geojson: any;
+    let route: any;
 
-    const data = json.routes[0]; // Pick 1st route in list of route recommendations
-    const route = data.geometry.coordinates; // list of coordinates forming route
-    const geojson = {
-      type: 'Feature',
-      properties: {},
-      geometry: {
-        type: 'LineString',
-        coordinates: route
+    if (!fallback) // Optimised route
+    {
+      const data = query.result; // Pick 1st route in list of route recommendations
+      route = coords; // list of coordinates forming route
+      geojson = {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: route
+        }
+      };
+      // get the sidebar and add the instructions
+
+      const steps = data.instructions;
+      for (const step of steps) {
+        this.instructions.push(step);
       }
-    };
-    // get the sidebar and add the instructions
-    const steps = data.legs[0].steps;
-    for (const step of steps) {
-      this.instructions.push(step.maneuver.instruction);
+
+      this.tripDuration = Math.floor(data.duration / 60);
+      this.tripDistance = Math.floor(data.distance / 1000);
+
+      //CALCULATE ETA
+      this.tripETA = new Date();
+      this.calculateETA();
     }
+    else // Mapbox
+    {
+      const json = await query.json();
 
-    this.tripDuration = Math.floor(data.duration / 60);
-    this.tripDistance = Math.floor(data.distance / 1000);
+      const data = json.routes[0]; // Pick 1st route in list of route recommendations
+      route = data.geometry.coordinates; // list of coordinates forming route
+      geojson = {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: route
+        }
+      };
+      // get the sidebar and add the instructions
+      const steps = data.legs[0].steps;
+      for (const step of steps) {
+        this.instructions.push(step.maneuver.instruction);
+      }
 
-    //CALCULATE ETA
-    this.tripETA = new Date();
-    this.calculateETA();
+      this.tripDuration = Math.floor(data.duration / 60);
+      this.tripDistance = Math.floor(data.distance / 1000);
+
+      //CALCULATE ETA
+      this.tripETA = new Date();
+      this.calculateETA();
+    }
 
 
     // if the route already exists on the map, we'll reset it using setData
@@ -553,6 +653,16 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       padding: 100, // Adjust padding as needed
       maxZoom: 12 // Adjust the maximum zoom level as needed
     });
+  }
+
+  private async presentLoading() {
+    const loading = await this.loadingController.create({
+      message: 'Calculating Route...',
+      spinner: 'crescent', // spinner style
+      duration: 20000,
+    });
+    await loading.present();
+    return loading;
   }
 
   delay(ms: number) {

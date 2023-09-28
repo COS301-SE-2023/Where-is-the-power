@@ -49,7 +49,6 @@ export class TabStatisticsPage implements OnInit {
       }));
       this.filteredItems = [...this.searchItems];
       console.log("Search Items:", this.filteredItems);
-
     });
   }
 
@@ -275,10 +274,6 @@ export class TabStatisticsPage implements OnInit {
     this.isLocationAvailableSubscription.unsubscribe();
     this.suburbDataSubscription.unsubscribe();
     this.listSuburbsSubscription.unsubscribe();
-  }
-
-  ionViewDidLeave() {
-    this.searchTerm = '';
   }
 }
 

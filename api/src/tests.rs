@@ -190,7 +190,10 @@ async fn test_ai_endpoint() {
     let response = client
         .post(format!("/api{}", uri!(super::ai::get_ai_info)))
         .header(ContentType::JSON)
-        .json(&AiInfoRequest { polygon: vec![] })
+        .json(&AiInfoRequest {
+            origin: Box::new([28.3, -27.73]),
+            destination: Box::new([28.2651, -25.7597]),
+        })
         .dispatch()
         .await;
 

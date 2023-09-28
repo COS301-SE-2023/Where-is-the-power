@@ -1,0 +1,39 @@
+name: Build and Deploy app to PROD site
+'on':
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install Dependencies
+        working-directory: ./app/WhereIsThePower
+        run: npm install --frozen-lock
+      
+      - name: Remove consolelogs from production site  
+        run: echo "if(window) { window.console.log = function() {}; }" >> app/WhereIsThePower/src/main.ts
+    
+      - name: update Prod ENV file
+        run: | 
+          sed -i 's/HelloAPIKey/${{ secrets.MAPBOX_API_KEY }}/g' app/WhereIsThePower/src/environments/environment.prod.ts
+
+      - name: Build app
+        working-directory: ./app/WhereIsThePower
+        run: npm run build
+
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_WHEREISTHEPOWER_33A66 }}'
+          channelId: live
+          projectId: whereisthepower-33a66
+          target: prod
+          entrypoint: ./app/WhereIsThePower

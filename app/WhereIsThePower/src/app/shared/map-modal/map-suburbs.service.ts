@@ -27,4 +27,23 @@ export class MapSuburbsService {
 
     return this.httpClient.post(url, requestBody);
   }
+
+  fetchOptimalRoute(originLon: number, originLat: number, destinationLon: number, destinationLat: number) {
+    const url = `https://witpa.codelog.co.za/api/ai/info`;
+console.log(originLon, originLat, destinationLon, destinationLat);
+
+    const requestBody =
+    {
+      "origin": [
+        originLon,
+        originLat     
+       ],
+      "destination": [
+        destinationLon,
+        destinationLat
+      ]
+    };
+
+    return this.httpClient.post(url, requestBody);
+  }
 }

@@ -16,6 +16,7 @@ use rocket::{
     fairing::{self, Fairing, Info, Kind},
     futures::{future::try_join_all, TryStreamExt},
     post,
+    get,
     serde::json::Json,
     Orbit, Rocket, State,
 };
@@ -191,6 +192,22 @@ pub async fn fetch_time_for_polygon<'a>(
         }
         Err(err) => err.into(),
     }
+}
+
+#[utoipa::path(get, path = "/api/fetchCurrentStage")]
+#[get("/fetchCurrentStage")]
+pub async fn get_current_stage<'a>(
+    loadshedding_stage: &State<Option<Arc<RwLock<LoadSheddingStage>>>>,
+) -> ApiResponse<'a, i32> {
+    // query end
+    ApiResponse::Ok(loadshedding_stage
+        .inner()
+        .as_ref()
+        .clone()
+        .unwrap()
+        .read()
+        .await
+        .stage)
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Entity)]
