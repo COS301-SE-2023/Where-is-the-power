@@ -82,6 +82,7 @@ describe('Navigation Test', () => {
     })
     
     it('should log out', () => {
+      cy.viewport('iphone-6')
       cy.visit('/tabs/tab-profile')
       cy.get('.in-toolbar > .list-md > :nth-child(2)').click()
       cy.get('[data-cy="input-fn"]').type("Bob")
@@ -93,6 +94,7 @@ describe('Navigation Test', () => {
       cy.get('[data-cy="logout-button"]').click()
       cy.get('[data-cy="login-button"]').should('exist');
     })
+    
     
     
    })
