@@ -62,9 +62,9 @@ pub fn convert_to_ints(time_range:&str) -> Result<Times,Json<ApiError<'static>>>
             return Err(Json(ApiError::ScraperUploadError(
                 "You have a malformed starting hour, please fix this, HH <= 23",
             )));
-        } else if potential_times.end_hour >= 24 {
+        } else if potential_times.end_hour > 24 || potential_times.end_hour == 0 {
             return Err(Json(ApiError::ScraperUploadError(
-                "You have a malformed end hour, please fix this, HH <= 23",
+                "You have a malformed end hour, please fix this, 0 < HH <= 24",
             )));
         } else if potential_times.start_minute >= 60 {
             return Err(Json(ApiError::ScraperUploadError(
