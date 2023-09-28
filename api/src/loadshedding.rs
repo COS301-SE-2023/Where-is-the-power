@@ -708,7 +708,7 @@ impl TimeScheduleEntity {
                 self.stop_minute as u32
             })
             .unwrap();
-        if time < time_to_search {
+        if time < time_to_search && !start {
             time = time.checked_add_signed(chrono::Duration::days(1)).unwrap();
         }
         time
