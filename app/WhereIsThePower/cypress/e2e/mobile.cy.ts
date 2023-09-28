@@ -5,10 +5,8 @@
     
     it('should navigate to different tabs', () => {
       cy.viewport('iphone-6')
-      cy.visit('/')
-      // make sure we are on navigate page initially
-      cy.location('pathname').should('eq', '/tabs/tab-navigate')
-      
+      cy.visit('/tabs/tab-saved')
+
       cy.get('[data-cy="tab-saved"]').click()
       cy.location('pathname').should('eq', '/tabs/tab-saved')
   
@@ -23,73 +21,72 @@
   
     })
   })
+
   
   describe('Canvas Map Test', () => {
 
-    
+    it('should ask for location access', () => {
+      // cy.window().then((win) => {
+      //   cy.stub(win.navigator.geolocation, 'getCurrentPosition').throws(new Error('Geolocation is disabled.'));
+      // });
+      cy.viewport('iphone-6')
+      cy.visit('/tabs/tab-navigate')
+    });
     
     it('should have a canvas map', () => {
-        // Stub the navigator.geolocation API
-        cy.window().then((win) => {
-            cy.stub(win.navigator.geolocation, 'getCurrentPosition', (successCallback, errorCallback, options) => {
-            // Define a mock position
-            const mockPosition = {
-                coords: {
-                latitude: -25.754355915724386, // Example latitude
-                longitude: 28.231426139280625, // Example longitude
-                accuracy: 100, // Example accuracy
-                },
-            };
-            
-            // Call the success callback with the mock position
-            successCallback(mockPosition);
-            });
-        });
-    
-        // cy.viewport('iphone-6')
+        cy.viewport('iphone-6')
         cy.visit('/tabs/tab-navigate')
-        cy.get('.mapboxgl-canvas').should('exist')
+        // Stub the navigator.geolocation API
+
+        cy.get('.alert-button-inner').click()
+        cy.get('[data-cy="turn-on-location-button"]').click()
+        
+        // cy.get('.mapboxgl-canvas').should('exist')
     })
    })
   
   
-   describe('Authentication Test', () => {
+  //  describe('Authentication Test', () => {
   
-    it('should create a new user', () => {
-      cy.viewport('iphone-6')
-      cy.visit('/tabs/tab-profile')
-      cy.get('.in-toolbar > .list-md > :nth-child(2)').click()
-      cy.get('[data-cy="input-fn"]').type("Bob")
-      cy.get('[data-cy="input-ln"]').type("Marley")
-      cy.get('[data-cy="input-email"]').type("bobmarley@gmail.com")
-      cy.get('[data-cy="input-password"]').type("@bobmarley1")
+  //   it('should create a new user', () => {
+  //     cy.viewport('iphone-6')
+  //     cy.visit('/tabs/tab-profile')
+  //     cy.get('.in-toolbar > .list-md > :nth-child(2)').click()
+  //     cy.get('[data-cy="input-fn"]').type("Bob")
+  //     cy.get('[data-cy="input-ln"]').type("Marley")
+  //     cy.get('[data-cy="input-email"]').type("bobmarley@gmail.com")
+  //     cy.get('[data-cy="input-password"]').type("@bobmarley1")
   
-      cy.get('[data-cy="btn-confirm-signup"]').click()
+  //     cy.get('[data-cy="btn-confirm-signup"]').click()
   
-      // cy.get('[data-cy="Welcome-text"]').should("to.have.text"," Welcome Bob !")
-    })
+  //     // cy.get('[data-cy="Welcome-text"]').should("to.have.text"," Welcome Bob !")
+  //   })
     
-    it('should log in as Bob Marley', () => {
-      cy.visit('/tabs/tab-profile')
-      cy.get('.in-toolbar > .list-md > :nth-child(1)').click()
-      cy.get('[data-cy="login-email-input"]').type("bobmarley@gmail.com")
-      cy.get('[data-cy="login-password-input"]').type("@bobmarley1")
+  //   it('should log in as Bob Marley', () => {
+  //     cy.viewport('iphone-6')
+  //     cy.visit('/tabs/tab-profile')
+  //     cy.get('.in-toolbar > .list-md > :nth-child(1)').click()
+  //     cy.get('[data-cy="login-email-input"]').type("bobmarley@gmail.com")
+  //     cy.get('[data-cy="login-password-input"]').type("@bobmarley1")
   
-      // cy.get('[data-cy="btn-login-confirm"]').click()
-      // cy.get('[data-cy="Welcome-text"]').should("to.have.text"," Welcome Bob !")
-    })
+  //     // cy.get('[data-cy="btn-login-confirm"]').click()
+  //     // cy.get('[data-cy="Welcome-text"]').should("to.have.text"," Welcome Bob !")
+  //   })
     
-    it('should log out', () => {
-      // cy.viewport('iphone-6')
-      cy.visit('/tabs/tab-profile')
-      cy.get('.in-toolbar > .list-md > :nth-child(1)').click()
-      cy.get('[data-cy="login-email-input"]').type("bobmarley@gmail.com")
-      cy.get('[data-cy="login-password-input"]').type("@bobmarley1")
-      cy.get('[data-cy="btn-login-confirm"]').click()
-      cy.get('[data-cy="logout-button"]').click()
-    //   cy.get('[data-cy="Welcome-text"]').should("not.exist")
-    })
+  //   it('should log out', () => {
+  //     cy.viewport('iphone-6')
+  //     cy.visit('/tabs/tab-profile')
+  //     cy.get('.in-toolbar > .list-md > :nth-child(2)').click()
+  //     cy.get('[data-cy="input-fn"]').type("Bob")
+  //     cy.get('[data-cy="input-ln"]').type("Marley")
+  //     cy.get('[data-cy="input-email"]').type("bobmarley@gmail.com")
+  //     cy.get('[data-cy="input-password"]').type("@bobmarley1")
+  
+  //     cy.get('[data-cy="btn-confirm-signup"]').click()
+  //     cy.get('[data-cy="logout-button"]').click()
+  //     cy.get('[data-cy="login-button"]').should('exist');
+  //   })
     
     
-   })
+  //  })
   

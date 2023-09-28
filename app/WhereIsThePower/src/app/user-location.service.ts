@@ -47,9 +47,11 @@ export class UserLocationService {
           text: 'OK',
           handler: () => {
             // Do something when the user dismisses the alert
-          }
+          },
+
         }
-      ]
+      ],
+
     });
 
     await alert.present();
