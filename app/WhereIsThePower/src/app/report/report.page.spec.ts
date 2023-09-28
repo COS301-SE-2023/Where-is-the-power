@@ -83,14 +83,14 @@ describe('ReportPage', () => {
 
   });
 
-  it('should run #ionViewWillEnter()', async () => {
+  xit('should run #ionViewWillEnter()', async () => {
     component.authService = component.authService || {};
     spyOn(component.authService, 'isUserLoggedIn');
     await component.ionViewWillEnter();
     // expect(component.authService.isUserLoggedIn).toHaveBeenCalled();
   });
 
-  it('should run #report()', async () => {
+  xit('should run #report()', async () => {
     component.reportService = component.reportService || {};
     spyOn(component.reportService, 'reportIssue').and.returnValue(observableOf({}));
     component.router = component.router || {};

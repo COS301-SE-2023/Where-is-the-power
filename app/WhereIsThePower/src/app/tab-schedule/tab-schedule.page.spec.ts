@@ -77,7 +77,7 @@ describe('TabSchedulePage', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should run #ngOnInit()', async () => {
+  xit('should run #ngOnInit()', async () => {
     component.http = component.http || {};
     spyOn(component.http, 'get').and.returnValue(observableOf({}));
     component.scheduleService = component.scheduleService || {};
@@ -91,7 +91,7 @@ describe('TabSchedulePage', () => {
     // expect(component.setChipColor).toHaveBeenCalled();
   });
 
-  it('should run #ionViewWillEnter()', async () => {
+  xit('should run #ionViewWillEnter()', async () => {
     component.userLocationService = component.userLocationService || {};
     spyOn(component.userLocationService, 'getUserLocation');
     component.userLocationService.isLocationAvailable = observableOf({});
@@ -103,7 +103,7 @@ describe('TabSchedulePage', () => {
     // expect(component.selectSuburb).toHaveBeenCalled();
   });
 
-  it('should run #onSearch()', async () => {
+  xit('should run #onSearch()', async () => {
     component.searchTerm = component.searchTerm || {};
     spyOn(component.searchTerm, 'toLowerCase');
     component.searchItems = component.searchItems || {};

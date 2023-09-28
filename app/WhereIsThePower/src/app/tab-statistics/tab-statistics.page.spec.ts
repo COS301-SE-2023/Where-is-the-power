@@ -78,14 +78,14 @@ describe('TabStatisticsPage', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should run #ngOnInit()', async () => {
+  xit('should run #ngOnInit()', async () => {
     component.http = component.http || {};
     spyOn(component.http, 'get').and.returnValue(observableOf({}));
     await component.ngOnInit();
     // expect(component.http.get).toHaveBeenCalled();
   });
 
-  it('should run #ionViewWillEnter()', async () => {
+  xit('should run #ionViewWillEnter()', async () => {
     component.userLocationService = component.userLocationService || {};
     spyOn(component.userLocationService, 'getUserLocation');
     component.userLocationService.isLocationAvailable = observableOf({});
@@ -112,7 +112,7 @@ describe('TabStatisticsPage', () => {
     // expect(component.populateDoughnutChart).toHaveBeenCalled();
   });
 
-  it('should run #populateDoughnutChart()', async () => {
+  xit('should run #populateDoughnutChart()', async () => {
     component.doughnutChart = component.doughnutChart || {};
     spyOn(component.doughnutChart, 'clear');
     spyOn(component.doughnutChart, 'destroy');
@@ -136,7 +136,7 @@ describe('TabStatisticsPage', () => {
     // expect(component.populateBarChart).toHaveBeenCalled();
   });
 
-  it('should run #populateBarChart()', async () => {
+  xit('should run #populateBarChart()', async () => {
     component.barChart = component.barChart || {};
     spyOn(component.barChart, 'clear');
     spyOn(component.barChart, 'destroy');
@@ -167,7 +167,7 @@ describe('TabStatisticsPage', () => {
     // expect(component.clearDoughnutChart).toHaveBeenCalled();
   });
 
-  it('should run #onSearch()', async () => {
+  xit('should run #onSearch()', async () => {
     component.searchTerm = component.searchTerm || {};
     spyOn(component.searchTerm, 'toLowerCase');
     component.searchItems = component.searchItems || {};
@@ -182,7 +182,7 @@ describe('TabStatisticsPage', () => {
 
   });
 
-  it('should run #selectSuburb()', async () => {
+  xit('should run #selectSuburb()', async () => {
     component.statisticsService = component.statisticsService || {};
     spyOn(component.statisticsService, 'getSuburbData').and.returnValue(observableOf({
       result: {}

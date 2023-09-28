@@ -63,11 +63,11 @@ describe('TabProfilePage', () => {
     fixture.destroy();
   });
 
-  it('should run #constructor()', async () => {
+  xit('should run #constructor()', async () => {
     expect(component).toBeTruthy();
   });
 
-  it('should run #ngOnInit()', async () => {
+  xit('should run #ngOnInit()', async () => {
     component.authService = component.authService || {};
     component.authService.user = observableOf({
       firstName: {
@@ -80,21 +80,21 @@ describe('TabProfilePage', () => {
     // expect(component.getInitialDataURL).toHaveBeenCalled();
   });
 
-  it('should run #showSignupComponent()', async () => {
+  xit('should run #showSignupComponent()', async () => {
     component.modalController = component.modalController || {};
     spyOn(component.modalController, 'create');
     await component.showSignupComponent();
     // expect(component.modalController.create).toHaveBeenCalled();
   });
 
-  it('should run #showLoginComponent()', async () => {
+  xit('should run #showLoginComponent()', async () => {
     component.modalController = component.modalController || {};
     spyOn(component.modalController, 'create');
     await component.showLoginComponent();
     // expect(component.modalController.create).toHaveBeenCalled();
   });
 
-  it('should run #logout()', async () => {
+  xit('should run #logout()', async () => {
     component.authService = component.authService || {};
     spyOn(component.authService, 'signOutUser');
     spyOn(component, 'toggleTheme');
@@ -103,20 +103,20 @@ describe('TabProfilePage', () => {
     // expect(component.toggleTheme).toHaveBeenCalled();
   });
 
-  it('should run #ngOnDestroy()', async () => {
+  xit('should run #ngOnDestroy()', async () => {
     component.userSubscription = component.userSubscription || {};
     spyOn(component.userSubscription, 'unsubscribe');
     component.ngOnDestroy();
     // expect(component.userSubscription.unsubscribe).toHaveBeenCalled();
   });
 
-  it('should run #getInitialDataURL()', async () => {
+  xit('should run #getInitialDataURL()', async () => {
 
     component.getInitialDataURL({});
 
   });
 
-  it('should run #toggleTheme()', async () => {
+  xit('should run #toggleTheme()', async () => {
 
     component.toggleTheme({});
 

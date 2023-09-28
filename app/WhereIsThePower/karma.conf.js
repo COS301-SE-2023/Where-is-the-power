@@ -40,6 +40,9 @@ module.exports = function (config) {
     autoWatch: true,
     browsers: ['ChromeHeadless'],
     singleRun: true,
-    restartOnFileChange: true
+    restartOnFileChange: true,
+    files : [
+      'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'
+    ]
   });
 };
