@@ -8,16 +8,20 @@ describe('Navigation Test', () => {
       // make sure we are on navigate page initially
       cy.location('pathname').should('eq', '/tabs/tab-navigate')
       
-      cy.get('[data-cy="tab-saved"]').click()
+      cy.get('[routerlink="/tabs/tab-saved"]').click()
       cy.location('pathname').should('eq', '/tabs/tab-saved')
   
-      cy.get('[data-cy="tab-schedule"]').click()
+      cy.get('[routerlink="/tabs/tab-schedule"]').click()
       cy.location('pathname').should('eq', '/tabs/tab-schedule')
   
-      cy.get('[data-cy="tab-statistics"]').click()
+      cy.get('[routerlink="/tabs/tab-statistics"]').click()
       cy.location('pathname').should('eq', '/tabs/tab-statistics')
-  
-      cy.get('[data-cy="tab-navigate"]').click()
+
+      cy.get('[routerlink="/tabs/tab-profile"]').click()
+      cy.location('pathname').should('eq','/tabs/tab-profile')
+
+
+      cy.get('[routerlink="/tabs/tab-navigate"]').click()
       cy.location('pathname').should('eq', '/tabs/tab-navigate')
   
     })
@@ -79,12 +83,15 @@ describe('Navigation Test', () => {
     
     it('should log out', () => {
       cy.visit('/tabs/tab-profile')
-      cy.get('.in-toolbar > .list-md > :nth-child(1)').click()
-      cy.get('[data-cy="login-email-input"]').type("bobmarley@gmail.com")
-      cy.get('[data-cy="login-password-input"]').type("@bobmarley1")
-      cy.get('[data-cy="btn-login-confirm"]').click()
+      cy.get('.in-toolbar > .list-md > :nth-child(2)').click()
+      cy.get('[data-cy="input-fn"]').type("Bob")
+      cy.get('[data-cy="input-ln"]').type("Marley")
+      cy.get('[data-cy="input-email"]').type("bobmarley@gmail.com")
+      cy.get('[data-cy="input-password"]').type("@bobmarley1")
+  
+      cy.get('[data-cy="btn-confirm-signup"]').click()
       cy.get('[data-cy="logout-button"]').click()
-    //   cy.get('[data-cy="Welcome-text"]').should("not.exist")
+      cy.get('[data-cy="login-button"]').should('exist');
     })
     
     
