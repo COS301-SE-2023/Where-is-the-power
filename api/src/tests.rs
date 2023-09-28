@@ -89,7 +89,7 @@ fn time_range_validation_test_pass() {
         "  2:3 - 3: 0",
         "22:30-2:03",
         "1 : 3 - 2 : 3",
-        "23:59-00:00",
+        "23:59-24:00",
     ];
     let _ = cases
         .iter()
