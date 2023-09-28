@@ -89,7 +89,7 @@ fn time_range_validation_test_pass() {
         "  2:3 - 3: 0",
         "22:30-2:03",
         "1 : 3 - 2 : 3",
-        "23:59-00:00",
+        "23:59-24:00",
     ];
     let _ = cases
         .iter()
@@ -166,7 +166,7 @@ async fn test_buildschedule() {
     let mock = create_mock();
     let result = testing_suburb.build_schedule(None, &mock, Some(testing_time)).await.unwrap();
     let expected_output:PredictiveSuburbStatsResponse = serde_json::from_str(TEST_GETSCHEDULE_EXPECTED_RESULT).unwrap();
-    //println!("{:?}" , serde_json::to_string(&result).unwrap());
+    println!("{:?}" , serde_json::to_string(&result).unwrap());
     assert_eq!(result,expected_output);
 }
 
@@ -260,221 +260,221 @@ fn create_mock() -> MockDBFunctionsTrait  {
     let mut mock = MockDBFunctionsTrait::new();
     // DO NOT CHANGE ONCE FINALIZED
     let data = r#"[
-        { 
+        {
             "_id": { "$oid": "64b6b9b30d09aa7756061c0d" },
             "startHour": 20,
             "startMinute": 0,
             "stopHour": 22,
-            "stopMinute": 30, 
-            "stages": [ 
+            "stopMinute": 30,
+            "stages": [
                 { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
                 { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
                 { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
                 { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
-            ], 
-            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+            ],
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }
         },
         {
             "_id": { "$oid": "64b6b9b30d09bb4756061c0d" },
             "startHour": 22,
             "startMinute": 0,
             "stopHour": 0,
-            "stopMinute": 30, 
-            "stages": [ 
+            "stopMinute": 30,
+            "stages": [
                 { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
                 { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
                 { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
                 { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
-            ], 
-            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+            ],
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }
         },
         {
             "_id": { "$oid": "64b6b9b30dabbb4756061c0d" },
             "startHour": 0,
             "startMinute": 0,
             "stopHour": 2,
-            "stopMinute": 30, 
-            "stages": [ 
+            "stopMinute": 30,
+            "stages": [
                 { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
                 { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
                 { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
                 { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
-            ], 
-            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+            ],
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }
         },
         {
             "_id": { "$oid": "63b6b9b30d09bb4756061c0d" },
             "startHour": 2,
             "startMinute": 0,
             "stopHour": 4,
-            "stopMinute": 30, 
-            "stages": [ 
+            "stopMinute": 30,
+            "stages": [
                 { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
                 { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
                 { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
                 { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
-            ], 
-            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+            ],
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }
         },
         {
             "_id": { "$oid": "63b6b9bdcd09bb4756061c0d" },
             "startHour": 4,
             "startMinute": 0,
             "stopHour": 6,
-            "stopMinute": 30, 
-            "stages": [ 
+            "stopMinute": 30,
+            "stages": [
                 { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
                 { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
                 { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
                 { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
-            ], 
-            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+            ],
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }
         },
         {
             "_id": { "$oid": "63b6b9b30d09bb475606dafd" },
             "startHour": 6,
             "startMinute": 0,
             "stopHour": 8,
-            "stopMinute": 30, 
-            "stages": [ 
+            "stopMinute": 30,
+            "stages": [
                 { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
                 { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
                 { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
                 { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
-            ], 
-            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+            ],
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }
         },
         {
             "_id": { "$oid": "63b6b9b30d09cc4756061c0d" },
             "startHour": 8,
             "startMinute": 0,
             "stopHour": 10,
-            "stopMinute": 30, 
-            "stages": [ 
+            "stopMinute": 30,
+            "stages": [
                 { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
                 { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
                 { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
                 { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
-            ], 
-            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+            ],
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }
         },
         {
             "_id": { "$oid": "63b6b9b30d09bcf756061c0d" },
             "startHour": 10,
             "startMinute": 0,
             "stopHour": 12,
-            "stopMinute": 30, 
-            "stages": [ 
+            "stopMinute": 30,
+            "stages": [
                 { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
                 { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
                 { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
                 { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
-            ], 
-            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+            ],
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }
         },
         {
             "_id": { "$oid": "63b7b9b30d09bcf756061c0d" },
             "startHour": 12,
             "startMinute": 0,
             "stopHour": 14,
-            "stopMinute": 30, 
-            "stages": [ 
+            "stopMinute": 30,
+            "stages": [
                 { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
                 { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
                 { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
                 { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
-            ], 
-            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+            ],
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }
         },
         {
             "_id": { "$oid": "63b6b1b30d09bcf756061c0d" },
             "startHour": 14,
             "startMinute": 0,
             "stopHour": 16,
-            "stopMinute": 30, 
-            "stages": [ 
+            "stopMinute": 30,
+            "stages": [
                 { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
                 { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
                 { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
                 { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
-            ], 
-            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+            ],
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }
         },
         {
             "_id": { "$oid": "63b6b9b3dd09bcf756061c0d" },
             "startHour": 16,
             "startMinute": 0,
             "stopHour": 18,
-            "stopMinute": 30, 
-            "stages": [ 
+            "stopMinute": 30,
+            "stages": [
                 { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
                 { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
                 { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
                 { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
-            ], 
-            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+            ],
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }
         },
         {
             "_id": { "$oid": "63b6b9b30d09bcf756061c0d" },
             "startHour": 18,
             "startMinute": 0,
             "stopHour": 20,
-            "stopMinute": 30, 
-            "stages": [ 
+            "stopMinute": 30,
+            "stages": [
                 { "stage": 4, "groups": [ { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" }, { "$oid": "64b6b9b30d09aa7756061b9d" } ] },
                 { "stage": 1, "groups": [ { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }, { "$oid": "64b6b9b30d09aa7756061a79" }] },
                 { "stage": 2, "groups": [ { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }, { "$oid": "64b6b9b30d09aa7756061a94" }] },
                 { "stage": 3, "groups": [ { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }, { "$oid": "64b6b9b30d09aa7756061ab6" }] }
-            ], 
-            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" } 
+            ],
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }
         }
     ] "#;
     let test_schedule: Vec<TimeScheduleEntity> = serde_json::from_str(data).unwrap();
     // DO NOT CHANGE ONCE FINALIZED
     // STATUS = FINALIZED
     let data = r#"[
-        { 
+        {
             "_id": { "$oid": "64b6b9b30d09aa7756061b9d" },
-            "number": 1, 
-            "suburbs": [ 
+            "number": 1,
+            "suburbs": [
                 { "$oid": "64b6b9b30d09aa7756061b30" }
             ]
-        },{ 
+        },{
             "_id": { "$oid": "64b6b9b30d09aa7756061a79" },
             "number": 2,
-            "suburbs": [ 
+            "suburbs": [
                 { "$oid": "64b6b9b30d09aa7756061b7d" }
-            ] 
+            ]
         }, {
             "_id": { "$oid": "64b6b9b30d09aa7756061a94" },
             "number": 3,
             "suburbs": [ { "$oid": "64b6b9b30d09aa7756061a63" }]
-        } 
+        }
     ]"#;
     let test_groups: Vec<GroupEntity> = serde_json::from_str(data).unwrap();
     // DO NOT CHANGE ONCE FINALIZED
     // STATUS = FINALIZED
-    let data = r#"[ 
-        { 
+    let data = r#"[
+        {
             "_id": { "$oid": "64b6b9b30d09aa7756061b30" },
             "municipality": { "$oid": "64b6b9b30d09aa7756061a47" },
-            "name": "MUCKLENEUK", 
-            "geometry": [ 1 ] 
-        }, { 
+            "name": "MUCKLENEUK",
+            "geometry": [ 1 ]
+        }, {
             "_id": { "$oid": "64b6b9b30d09aa7756061b7d" },
-            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, 
-            "name": "NEWLANDS", 
-            "geometry": [ 2 ] 
-        }, { 
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" },
+            "name": "NEWLANDS",
+            "geometry": [ 2 ]
+        }, {
             "_id": { "$oid": "64b6b9b30d09aa7756061a63" },
-            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, 
-            "name": "SOSHANGUVE EAST", 
-            "geometry": [   ] 
-        }, { 
-            "_id": { "$oid": "64b6b9b30d09aa7756061a7b" }, 
-            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" }, 
-            "name": "MAGALIESKRUIN", 
-            "geometry": [ 4 ] 
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" },
+            "name": "SOSHANGUVE EAST",
+            "geometry": [   ]
+        }, {
+            "_id": { "$oid": "64b6b9b30d09aa7756061a7b" },
+            "municipality": { "$oid": "64b6b9b30d09aa7756061a47" },
+            "name": "MAGALIESKRUIN",
+            "geometry": [ 4 ]
         }
     ]"#;
     let test_suburbs: Vec<SuburbEntity> = serde_json::from_str(data).unwrap();
@@ -620,15 +620,15 @@ fn create_mock() -> MockDBFunctionsTrait  {
     }"#;
     let test_stage_log: LoadSheddingStage = serde_json::from_str(data).unwrap();
 
-    let data = r#"{ 
+    let data = r#"{
         "_id": { "$oid": "64b6b9b30d09aa7756061b9d" },
-        "number": 1, 
-        "suburbs": [ 
+        "number": 1,
+        "suburbs": [
             { "$oid": "64b6b9b30d09aa7756061b30" }
         ]
     }"#;
     let test_one_group: GroupEntity = serde_json::from_str(data).unwrap();
-    
+
     mock.expect_collect_schedules()
         .returning(move |_, _, _| Ok(test_schedule.clone()));
     mock.expect_collect_groups()
@@ -643,207 +643,207 @@ fn create_mock() -> MockDBFunctionsTrait  {
         .returning(move |_query, _conn, _opts| Ok(test_stage_log.clone()));
     mock
 }
-const TEST_SUBURB_DATA: &'static str = r#"{ 
+const TEST_SUBURB_DATA: &'static str = r#"{
     "_id": { "$oid": "64b6b9b30d09aa7756061b30" },
     "municipality": { "$oid": "64b6b9b30d09aa7756061a47" },
-    "name": "MUCKLENEUK", 
-    "geometry": [ 1 ] 
+    "name": "MUCKLENEUK",
+    "geometry": [ 1 ]
 }"#;
 
 const TEST_GETSTATS_EXPECTED_RESULT: &'static str = "{\"totalTime\":{\"on\":2520,\"off\":7560},\"perDayTimes\":{\"Sun\":{\"on\":360,\"off\":1080},\"Mon\":{\"on\":360,\"off\":1080},\"Sat\":{\"on\":360,\"off\":1080},\"Tue\":{\"on\":360,\"off\":1080},\"Thu\":{\"on\":360,\"off\":1080},\"Fri\":{\"on\":360,\"off\":1080},\"Wed\":{\"on\":360,\"off\":1080}},\"suburb\":{\"_id\":{\"$oid\":\"64b6b9b30d09aa7756061b30\"},\"municipality\":{\"$oid\":\"64b6b9b30d09aa7756061a47\"},\"name\":\"MUCKLENEUK\",\"geometry\":[1]}}";
-const TEST_GETSCHEDULE_EXPECTED_RESULT: &'static str = "{\"timesOff\":[{\"start\":1694743200,\"end\":1694665800},{\"start\":1694750400,\"end\":1694673000},{\"start\":1694757600,\"end\":1694680200},{\"start\":1694764800,\"end\":1694687400},{\"start\":1694772000,\"end\":1694694600},{\"start\":1694779200,\"end\":1694701800},{\"start\":1694786400,\"end\":1694709000},{\"start\":1694793600,\"end\":1694716200},{\"start\":1694800800,\"end\":1694723400},{\"start\":1694728800,\"end\":1694737800},{\"start\":1694822400,\"end\":1694745000},{\"start\":1694829600,\"end\":1694752200}]}";
-const POLYGON_DATA: &'static str = r#"{ 
-    "_id": { "$oid": "64b6b9b30d09aa7756061a47" }, 
-    "name": "tshwane", 
-    "geometry": { 
-        "name": "SP_SA_2011|Selection", 
-        "map_layer_type": "Area", 
-        "bounds": [ 
-            [ 27.890227, -26.077549 ], 
-            [ 29.098541, -25.110155 ] 
-        ], 
-        "center": [ 28.494384, -25.593852 ], 
-        "zoom": 6, 
-        "median_zoom": 13, 
-        "count": 594, 
-        "property_names": [ 
-            "SP_CODE", 
-            "SP_CODE_st", 
-            "SP_NAME", 
-            "MP_CODE", 
-            "MP_CODE_st", 
-            "MP_NAME", 
-            "MN_MDB_C", 
-            "MN_CODE", 
-            "MN_CODE_st", 
-            "MN_NAME", 
-            "DC_MDB_C", 
-            "DC_MN_C", 
-            "DC_MN_C_st", 
-            "DC_NAME", 
-            "PR_MDB_C", 
-            "PR_CODE", 
-            "PR_CODE_st", 
-            "PR_NAME", 
-            "ALBERS_ARE", 
-            "Shape_Leng", 
-            "Shape_Area" 
-        ], 
-        "type": "FeatureCollection", 
-        "features": [ 
-            { 
-                "type": "Feature", 
-                "id": 1, 
-                "properties": { 
-                    "SP_CODE": 799078003, 
-                    "SP_CODE_st": "799078003", 
-                    "SP_NAME": "MUCKLNEUK", 
-                    "MP_CODE": 799078, 
-                    "MP_CODE_st": "799078", 
-                    "MP_NAME": "Olievenhoutbos", 
-                    "MN_MDB_C": "TSH", 
-                    "MN_CODE": 799, 
-                    "MN_CODE_st": "799", 
-                    "MN_NAME": "City of Tshwane", 
-                    "DC_MDB_C": "TSH", 
-                    "DC_MN_C": 799, 
-                    "DC_MN_C_st": "799", 
-                    "DC_NAME": "City of Tshwane", 
-                    "PR_MDB_C": "GT", 
-                    "PR_CODE": 7, 
+const TEST_GETSCHEDULE_EXPECTED_RESULT: &'static str = "{\"timesOff\":[{\"start\":1694656800,\"end\":1694723400},{\"start\":1694728800,\"end\":1694752200}]}";
+const POLYGON_DATA: &'static str = r#"{
+    "_id": { "$oid": "64b6b9b30d09aa7756061a47" },
+    "name": "tshwane",
+    "geometry": {
+        "name": "SP_SA_2011|Selection",
+        "map_layer_type": "Area",
+        "bounds": [
+            [ 27.890227, -26.077549 ],
+            [ 29.098541, -25.110155 ]
+        ],
+        "center": [ 28.494384, -25.593852 ],
+        "zoom": 6,
+        "median_zoom": 13,
+        "count": 594,
+        "property_names": [
+            "SP_CODE",
+            "SP_CODE_st",
+            "SP_NAME",
+            "MP_CODE",
+            "MP_CODE_st",
+            "MP_NAME",
+            "MN_MDB_C",
+            "MN_CODE",
+            "MN_CODE_st",
+            "MN_NAME",
+            "DC_MDB_C",
+            "DC_MN_C",
+            "DC_MN_C_st",
+            "DC_NAME",
+            "PR_MDB_C",
+            "PR_CODE",
+            "PR_CODE_st",
+            "PR_NAME",
+            "ALBERS_ARE",
+            "Shape_Leng",
+            "Shape_Area"
+        ],
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "id": 1,
+                "properties": {
+                    "SP_CODE": 799078003,
+                    "SP_CODE_st": "799078003",
+                    "SP_NAME": "MUCKLNEUK",
+                    "MP_CODE": 799078,
+                    "MP_CODE_st": "799078",
+                    "MP_NAME": "Olievenhoutbos",
+                    "MN_MDB_C": "TSH",
+                    "MN_CODE": 799,
+                    "MN_CODE_st": "799",
+                    "MN_NAME": "City of Tshwane",
+                    "DC_MDB_C": "TSH",
+                    "DC_MN_C": 799,
+                    "DC_MN_C_st": "799",
+                    "DC_NAME": "City of Tshwane",
+                    "PR_MDB_C": "GT",
+                    "PR_CODE": 7,
                     "PR_CODE_st": "7",
-                    "PR_NAME": "Gauteng", 
-                    "ALBERS_ARE": 0.143416, 
-                    "Shape_Leng": 0.015471, 
-                    "Shape_Area": 0.000013 
-                }, 
-                "geometry": { 
-                    "type": "Polygon", 
-                    "coordinates": [ 
-                        [ 
-                            [ 28.094077, -25.908263 ], 
-                            [ 28.093557, -25.908198 ], 
-                            [ 28.090423, -25.907788 ], 
-                            [ 28.094077, -25.908263 ] 
-                        ] 
-                    ] 
-                } 
-            }, { 
-                "type": "Feature", 
-                "id": 2, 
-                "properties": { 
-                    "SP_CODE": 799078004, 
-                    "SP_CODE_st": "799078004", 
-                    "SP_NAME": "NEWLANDS", 
-                    "MP_CODE": 799078, 
-                    "MP_CODE_st": "799078", 
-                    "MP_NAME": "Olievenhoutbos", 
-                    "MN_MDB_C": "TSH", 
-                    "MN_CODE": 799, 
-                    "MN_CODE_st": "799", 
-                    "MN_NAME": "City of Tshwane", 
-                    "DC_MDB_C": "TSH", 
-                    "DC_MN_C": 799, 
-                    "DC_MN_C_st": "799", 
-                    "DC_NAME": "City of Tshwane", 
-                    "PR_MDB_C": "GT", 
-                    "PR_CODE": 7, 
-                    "PR_CODE_st": "7", 
-                    "PR_NAME": "Gauteng", 
-                    "ALBERS_ARE": 0.59043, 
-                    "Shape_Leng": 0.038927, 
-                    "Shape_Area": 0.000053 
-                }, 
-                "geometry": { 
-                    "type": "Polygon", 
-                    "coordinates": [ 
-                        [ 
-                            [ 28.096909, -25.905686 ], 
-                            [ 28.096212, -25.90543 ], 
-                            [ 28.093557, -25.908198 ], 
-                            [ 28.096909, -25.905686 ] 
-                        ] 
-                    ] 
-                } 
-            }, { 
-                "type": "Feature", 
-                "id": 3, 
-                "properties": { 
-                    "SP_CODE": 799078005, 
-                    "SP_CODE_st": "799078005", 
-                    "SP_NAME": "SOSHANGUVE EAST", 
-                    "MP_CODE": 799078, 
-                    "MP_CODE_st": "799078", 
-                    "MP_NAME": "Olievenhoutbos", 
-                    "MN_MDB_C": "TSH", 
-                    "MN_CODE": 799, 
-                    "MN_CODE_st": "799", 
-                    "MN_NAME": "City of Tshwane", 
-                    "DC_MDB_C": "TSH", 
-                    "DC_MN_C": 799, 
-                    "DC_MN_C_st": "799", 
-                    "DC_NAME": "City of Tshwane", 
-                    "PR_MDB_C": "GT", 
-                    "PR_CODE": 7, 
-                    "PR_CODE_st": "7", 
-                    "PR_NAME": "Gauteng", 
-                    "ALBERS_ARE": 5.111315, 
-                    "Shape_Leng": 0.11507, 
-                    "Shape_Area": 0.00046 
-                }, 
-                "geometry": { 
-                    "type": "Polygon", 
-                    "coordinates": [ 
-                        [ 
-                            [ 28.120268, -25.900284 ], 
-                            [ 28.120077, -25.89996 ], 
-                            [ 28.119871, -25.899611 ], 
-                            [ 28.117086, -25.9021 ], 
-                            [ 28.117425, -25.902778 ], 
-                            [ 28.117464, -25.902857 ], 
-                            [ 28.120268, -25.900284 ] 
-                        ] 
-                    ] 
-                } 
-            }, { 
-                "type": "Feature", 
-                "id": 4, 
-                "properties": { 
-                    "SP_CODE": 799078006, 
-                    "SP_CODE_st": "799078006", 
-                    "SP_NAME": "MAGALIESKRUIN", 
-                    "MP_CODE": 799078, 
-                    "MP_CODE_st": "799078", 
-                    "MP_NAME": "Olievenhoutbos", 
-                    "MN_MDB_C": "TSH", 
-                    "MN_CODE": 799, 
-                    "MN_CODE_st": "799", 
-                    "MN_NAME": "City of Tshwane", 
-                    "DC_MDB_C": "TSH", 
-                    "DC_MN_C": 799, 
-                    "DC_MN_C_st": "799", 
-                    "DC_NAME": "City of Tshwane", 
-                    "PR_MDB_C": "GT", 
-                    "PR_CODE": 7, 
-                    "PR_CODE_st": "7", 
-                    "PR_NAME": "Gauteng", 
-                    "ALBERS_ARE": 0.414983, 
-                    "Shape_Leng": 0.030855, 
-                    "Shape_Area": 0.000037 
-                }, 
-                "geometry": { 
-                    "type": "Polygon", 
-                    "coordinates": [ 
-                        [ 
-                            [ 28.098344, -25.917966 ], 
-                            [ 28.097966, -25.917912 ], 
-                            [ 28.097348, -25.918184 ], 
-                            [ 28.09721, -25.918154 ], 
-                            [ 28.098344, -25.917966 ] 
-                        ] 
-                    ] 
-                } 
-            } 
-        ] 
-    } 
+                    "PR_NAME": "Gauteng",
+                    "ALBERS_ARE": 0.143416,
+                    "Shape_Leng": 0.015471,
+                    "Shape_Area": 0.000013
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [ 28.094077, -25.908263 ],
+                            [ 28.093557, -25.908198 ],
+                            [ 28.090423, -25.907788 ],
+                            [ 28.094077, -25.908263 ]
+                        ]
+                    ]
+                }
+            }, {
+                "type": "Feature",
+                "id": 2,
+                "properties": {
+                    "SP_CODE": 799078004,
+                    "SP_CODE_st": "799078004",
+                    "SP_NAME": "NEWLANDS",
+                    "MP_CODE": 799078,
+                    "MP_CODE_st": "799078",
+                    "MP_NAME": "Olievenhoutbos",
+                    "MN_MDB_C": "TSH",
+                    "MN_CODE": 799,
+                    "MN_CODE_st": "799",
+                    "MN_NAME": "City of Tshwane",
+                    "DC_MDB_C": "TSH",
+                    "DC_MN_C": 799,
+                    "DC_MN_C_st": "799",
+                    "DC_NAME": "City of Tshwane",
+                    "PR_MDB_C": "GT",
+                    "PR_CODE": 7,
+                    "PR_CODE_st": "7",
+                    "PR_NAME": "Gauteng",
+                    "ALBERS_ARE": 0.59043,
+                    "Shape_Leng": 0.038927,
+                    "Shape_Area": 0.000053
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [ 28.096909, -25.905686 ],
+                            [ 28.096212, -25.90543 ],
+                            [ 28.093557, -25.908198 ],
+                            [ 28.096909, -25.905686 ]
+                        ]
+                    ]
+                }
+            }, {
+                "type": "Feature",
+                "id": 3,
+                "properties": {
+                    "SP_CODE": 799078005,
+                    "SP_CODE_st": "799078005",
+                    "SP_NAME": "SOSHANGUVE EAST",
+                    "MP_CODE": 799078,
+                    "MP_CODE_st": "799078",
+                    "MP_NAME": "Olievenhoutbos",
+                    "MN_MDB_C": "TSH",
+                    "MN_CODE": 799,
+                    "MN_CODE_st": "799",
+                    "MN_NAME": "City of Tshwane",
+                    "DC_MDB_C": "TSH",
+                    "DC_MN_C": 799,
+                    "DC_MN_C_st": "799",
+                    "DC_NAME": "City of Tshwane",
+                    "PR_MDB_C": "GT",
+                    "PR_CODE": 7,
+                    "PR_CODE_st": "7",
+                    "PR_NAME": "Gauteng",
+                    "ALBERS_ARE": 5.111315,
+                    "Shape_Leng": 0.11507,
+                    "Shape_Area": 0.00046
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [ 28.120268, -25.900284 ],
+                            [ 28.120077, -25.89996 ],
+                            [ 28.119871, -25.899611 ],
+                            [ 28.117086, -25.9021 ],
+                            [ 28.117425, -25.902778 ],
+                            [ 28.117464, -25.902857 ],
+                            [ 28.120268, -25.900284 ]
+                        ]
+                    ]
+                }
+            }, {
+                "type": "Feature",
+                "id": 4,
+                "properties": {
+                    "SP_CODE": 799078006,
+                    "SP_CODE_st": "799078006",
+                    "SP_NAME": "MAGALIESKRUIN",
+                    "MP_CODE": 799078,
+                    "MP_CODE_st": "799078",
+                    "MP_NAME": "Olievenhoutbos",
+                    "MN_MDB_C": "TSH",
+                    "MN_CODE": 799,
+                    "MN_CODE_st": "799",
+                    "MN_NAME": "City of Tshwane",
+                    "DC_MDB_C": "TSH",
+                    "DC_MN_C": 799,
+                    "DC_MN_C_st": "799",
+                    "DC_NAME": "City of Tshwane",
+                    "PR_MDB_C": "GT",
+                    "PR_CODE": 7,
+                    "PR_CODE_st": "7",
+                    "PR_NAME": "Gauteng",
+                    "ALBERS_ARE": 0.414983,
+                    "Shape_Leng": 0.030855,
+                    "Shape_Area": 0.000037
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [ 28.098344, -25.917966 ],
+                            [ 28.097966, -25.917912 ],
+                            [ 28.097348, -25.918184 ],
+                            [ 28.09721, -25.918154 ],
+                            [ 28.098344, -25.917966 ]
+                        ]
+                    ]
+                }
+            }
+        ]
+    }
 }"#;
