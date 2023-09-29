@@ -1,4 +1,4 @@
-[Technical Installation Manual (1).pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12756469/Technical.Installation.Manual.1.pdf)[Software Requirement Specification.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12756322/Software.Requirement.Specification.pdf)<div align="center">
+<div align="center">
 
 [![codecov](https://codecov.io/gh/COS301-SE-2023/Where-is-the-power/branch/main/graph/badge.svg?token=V7DD9L1UAC)](https://codecov.io/gh/COS301-SE-2023/Where-is-the-power)
 
