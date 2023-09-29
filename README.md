@@ -8,6 +8,8 @@
     
 <h1>Where is the power 💡</h1>
 <img alt="logo" height="200px" src="https://user-images.githubusercontent.com/14026724/236333707-7c8ed21b-b0e0-4166-ab95-e9a08a842a87.jpg">
+<br>
+<a style="color: orange;font-size:24px;text-decoration: underline;" href="https://whereisthepower.net/">Deployed site</a>
 </div>
 
 <br>
@@ -15,6 +17,7 @@
 <div align="center" style="background-color: red;">
     <h2>Byte my Code</h2>
 </div>
+
 
 # Project Description 🔑
 Where is the power is a web app accessible on mobile and desktop that gives
