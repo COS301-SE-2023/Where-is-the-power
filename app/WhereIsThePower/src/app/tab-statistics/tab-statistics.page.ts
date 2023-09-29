@@ -7,6 +7,7 @@ import { Renderer2 } from '@angular/core';
 import { UserLocationService } from '../user-location.service';
 import { Subscription } from 'rxjs';
 
+
 Chart.register(...registerables)
 
 @Component({

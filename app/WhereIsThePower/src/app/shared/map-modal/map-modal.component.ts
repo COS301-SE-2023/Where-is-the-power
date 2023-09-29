@@ -661,7 +661,10 @@ export class MapModalComponent implements OnInit, AfterViewInit {
       spinner: 'crescent', // spinner style
       duration: 20000,
     });
-    await loading.present();
+
+    if (loading) {
+      await loading.present();
+    }
     return loading;
   }
 
@@ -865,7 +868,9 @@ export class MapModalComponent implements OnInit, AfterViewInit {
   ngOnDestroy() {
     if (this.navigateToPlaceSubscription) {
       this.navigateToPlaceSubscription.unsubscribe();
-      this.savedPlacesService.navigateToPlace.next(false);
+      if(this.savedPlacesService.navigateToPlace){
+        this.savedPlacesService.navigateToPlace.next(false)
+      }
     }
 
     if (this.MapSubscription) {
