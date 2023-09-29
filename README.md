@@ -28,7 +28,7 @@ to help assist users navigate their routes through these dark times.
     - [Tesing policy.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12755462/Tesing.policy.pdf)
     - [Coding Standards.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12755477/Coding.Standards.pdf)
     - [Software Requirement Specification.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12756323/Software.Requirement.Specification.pdf)
-    - [Technical Installation Manual (1).pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12756471/Technical.Installation.Manual.1.pdf)
+    - [Technical Installation Manual.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12756471/Technical.Installation.Manual.1.pdf)
 
 
 
