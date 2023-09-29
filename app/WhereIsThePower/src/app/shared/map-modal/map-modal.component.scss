@@ -100,3 +100,9 @@ ion-list {
   padding-right: 8px;
   /* Adjust the margin as needed */
 }
+
+.report-icon {
+  position: absolute;
+  z-index: 9999; /* Set a high z-index value */
+  /* Add any other styling as needed */
+}

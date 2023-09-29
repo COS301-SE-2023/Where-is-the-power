@@ -21,7 +21,7 @@ export class TabProfilePage implements OnInit {
 
   isLoggedIn: boolean = false;
   constructor(private authService: AuthService,
-              private modalController: ModalController) { }
+    private modalController: ModalController) { }
 
   ngOnInit() {
     //this.isLoggedIn = this.authService.isLoggedin;
@@ -95,5 +95,24 @@ export class TabProfilePage implements OnInit {
 
   toggleTheme(systemTheme: string) {
     document.body.setAttribute('witp-color-theme', systemTheme);
+  }
+
+  downloadUserManual(type: string) {
+    // Determine the URL of the user manual based on the 'type'
+    let userManualURL = '';
+
+    if (type === 'mobile') {
+      userManualURL = 'assets/pdf/user-manual-mobile.pdf';
+    } else if (type === 'desktop') {
+      userManualURL = 'assets/pdf/user-manual-desktop.pdf';
+    }
+    // Add more 'if' conditions for other user manual types if needed
+
+    // Trigger the download
+    const link = document.createElement('a');
+    link.href = userManualURL;
+    link.target = '_blank'; // Open the link in a new tab (optional)
+    link.download = `user-manual-${type}.pdf`; // Specify the filename
+    link.click();
   }
 }
