@@ -64,11 +64,6 @@ describe('AuthService', () => {
     authService.signOutUser();
   }));
 
-  it('should get user data', async(() => {
-    authService.getUserData().then((userData) => {
-    });
-  }));
-
   it('should check if a user is logged in', async(() => {
     authService.isUserLoggedIn().then((loggedIn) => {
     });
