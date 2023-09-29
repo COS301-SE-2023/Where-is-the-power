@@ -24,7 +24,9 @@ to help assist users navigate their routes through these dark times.
 # Demos
 - ## Demo 4
     - [user-manual-mobile.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12755255/user-manual-mobile.pdf)
-    - [user-manual-desktop.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12755258/user-manual-desktop.pdf) 
+    - [user-manual-desktop.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12755258/user-manual-desktop.pdf)
+    - [Tesing policy.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12755462/Tesing.policy.pdf)
+
 - ## Demo 3
    - [Project Management](https://github.com/orgs/COS301-SE-2023/projects/7)
    - [User Manual](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/User_Manual.pdf)
