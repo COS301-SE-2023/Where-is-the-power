@@ -1,4 +1,4 @@
-<div align="center">
+[Software Requirement Specification.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12756322/Software.Requirement.Specification.pdf)<div align="center">
 
 [![codecov](https://codecov.io/gh/COS301-SE-2023/Where-is-the-power/branch/main/graph/badge.svg?token=V7DD9L1UAC)](https://codecov.io/gh/COS301-SE-2023/Where-is-the-power)
 
@@ -27,6 +27,8 @@ to help assist users navigate their routes through these dark times.
     - [user-manual-desktop.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12755258/user-manual-desktop.pdf)
     - [Tesing policy.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12755462/Tesing.policy.pdf)
     - [Coding Standards.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12755477/Coding.Standards.pdf)
+    - [Software Requirement Specification.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12756323/Software.Requirement.Specification.pdf)
+
 
 
 - ## Demo 3
