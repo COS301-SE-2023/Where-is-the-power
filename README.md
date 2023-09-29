@@ -22,25 +22,26 @@ the user a map overlay of areas where loadshedding is currently happening,
 to help assist users navigate their routes through these dark times.
 
 # Demos
-- ## Demo 1
-    - [BytemyCode Demo 1 Video](https://drive.google.com/file/d/10su_NZ4v-KUKky87HE0h-KsPnfg_5ynS/view)
-    - [System Requirements Specifications](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Software-Requirements-Specification-(SRS))
-- ## Demo 2
-    - [BytemyCode Demo 2 Video](https://drive.google.com/file/d/1gnUPZZERiG1_7zgNZKQTL3aRJQPowEPz/view)
-    - [Coding Standards Document](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Coding-Standards)
-    - [User Manual](https://github.com/COS301-SE-2023/Where-is-the-power/files/11878231/User_Manual.pdf)
-    - [System Requirements Specifications](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Software-Requirements-Specification-(SRS))
-    - [Architectural Requirements Document](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Architectural-Requirements-Document)    
+- ## Demo 4
+    - [user-manual-mobile.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12755255/user-manual-mobile.pdf)
+    - [user-manual-desktop.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12755258/user-manual-desktop.pdf) 
 - ## Demo 3
-  [**All documentation can be found on the Wiki!**](https://github.com/COS301-SE-2023/Where-is-the-power/wiki)
-
-  ***However PDFs are listed below:***
    - [Project Management](https://github.com/orgs/COS301-SE-2023/projects/7)
    - [User Manual](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/User_Manual.pdf)
    - [Technical Installation Manual](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Technical%20Installation%20Manual.pdf)
    - [Coding Standards/Quality](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Coding%20Standards.pdf)
    - [SRS PDF](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Software-Requirements-Specification-(SRS).pdf)
    - [Architectural Requirements Document](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Architectural-Requirements-Document.pdf)
+- ## Demo 2
+    - [BytemyCode Demo 2 Video](https://drive.google.com/file/d/1gnUPZZERiG1_7zgNZKQTL3aRJQPowEPz/view)
+    - [Coding Standards Document](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Coding-Standards)
+    - [User Manual](https://github.com/COS301-SE-2023/Where-is-the-power/files/11878231/User_Manual.pdf)
+    - [System Requirements Specifications](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Software-Requirements-Specification-(SRS))
+    - [Architectural Requirements Document](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Architectural-Requirements-Document)    
+- ## Demo 1
+    - [BytemyCode Demo 1 Video](https://drive.google.com/file/d/10su_NZ4v-KUKky87HE0h-KsPnfg_5ynS/view)
+    - [System Requirements Specifications](https://github.com/COS301-SE-2023/Where-is-the-power/wiki/Software-Requirements-Specification-(SRS))
+
 
 
 # About the repo ℹ️
