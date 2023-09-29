@@ -41,10 +41,10 @@ describe('AuthService', () => {
   it('should log in a user', () => {
     const user: User = {
         authType: '',
-        email: '',
-        password: '',
-        firstName: '',
-        lastName: ''
+        email: 'andy@gmail.com',
+        password: 'Helloworld123',
+        firstName: 'andy',
+        lastName: 'vis'
     };
 
     authService.loginUser(user).subscribe((response) => {
