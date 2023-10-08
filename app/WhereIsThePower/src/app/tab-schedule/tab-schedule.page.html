@@ -32,8 +32,11 @@
     <ion-row *ngIf="isLocationProvided && isAreaFound; else areaNotAvailable">
       <ion-col size="12" class="ion-text-center"><h2>{{ suburbName }}</h2></ion-col>
       <ion-col size="12" class="ion-text-center">
-        <ion-chip [color]="chipColor">
+        <ion-chip *ngIf="loadsheddingStage > 0" [color]="chipColor">
           Current Stage: {{ loadsheddingStage }}
+        </ion-chip>
+        <ion-chip *ngIf="loadsheddingStage <= 0" [color]="chipColor">
+          No Loadshedding
         </ion-chip>
       </ion-col>
       <ion-col>     
