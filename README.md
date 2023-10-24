@@ -1,4 +1,4 @@
-<div align="center">
+[Byte My Code Demo 4.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/13126185/Byte.My.Code.Demo.4.pdf)<div align="center">
 
 [![codecov](https://codecov.io/gh/COS301-SE-2023/Where-is-the-power/branch/main/graph/badge.svg?token=V7DD9L1UAC)](https://codecov.io/gh/COS301-SE-2023/Where-is-the-power)
 
@@ -25,6 +25,11 @@ the user a map overlay of areas where loadshedding is currently happening,
 to help assist users navigate their routes through these dark times.
 
 # Demos
+- ## Final Evaluation
+    - [Demo Video](https://youtu.be/ZiFJXEgbAMk)
+    - [Slideshow](https://github.com/COS301-SE-2023/Where-is-the-power/files/13126197/Byte.My.Code.Demo.4.pdf)
+)
+)    
 - ## Demo 4
     - [user-manual-mobile.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12755255/user-manual-mobile.pdf)
     - [user-manual-desktop.pdf](https://github.com/COS301-SE-2023/Where-is-the-power/files/12755258/user-manual-desktop.pdf)
