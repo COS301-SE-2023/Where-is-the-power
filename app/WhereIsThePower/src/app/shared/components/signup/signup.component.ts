@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ToastController } from '@ionic/angular';
 import { RegisterUser } from '../../models/register-user';
@@ -27,7 +27,9 @@ export class SignupComponent implements OnInit {
     lastName: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
+    confirmPassword: ['', Validators.required],
   });
+
 
   constructor(
     private router: Router,
@@ -36,7 +38,17 @@ export class SignupComponent implements OnInit {
     private authService: AuthService,
     public modalController: ModalController,
     private loadingController: LoadingController
-  ) { }
+  ) {
+    this.signupForm.addValidators(
+      this.comparePasswordValidator(
+        this.signupForm.controls['password'],
+        this.signupForm.controls['confirmPassword']
+      )
+    );
+   }
+
+
+    
 
 
   ngOnInit() { }
@@ -45,7 +57,24 @@ export class SignupComponent implements OnInit {
     this.modalController.dismiss();
   }
 
+
+  comparePasswordValidator(passwordOne: AbstractControl, passwordTwo: AbstractControl) {
+      return () => {
+      if (passwordOne.value !== passwordTwo.value) {
+        console.log("Passwords do not match")
+        return { match_error: 'matchingErr' };
+      }
+        
+      return null;
+    };
+  }
+
   signup() {
+    if(this.signupForm.value.password !== this.signupForm.value.confirmPassword) {
+      this.failToast('Passwords do not match');
+      return;
+    }
+
     if (this.signupForm.valid) {
       this.newUser.firstName = this.signupForm.value.firstName;
       this.newUser.lastName = this.signupForm.value.lastName;

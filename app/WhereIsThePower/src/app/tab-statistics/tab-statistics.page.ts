@@ -83,15 +83,23 @@ export class TabStatisticsPage implements OnInit {
 
   processDoughnutChart(data: any) {
     // Get today's day name (e.g., "Mon", "Tue", etc.)
+
     const today = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+    //const today = "Wed";
 
+    //console.log("WEDNESDAY", data.result.perDayTimes["Wed"]);
     // Get the on and off values for today's day from the data
-    const todayOnValue = data.result.perDayTimes[today]?.on || 0;
-    const todayOffValue = data.result.perDayTimes[today]?.off || 0;
+    let uptimeToday = 24;
+    let downtimeToday = 0;
+    if (data.result.perDayTimes[today] != undefined) {
+      const todayOnValue = data.result.perDayTimes[today]?.on || 0;
+      const todayOffValue = data.result.perDayTimes[today]?.off || 0;
 
-    // Convert total uptime and downtime to hours
-    const uptimeToday = Math.floor(todayOnValue / 60);
-    const downtimeToday = Math.floor(todayOffValue / 60);
+      // Convert total uptime and downtime to hours
+      uptimeToday = Math.floor(todayOnValue / 60);
+      downtimeToday = Math.floor(todayOffValue / 60);
+    }
+
 
     // Data for Doughnut Chart (Uptime/Downtime for Today)
     const doughnutData = {

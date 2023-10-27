@@ -50,6 +50,15 @@
       <ion-text color="danger" *ngIf="signupForm.get('password')!.hasError('minlength')" class="ion-padding-start">
         Password must be at least 8 characters
       </ion-text>
+
+      <ion-item>
+        <ion-label position="floating">Confirm Password</ion-label>
+        <ion-input type="password" formControlName="confirmPassword" aria-label="Confrim Password"></ion-input>
+      </ion-item>
+      <ion-text color="danger" *ngIf="signupForm.get('confirmPassword')!.hasError('matchingErr')" class="ion-padding-start">
+        Passwords do not match
+      </ion-text>
+
       <div class="ion-padding-top">
         <ion-button expand="block" type="submit" data-cy="btn-confirm-signup" class="ion-margin-top ion-margin-start">Signup</ion-button>
       </div>
